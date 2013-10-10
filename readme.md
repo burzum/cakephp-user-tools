@@ -33,7 +33,9 @@ The behavior has a good amount of settings that allow you to configure the behav
 
 ## The Auth Helper
 
-The Auth helper allows you to access the user session in a convinient way like through the components AuthComponent::user() call but also lets you get the user data from a variable in the view.
+The Auth helper allows you to access the user data in a convenient way like through the components AuthComponent::user().
+
+You can configure the Auth helper to read the data directly from the session or a view variable. By default it is using the view variable named `userData`.
 
 ```php
 class AppController extends Controller {
@@ -74,7 +76,6 @@ The master branch holds the STABLE latest version of the plugin.
 Develop branch is UNSTABLE and used to test new features before releasing them. 
 
 Previous maintenance versions are named after the CakePHP compatible version, for example, branch 1.3 is the maintenance version compatible with CakePHP 1.3.
-All versions are updated with security patches.
 
 ## Contributing to this Plugin ##
 
