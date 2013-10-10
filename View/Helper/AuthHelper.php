@@ -46,7 +46,10 @@ class AuthHelper extends AppHelper {
 	}
 
 /**
+ * Sets up the user data from session or view var
  *
+ * @throws RuntimeException
+ * @return void
  */
 	protected function _setupUserData() {
 		if (is_string($this->settings['session'])) {
@@ -91,17 +94,6 @@ class AuthHelper extends AppHelper {
  */
 	public function user($key) {
 		return Hash::get($this->_userData, $key);
-	}
-
-/**
- * Convinence method to compare user data
- *
- * @param string $key
- * @param mixed $value
- * @return boolean
- */
-	public function equals($key, $value) {
-		return ($this->user($key) === $value);
 	}
 
 /**

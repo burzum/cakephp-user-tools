@@ -5,7 +5,7 @@ App::uses('Component', 'Controller');
  * UserToolComponent
  *
  * @author Florian Krämer
- * @copyright 2012 Florian Krämer
+ * @copyright 2013 Florian Krämer
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
@@ -33,12 +33,20 @@ class UserToolComponent extends Component {
 		'directMapping' => false,
 		'userModel' => null,
 		'setupAuth' => false,
+		'passwordReset' => 'token',
 		'registration' => array(
 			'enabled' => true,
 			'successMessage' => 'Thank you for signing up!',
 			'successRedirectUrl' => '/',
 			'errorMessage' => 'Please check your inputs',
 			'errorRedirectUrl' => false,
+		),
+		'login' => array(
+			'redirect' => true,
+			'cookie' => true,
+			'cookieSettings' => array(
+
+			),
 		),
 		'actionMap' => array(
 			'register' => array(
@@ -93,7 +101,7 @@ class UserToolComponent extends Component {
 /**
  * Start up
  *
- * @param Controller $controller
+ * @param Controller $Controller
  * @return void
  */
 	public function startup(Controller $Controller) {
@@ -139,15 +147,31 @@ class UserToolComponent extends Component {
 		return false;
 	}
 
-	public function login() {
+/**
+ * Login
+ *
+ * @var array
+ */
+	public function login($options = array()) {
+		$options = Hash::merge($this->settings['login'], $options);
+
 		if (!$this->Controller->request->is('get')) {
 			if ($this->Auth->login()) {
 
+				if ($options['redirect'] === false) {
+					return true;
+				}
 			}
 		}
+		return false;
 	}
 
-	public function logout() {
+/**
+ * Logout
+ *
+ * @return void
+ */
+	public function logout($options = array()) {
 		$user = $this->Auth->user();
 		$this->Session->destroy();
 		if (isset($_COOKIE[$this->Cookie->name])) {
@@ -189,7 +213,7 @@ class UserToolComponent extends Component {
  */
 	public function handleFlashAndRedirect($type, $options) {
 		if (is_string($options[$type . 'Message'])) {
-			$this->Session->setFlash($options['errorMessage']);
+			$this->Session->setFlash($options[$type . 'Message']);
 		}
 		if (is_array($options[$type . 'Message'])) {
 			$this->Session->setFlash($options[$type . 'Message']['message'], $options[$type . 'Message']['key'], $options[$type . 'Message']['message']);
@@ -222,8 +246,8 @@ class UserToolComponent extends Component {
 					$this->Controller->modelClass . '.email_verified' => 1)));
 
 		$this->Auth->loginRedirect = '/';
-		$this->Auth->logoutRedirect = array('plugin' => Inflector::underscore($this->plugin), 'controller' => 'users', 'action' => 'login');
-		$this->Auth->loginAction = array('admin' => false, 'plugin' => Inflector::underscore($this->plugin), 'controller' => 'users', 'action' => 'login');
+		$this->Auth->logoutRedirect = array('admin' => false, 'plugin' => Inflector::underscore($this->plugin), 'controller' => $this->Controller->name, 'action' => 'login');
+		$this->Auth->loginAction = array('admin' => false, 'plugin' => Inflector::underscore($this->plugin), 'controller' => $this->Controller->name, 'action' => 'login');
 	}
 
 }

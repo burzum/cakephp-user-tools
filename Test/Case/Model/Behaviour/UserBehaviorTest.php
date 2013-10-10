@@ -121,7 +121,7 @@ class UserBehaviorTest extends CakeTestCase {
 				),
 				'unique' => array(
 					'rule' => array(
-						(int)0 => 'isUnique'
+						0 => 'isUnique'
 					),
 					'message' => 'The username is already taken'
 				)
@@ -129,13 +129,13 @@ class UserBehaviorTest extends CakeTestCase {
 			'email' => array(
 				'email' => array(
 					'rule' => array(
-						(int)0 => 'email'
+						0 => 'email'
 					),
 					'message' => 'This is not a valid email'
 				),
 				'unique' => array(
 					'rule' => array(
-						(int)0 => 'isUnique'
+						0 => 'isUnique'
 					),
 					'message' => 'The email is already in use'
 				)

@@ -5,6 +5,7 @@ echo $this->Form->input('username', array(
 	'required' => false,
 ));
 echo $this->Form->input('password', array(
+	'type' => 'password',
 	'label' => __('Password'),
 	'required' => false,
 ));

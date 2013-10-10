@@ -18,9 +18,11 @@ class UserBehavior extends ModelBehavior {
  * @var array
  */
 	protected $_defaults = array(
+		'emailConfig' => 'default',
 		'defaultValidation' => true,
 		'emailVerification' => true,
 		'defaultRole' => null,
+		'hashPassword' => true,
 		'fieldMap' => array(
 			'username' => 'username',
 			'password' => 'password',
@@ -30,7 +32,9 @@ class UserBehavior extends ModelBehavior {
 			'lastLogin' => 'last_login',
 			'role' => 'role',
 			'emailToken' => 'email_token',
-			'emailExpires' => 'email_token_expires',
+			'emailTokenExpires' => 'email_token_expires',
+			'passwordToken' => 'password_token',
+			'passwordTokenExpires' => 'password_token_expires',
 			'emailVerified' => 'email_verified',
 		)
 	);
@@ -79,18 +83,21 @@ class UserBehavior extends ModelBehavior {
 		$Model->validate = Hash::merge(
 			array(
 				$this->_field($Model, 'username') => array(
+					'notEmpty' => array(
+						'rule' => array('notEmpty'),
+						'message' => 'You must fill this field.',
+					),
 					'alphaNumeric' => array(
-						'rule' => 'alphaNumeric',
-						'required' => true,
-						'message' => 'Alphabets and numbers only'
+						'rule' => array('alphaNumeric'),
+						'message' => 'The username must be alphanumeric.'
 					),
 					'between' => array(
 						'rule' => array('between', 3, 16),
 						'message' => 'Between 3 to 16 characters'
 					),
 					'unique' => array(
-						'rule' => array('isUnique'),
-						'message' => 'The username is already taken'
+						'rule' => array('isUnique', $this->_field($Model, 'username')),
+						'message' => 'This username is already in use.',
 					),
 				),
 				$this->_field($Model, 'email') => array(
@@ -99,13 +106,54 @@ class UserBehavior extends ModelBehavior {
 						'message' => 'This is not a valid email'
 					),
 					'unique' => array(
-						'rule' => array('isUnique'),
+						'rule' => array('isUnique', $this->_field($Model, 'email')),
 						'message' => 'The email is already in use'
+					)
+				),
+				$this->_field($Model, 'password') => array(
+					'notEmpty' => array(
+						'rule' => array('notEmpty'),
+						'message' => 'You must fill this field.',
+					),
+					'between' => array(
+						'rule' => array('between', 6, 64),
+						'message' => 'Between 3 to 16 characters'
+					),
+					'confirmPassword' => array(
+						'rule' => array('confirmPassword'),
+						'message' => 'The passwords don\'t match!',
+					)
+				),
+				$this->_field($Model, 'passwordCheck') => array(
+					'notEmpty' => array(
+						'rule' => array('notEmpty'),
+						'message' => 'You must fill this field.',
+					),
+					'confirmPassword' => array(
+						'rule' => array('confirmPassword'),
+						'message' => 'The passwords don\'t match!',
 					)
 				),
 			),
 			$Model->validate
 		);
+	}
+
+/**
+ * Custom validation method to ensure that the two entered passwords match
+ *
+ * @param Model $Model
+ * @param string $password Password
+ * @return boolean Success
+ */
+	public function confirmPassword(Model $Model, $password = null) {
+		$passwordCheck = $this->_field($Model, 'passwordCheck');
+		$password = $this->_field($Model, 'password');
+		if ((isset($Model->data[$Model->alias][$passwordCheck]) && isset($Model->data[$Model->alias][$password]))
+			&& ($Model->data[$Model->alias][$passwordCheck] === $Model->data[$Model->alias][$password])) {
+			return true;
+		}
+		return false;
 	}
 
 /**
@@ -157,14 +205,10 @@ class UserBehavior extends ModelBehavior {
 	}
 
 /**
- * Registers a new user
  *
- * @param Model $Model
- * @param array post data
- * @param array options
- * @return boolean
  */
-	public function register(Model $Model, $postData, $options = array()) {
+	protected function _beforeRegister(Model $Model, $postData, $options) {
+		$Model->set($postData);
 		$this->settings[$Model->alias] = Hash::merge($this->settings[$Model->alias], $options);
 
 		if ($this->settings[$Model->alias]['emailVerification'] === true) {
@@ -179,18 +223,39 @@ class UserBehavior extends ModelBehavior {
 			$postData[$Model->alias][$this->_field($Model, 'role')] = $this->settings[$Model->alias]['defaultRole'];
 		}
 
+		if ($this->settings[$Model->alias]['hashPassword'] === true) {
+			$Model->data[$Model->alias][$this->_field($Model, 'password')] = $this->hash($Model, $Model->data[$Model->alias][$this->_field($Model, 'password')]);
+		}
+	}
+
+/**
+ * Registers a new user
+ *
+ * @param Model $Model
+ * @param array post data
+ * @param array options
+ * @return boolean
+ */
+	public function register(Model $Model, $postData, $options = array()) {
+		if (!$Model->saveAll($postData, array('validate' => 'only'))) {
+			return false;
+		}
+
+		$this->settings[$Model->alias] = Hash::merge($this->settings[$Model->alias], $options);
+		$Model->set($this->_beforeRegister($Model, $postData, $options));
+
 		if (method_exists($Model, 'beforeRegister')) {
 			if (!$Model->beforeRegister()) {
 				return false;
 			}
 		}
 
-		$Model->create();
-		$result = $Model->saveAll($postData);
+		$data = $Model->data;
+		$result = $Model->saveAll($Model->data, array('validate' => false));
 
 		if ($result) {
-			$result[$Model->alias][$Model->primaryKey] = $Model->getLastInsertID();
-			$Model->data = $result;
+			$data[$Model->alias][$Model->primaryKey] = $Model->getLastInsertID();
+			$Model->data = $data;
 
 			if ($this->settings[$Model->alias]['emailVerification'] === true) {
 				$this->sendVerificationEmail($Model, $Model->data, array(
@@ -304,9 +369,8 @@ class UserBehavior extends ModelBehavior {
 /**
  * Removes all users from the user table that are outdated
  *
- * Override it as needed for your specific project
- *
  * @param Model $Model
+ * @param array $conditions
  * @return void
  */
 	public function removeExpiredRegistrations(Model $Model, $conditions = array()) {
@@ -325,12 +389,7 @@ class UserBehavior extends ModelBehavior {
  * @return CakeEmail CakeEmail instance
  */
 	public function getMailInstance(Model $Model) {
-		$emailConfig = Configure::read('Users.emailConfig');
-		if ($emailConfig) {
-			return new CakeEmail($emailConfig);
-		} else {
-			return new CakeEmail('default');
-		}
+		return new CakeEmail($this->settings[$Model->alias]['emailConfig']);
 	}
 
 /**
@@ -363,12 +422,14 @@ class UserBehavior extends ModelBehavior {
  *
  */
 	public function sendEmail(Model $Model, $options = array()) {
+		/*
 		$Email = $this->getMailInstance($Model);
 		$Email->subject($options['subject'])
 			->to($options['receiver'])
 			->viewVars($options['viewVars'])
 			->template($options['template'])
 			->send();
+		*/
 	}
 
 }

@@ -65,7 +65,7 @@ class AuthHelperTestCase extends CakeTestCase {
 	public function testIsMe() {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->isMe('user-1'));
-		$this->assertFalse($Auth->hasRole('user-2'));
+		$this->assertFalse($Auth->isMe('user-2'));
 	}
 
 /**
