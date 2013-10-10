@@ -2,6 +2,8 @@
 
 This plugin works very similar like the CakeDC users plugin and is a derivative work but instead of providing a full stack that is more or less hard to change and extend this plugin just provides you the building blocks for everything around users.
 
+Requires CakePHP 2.4 or greater.
+
 ## The UserTool component
 
 ```php

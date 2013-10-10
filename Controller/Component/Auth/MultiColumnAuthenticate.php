@@ -24,61 +24,57 @@ App::uses('FormAuthenticate', 'Controller/Component/Auth');
  * @license MIT
  * @link https://github.com/ceeram/Authenticate
  */
+
 class MultiColumnAuthenticate extends FormAuthenticate {
 
 /**
- * Settings for this object.
- *
- * - `fields` The fields to use to identify a user by.
- * - 'columns' array of columns to check username form input against
- * - `userModel` The model name of the User, defaults to User.
- * - `scope` Additional conditions to use when looking up and authenticating users,
- *    i.e. `array('User.is_active' => 1).`
- *
- * @var array
- */
-	public $settings = array(
-		'fields' => array(
-			'username' => 'username',
-			'password' => 'password'
-		),
-		'columns' => array(),
-		'userModel' => 'User',
-		'scope' => array()
-	);
-
-/**
- * Find a user record using the standard options.
- *
- * @param string $username The username/identifier.
- * @param string $password The unhashed password.
- * @return Mixed Either false on failure, or an array of user data.
+ * _findUser
+ * @param string $username
+ * @param string $password
+ * @return mixed
  */
 	protected function _findUser($username, $password = null) {
 		$userModel = $this->settings['userModel'];
 		list($plugin, $model) = pluginSplit($userModel);
 		$fields = $this->settings['fields'];
-		$conditions = array($model . '.' . $fields['username'] => $username);
-		if ($this->settings['columns'] && is_array($this->settings['columns'])) {
-			$columns = array();
-			foreach ($this->settings['columns'] as $column) {
-				$columns[] = array($model . '.' . $column => $username);
+
+		if (is_array($username)) {
+			$conditions = $username;
+		} else {
+			$conditions = array($model . '.' . $fields['username'] => $username);
+			if ($this->settings['columns'] && is_array($this->settings['columns'])) {
+				$columns = array();
+				foreach ($this->settings['columns'] as $column) {
+					$columns[] = array($model . '.' . $column => $username);
+				}
+				$conditions = array('OR' => $columns);
 			}
-			$conditions = array('OR' => $columns);
 		}
-		$conditions = array_merge($conditions, array($model . '.' . $fields['password'] => $this->_password($password)));
+
 		if (!empty($this->settings['scope'])) {
 			$conditions = array_merge($conditions, $this->settings['scope']);
 		}
+
 		$result = ClassRegistry::init($userModel)->find('first', array(
 			'conditions' => $conditions,
-			'recursive' => 0
+			'recursive' => $this->settings['recursive'],
+			'contain' => $this->settings['contain'],
 		));
-		if (empty($result) || empty($result[$model])) {
+		if (empty($result[$model])) {
+			$this->passwordHasher()->hash($password);
 			return false;
 		}
-		unset($result[$model][$fields['password']]);
-		return $result[$model];
+
+		$user = $result[$model];
+		if ($password) {
+			if (!$this->passwordHasher()->check($password, $user[$fields['password']])) {
+				return false;
+			}
+			unset($user[$fields['password']]);
+		}
+
+		unset($result[$model]);
+		return array_merge($user, $result);
 	}
 
 }

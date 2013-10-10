@@ -43,10 +43,10 @@ class UserToolComponent extends Component {
 		),
 		'login' => array(
 			'redirect' => true,
-			'cookie' => true,
-			'cookieSettings' => array(
-
-			),
+			'successMessage' => 'Thank you for signing up!',
+			'successRedirectUrl' => '/',
+			'errorMessage' => 'Please check your inputs',
+			'errorRedirectUrl' => false,
 		),
 		'actionMap' => array(
 			'register' => array(
@@ -56,6 +56,10 @@ class UserToolComponent extends Component {
 			'login' => array(
 				'method' => 'login',
 				'view' => 'UserTools.UserTools/login',
+			),
+			'logout' => array(
+				'method' => 'logout',
+				'view' => null
 			)
 		)
 	);
@@ -156,11 +160,13 @@ class UserToolComponent extends Component {
 		$options = Hash::merge($this->settings['login'], $options);
 
 		if (!$this->Controller->request->is('get')) {
+			$this->Auth->request = $this->Controller->request;
+			$this->Auth->response = $this->Controller->response;
 			if ($this->Auth->login()) {
-
 				if ($options['redirect'] === false) {
 					return true;
 				}
+				$this->Controller->redirect($options['redirect']);
 			}
 		}
 		return false;
@@ -177,7 +183,7 @@ class UserToolComponent extends Component {
 		if (isset($_COOKIE[$this->Cookie->name])) {
 			$this->Cookie->destroy();
 		}
-		$this->Session->setFlash(__d('user_tools', '%s you have successfully logged out'), $user[$this->Controller{$this->settings['userModel']}->displayField]);
+		$this->Session->setFlash(__d('user_tools', '%s you have successfully logged out'), 'test');
 		$this->Controller->redirect($this->Auth->logout());
 	}
 
