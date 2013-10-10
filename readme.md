@@ -43,6 +43,27 @@ class AppController extends Controller {
 }
 ```
 
+* session: Session key to read the user data from if you want to get it from the session, default is false
+* viewVar: Name of the view var you have to set somewhere (AppController::beforeRender for example), default is `userData`
+* viewVarException: Throws an exception if the viewVar is not found, default true
+* roleField: Name of the array key in the user data that contains a role to check
+
+Example of it's use in a view:
+
+```php
+if ($this->Auth->isLoggedIn()) {
+	echo __('Hello %s!', $this->Auth->user('username'));
+}
+
+if ($this->Auth->isMe($record['Record']['user_id']) {
+	echo '<h2>' . __('Your records') . '</h2>';
+}
+
+if ($this->Auth->hasRole('admin') {
+	echo $this->Html->link(__('delete'), array('action' => 'delete'));
+}
+```
+
 ## Support ##
 
 For support and feature request, please visit the [Users Plugin Support Site](http://cakedc.lighthouseapp.com/projects/60126-users-plugin/).
