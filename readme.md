@@ -6,6 +6,8 @@ Requires CakePHP 2.4 or greater.
 
 ## The UserTool component
 
+If you want to go for a kick start and use the component as it is you can simply use it as it is preconfigured.
+
 ```php
 class UsersController extends AppController {
 	public $components = array(
@@ -13,6 +15,16 @@ class UsersController extends AppController {
 	);
 }
 ```
+
+By default the users component will intercept the calls to some methods if not configured otherwise:
+
+ * login
+ * register
+ * logout
+
+### Login
+
+### Registration
 
 ## The User Behavior
 

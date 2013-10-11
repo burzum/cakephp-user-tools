@@ -65,6 +65,13 @@ class UserToolComponent extends Component {
 	);
 
 /**
+ * Settings of the component
+ *
+ * @var array
+ */
+	public $settings = array();
+
+/**
  * Initializes the component
  *
  * @param Controller $controller
@@ -72,6 +79,8 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function initialize(Controller $Controller, $settings = array()) {
+		parent::initialize($Controller, $settings);
+
 		$this->settings = Set::merge($this->defaults, $settings);
 		$this->Controller = $Controller;
 
@@ -109,6 +118,8 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function startup(Controller $Controller) {
+		parent::startup($Controller);
+
 		if ($this->settings['setupAuth'] !== false) {
 			if (is_string($this->settings['setupAuth'])) {
 				$this->Controller->{$this->settings['setupAuth']};
@@ -178,6 +189,8 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function logout($options = array()) {
+		$options = Hash::merge($this->settings['login'], $options);
+
 		$user = $this->Auth->user();
 		$this->Session->destroy();
 		if (isset($_COOKIE[$this->Cookie->name])) {
@@ -227,33 +240,6 @@ class UserToolComponent extends Component {
 		if ($options[$type . 'RedirectUrl'] !== false) {
 			$this->Controller->redirect($options[$type . 'RedirectUrl']);
 		}
-	}
-
-/**
- * Default auth setup
- *
- * @return void
- */
-	public function setupAuth() {
-		$this->Auth->allow('register', 'reset', 'verify', 'logout', 'reset_password', 'login', 'resend_verification');
-
-		if ($this->request->action == 'register') {
-			$this->Components->disable('Auth');
-		}
-
-		$this->Auth->authenticate = array(
-			'Form' => array(
-				'fields' => array(
-					'username' => 'email',
-					'password' => 'password'),
-				'userModel' => $this->Controller->modelClass,
-				'scope' => array(
-					$this->Controller->modelClass . '.active' => 1,
-					$this->Controller->modelClass . '.email_verified' => 1)));
-
-		$this->Auth->loginRedirect = '/';
-		$this->Auth->logoutRedirect = array('admin' => false, 'plugin' => Inflector::underscore($this->plugin), 'controller' => $this->Controller->name, 'action' => 'login');
-		$this->Auth->loginAction = array('admin' => false, 'plugin' => Inflector::underscore($this->plugin), 'controller' => $this->Controller->name, 'action' => 'login');
 	}
 
 }

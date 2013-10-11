@@ -20,9 +20,12 @@ class UserBehavior extends ModelBehavior {
 	protected $_defaults = array(
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
-		'emailVerification' => true,
 		'defaultRole' => null,
 		'hashPassword' => true,
+		'register' => array(
+			'emailVerification' => true,
+			'beforeRegister' => true
+		),
 		'fieldMap' => array(
 			'username' => 'username',
 			'password' => 'password',
@@ -205,13 +208,25 @@ class UserBehavior extends ModelBehavior {
 	}
 
 /**
+ * Hash password
+ *
+ * @param Model $Model
+ * @param $password
+ * @param array $options
+ * @return string Hash
+ */
+	public function hashPassword(Model $Model, $password, $options = array()) {
+		return $this->hash($Model, $password);
+	}
+
+/**
  *
  */
 	protected function _beforeRegister(Model $Model, $postData, $options) {
 		$Model->set($postData);
 		$this->settings[$Model->alias] = Hash::merge($this->settings[$Model->alias], $options);
 
-		if ($this->settings[$Model->alias]['emailVerification'] === true) {
+		if ($this->settings[$Model->alias]['register']['emailVerification'] === true) {
 			$postData[$Model->alias][$this->_field($Model, 'emailToken')] = $this->generateToken($Model);
 			$postData[$Model->alias][$this->_field($Model, 'emailTokenExpires')] = $this->expirationTime($Model);
 			$postData[$Model->alias][$this->_field($Model, 'emailVerified')] = 0;
@@ -224,12 +239,19 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		if ($this->settings[$Model->alias]['hashPassword'] === true) {
-			$Model->data[$Model->alias][$this->_field($Model, 'password')] = $this->hash($Model, $Model->data[$Model->alias][$this->_field($Model, 'password')]);
+			$Model->data[$Model->alias][$this->_field($Model, 'password')] = $this->hashPassword($Model, $Model->data[$Model->alias][$this->_field($Model, 'password')]);
 		}
 	}
 
 /**
  * Registers a new user
+ *
+ * Flow:
+ * - validates the passed $postData
+ * - calls the behaviors _beforeRegister if not disabled
+ * - calls Model::beforeRegister if implemented
+ * - saves the user data
+ * - calls Model::afterRegister if implemented
  *
  * @param Model $Model
  * @param array post data
@@ -242,7 +264,10 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		$this->settings[$Model->alias] = Hash::merge($this->settings[$Model->alias], $options);
-		$Model->set($this->_beforeRegister($Model, $postData, $options));
+
+		if ($this->settings[$Model->alias]['register']['beforeRegister'] === true) {
+			$Model->set($this->_beforeRegister($Model, $postData, $options));
+		}
 
 		if (method_exists($Model, 'beforeRegister')) {
 			if (!$Model->beforeRegister()) {
@@ -257,7 +282,7 @@ class UserBehavior extends ModelBehavior {
 			$data[$Model->alias][$Model->primaryKey] = $Model->getLastInsertID();
 			$Model->data = $data;
 
-			if ($this->settings[$Model->alias]['emailVerification'] === true) {
+			if ($this->settings[$Model->alias]['register']['emailVerification'] === true) {
 				$this->sendVerificationEmail($Model, $Model->data, array(
 					'receiver' => $Model->data[$Model->alias][$this->_field($Model, 'email')]
 				));
@@ -279,19 +304,21 @@ class UserBehavior extends ModelBehavior {
  * @throws NotFoundException if the token was not found at all
  * @param Model $Model
  * @param string $token
+ * @param array $options
  * @return boolean Returns false if the token has expired
  */
 	public function verifyToken(Model $Model, $token, $options = array()) {
 		$defaults = array(
-			'tokenField' => 'email_token',
-			'expirationField' => 'email_token_expires'
+			'tokenField' => $this->_field($Model, 'emailToken'),
+			'expirationField' => $this->_field($Model, 'emailTokenExpires'),
+			'returnData' => false,
 		);
 
 		$options = Hash::merge($defaults, $options);
 
 		$result = $Model->find('first', array(
 			'conditions' => array(
-				$this->_field($Model, 'emailToken') => $token
+				$options['tokenField'] => $token
 			)
 		));
 
@@ -299,7 +326,14 @@ class UserBehavior extends ModelBehavior {
 			throw new NotFoundException(__('Invalid token'));
 		}
 
-		return ($result[$Model->alias][$this->_field($Model, 'emailTokenExpires')] > date('Y-m-d H:i:s'));
+		$isExpired = $result[$Model->alias][$this->_field($Model, 'emailTokenExpires')] > date('Y-m-d H:i:s');;
+
+		if ($options['returnData'] === true) {
+			$result[$Model->alias]['is_expired'] = $isExpired;
+			return $result;
+		}
+
+		return $isExpired;
 	}
 
 /**
