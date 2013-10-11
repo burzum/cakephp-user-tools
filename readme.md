@@ -22,9 +22,11 @@ By default the users component will intercept the calls to some methods if not c
  * register
  * logout
 
-### Login
+### UserTool::login()
 
-### Registration
+### UserTool::register()
+
+### UserTool::logout()
 
 ## The User Behavior
 
@@ -59,14 +61,6 @@ class AppController extends Controller {
 }
 ```
 
-```php
-class UsersController extends Controller {
-	public $helpers = array(
-		'UserTools.Auth'
-	);
-}
-```
-
 * session: Session key to read the user data from if you want to get it from the session, default is false
 * viewVar: Name of the view var you have to set somewhere (AppController::beforeRender for example), default is `userData`
 * viewVarException: Throws an exception if the viewVar is not found, default true
@@ -86,8 +80,6 @@ if ($this->Auth->isMe($record['Record']['user_id']) {
 if ($this->Auth->hasRole('admin') {
 	echo $this->Html->link(__('delete'), array('action' => 'delete'));
 }
-
-if ($this->Auth->equals('some_field', 10)
 ```
 
 ## Support ##

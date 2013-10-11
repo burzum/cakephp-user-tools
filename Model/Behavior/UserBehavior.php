@@ -20,10 +20,13 @@ class UserBehavior extends ModelBehavior {
 	protected $_defaults = array(
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
-		'defaultRole' => null,
-		'hashPassword' => true,
 		'register' => array(
+			'defaultRole' => null,
+			'hashPassword' => true,
+			'userActive' => true,
+			'generatePassword' => false,
 			'emailVerification' => true,
+			'verificationExpirationTime' => '+1 day',
 			'beforeRegister' => true
 		),
 		'fieldMap' => array(
@@ -39,6 +42,7 @@ class UserBehavior extends ModelBehavior {
 			'passwordToken' => 'password_token',
 			'passwordTokenExpires' => 'password_token_expires',
 			'emailVerified' => 'email_verified',
+			'active' => 'active',
 		)
 	);
 
@@ -220,25 +224,45 @@ class UserBehavior extends ModelBehavior {
 	}
 
 /**
+ * Behavior internal before registration callback
  *
+ * This method deals with most of the settings for the registration that can be
+ * applied before the actual user record is saved.
+ *
+ * @param Model $Model
+ * @param array $postData
+ * @param array $options
+ * @return void
  */
 	protected function _beforeRegister(Model $Model, $postData, $options) {
 		$Model->set($postData);
-		$this->settings[$Model->alias] = Hash::merge($this->settings[$Model->alias], $options);
+		extract(Hash::merge($this->settings[$Model->alias]['register'], $options));
 
-		if ($this->settings[$Model->alias]['register']['emailVerification'] === true) {
+		if ($userActive === true) {
+			$postData[$Model->alias][$this->_field($Model, 'active')] = 1;
+		}
+
+		if ($emailVerification === true) {
 			$postData[$Model->alias][$this->_field($Model, 'emailToken')] = $this->generateToken($Model);
-			$postData[$Model->alias][$this->_field($Model, 'emailTokenExpires')] = $this->expirationTime($Model);
+			if ($verificationExpirationTime !== false) {
+				$postData[$Model->alias][$this->_field($Model, 'emailTokenExpires')] = $this->expirationTime($Model, $verificationExpirationTime);
+			}
 			$postData[$Model->alias][$this->_field($Model, 'emailVerified')] = 0;
 		} else {
 			$postData[$Model->alias][$this->_field($Model, 'emailVerified')] = 1;
 		}
 
 		if (!isset($postData[$Model->alias][$this->_field($Model, 'role')])) {
-			$postData[$Model->alias][$this->_field($Model, 'role')] = $this->settings[$Model->alias]['defaultRole'];
+			$postData[$Model->alias][$this->_field($Model, 'role')] = $defaultRole;
 		}
 
-		if ($this->settings[$Model->alias]['hashPassword'] === true) {
+		if ($generatePassword !== false) {
+			$password = $this->generatePassword($Model, (int)$generatePassword);
+			$Model->data[$Model->alias][$this->_field($Model, 'password')] = $password;
+			$Model->data[$Model->alias]['clear_password'] = $password;
+		}
+
+		if ($hashPassword === true) {
 			$Model->data[$Model->alias][$this->_field($Model, 'password')] = $this->hashPassword($Model, $Model->data[$Model->alias][$this->_field($Model, 'password')]);
 		}
 	}
