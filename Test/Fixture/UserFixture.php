@@ -73,6 +73,25 @@ class UserFixture extends CakeTestFixture {
 			'role' => 'admin',			
 			'created'  => '2008-03-25 02:45:46',
 			'modified'  => '2008-03-25 02:45:46'
+		),
+		array(
+			'id'  => '2',
+			'username'  => 'newuser',
+			'slug' => 'newuser',
+			'password'  => 'test', // test
+			'password_token'  => 'newusertoken',
+			'email' => 'newuser@cakedc.com',
+			'email_verified' => 1,
+			'email_token' => 'secondusertesttoken',
+			'email_token_expires' => '2008-03-25 02:45:46',
+			'tos' => 1,
+			'active' => 1,
+			'last_action'  => '2008-03-25 02:45:46',
+			'last_login' => '2008-03-25 02:45:46',
+			'is_admin' => 1,
+			'role' => 'admin',
+			'created'  => '2008-03-25 02:45:46',
+			'modified'  => '2008-03-25 02:45:46'
 		)
 	);
 

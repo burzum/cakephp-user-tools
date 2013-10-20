@@ -43,7 +43,7 @@ class MultiColumnAuthenticate extends FormAuthenticate {
 		} else {
 			$conditions = array($model . '.' . $fields['username'] => $username);
 			if ($this->settings['columns'] && is_array($this->settings['columns'])) {
-				$columns = array();
+				$columns = [];
 				foreach ($this->settings['columns'] as $column) {
 					$columns[] = array($model . '.' . $column => $username);
 				}

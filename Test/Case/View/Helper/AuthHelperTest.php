@@ -77,7 +77,7 @@ class AuthHelperTestCase extends CakeTestCase {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->isLoggedin());
 
-		$this->View->viewVars['userData'] = array();
+		$this->View->viewVars['userData'] = [];
 		$Auth = new AuthHelper($this->View);
 		$this->assertFalse($Auth->isLoggedin());
 	}

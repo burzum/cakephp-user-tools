@@ -27,12 +27,11 @@ class UserToolComponent extends Component {
  *
  * @var array
  */
-	public $defaults = array(
+	protected $_defaults = array(
 		'autoloadBehavior' => true,
 		'actionMapping' => true,
 		'directMapping' => false,
 		'userModel' => null,
-		'setupAuth' => false,
 		'passwordReset' => 'token',
 		'registration' => array(
 			'enabled' => true,
@@ -47,6 +46,12 @@ class UserToolComponent extends Component {
 			'successRedirectUrl' => '/',
 			'errorMessage' => 'Please check your inputs',
 			'errorRedirectUrl' => false,
+		),
+		'verifyEmail' => array(
+
+		),
+		'requestPasswordChange' => array(
+
 		),
 		'actionMap' => array(
 			'register' => array(
@@ -69,46 +74,69 @@ class UserToolComponent extends Component {
  *
  * @var array
  */
-	public $settings = array();
+	public $settings = [];
+
+/**
+ * User Model
+ *
+ * @var Model
+ */
+	public $UserModel = null;
 
 /**
  * Initializes the component
  *
- * @param Controller $controller
+ * @param Controller $Controller
  * @param array $settings
  * @return void
  */
-	public function initialize(Controller $Controller, $settings = array()) {
+	public function initialize(Controller $Controller, $settings = []) {
 		parent::initialize($Controller, $settings);
 
-		$this->settings = Set::merge($this->defaults, $settings);
+		$this->settings = Set::merge($this->_defaults, $settings);
 		$this->Controller = $Controller;
 
-		$this->_loadUserBehaviour();
-		$this->_setUserModelClass();
+		$this->setUserModel($this->settings['userModel']);
+		$this->loadUserBehaviour();
 	}
 
 /**
- * _loadUserBehaviour
+ * loadUserBehaviour
  *
  * @return void
  */
-	protected function _loadUserBehaviour() {
-		if ($this->settings['autoloadBehavior'] || !$this->Controller->{$this->Controller->modelClass}->Behaviors->loaded('UserTools.User')) {
-			$this->Controller->{$this->Controller->modelClass}->Behaviors->load('UserTools.User');
+	public function loadUserBehaviour() {
+		if ($this->settings['autoloadBehavior'] && !$this->UserModel->Behaviors->loaded('UserTools.User')) {
+			if (is_array($this->settings['autoloadBehavior'])) {
+				$this->UserModel->Behaviors->load('UserTools.User', $this->settings['autoloadBehavior']);
+			} else {
+				$this->UserModel->Behaviors->load('UserTools.User');
+			}
 		}
 	}
 
 /**
- * _setUserModelClass
+ * Sets or instantiates the user model class
  *
+ * @param mixed $modelClass
+ * @throws RuntimeException
  * @return void
  */
-	protected function _setUserModelClass() {
-		if ($this->settings['userModel'] === null) {
-			$this->settings['userModel'] = $this->Controller->modelClass;
+	public function setUserModel($modelClass = null) {
+		if ($modelClass === null) {
+			$this->UserModel = $this->Controller{$this->Controller->modelClass};
+		} else {
+			if (is_object($modelClass)) {
+				if (!is_a($modelClass, 'Model')) {
+					throw new RuntimeException(__d('user_tools', 'Passed object is not of type Model'));
+				}
+				$this->UserModel = $modelClass;
+			}
+			if (is_string($modelClass)) {
+				$this->UserModel = ClassRegistry::init($modelClass);
+			}
 		}
-		$this->Controller->set('userModel', $this->Controller->{$this->settings['userModel']}->alias);
+		$this->Controller->set('userModel', $this->UserModel->alias);
 	}
 
 /**
@@ -120,13 +148,6 @@ class UserToolComponent extends Component {
 	public function startup(Controller $Controller) {
 		parent::startup($Controller);
 
-		if ($this->settings['setupAuth'] !== false) {
-			if (is_string($this->settings['setupAuth'])) {
-				$this->Controller->{$this->settings['setupAuth']};
-			} else {
-				$this->setupAuth();
-			}
-		}
 		if ($this->settings['actionMapping'] === true) {
 			$this->mapAction();
 		}
@@ -166,14 +187,19 @@ class UserToolComponent extends Component {
  * Login
  *
  * @var array
+ * @return bool
  */
-	public function login($options = array()) {
-		$options = Hash::merge($this->settings['login'], $options);
+	public function login($options = []) {
+		$options = $this->_mergeOptions($this->settings['login'], $options);
 
 		if (!$this->Controller->request->is('get')) {
 			$this->Auth->request = $this->Controller->request;
 			$this->Auth->response = $this->Controller->response;
 			if ($this->Auth->login()) {
+				if ($options['cookie'] !== false) {
+					$this->setUserCookie($this->Auth->user());
+				}
+
 				if ($options['redirect'] === false) {
 					return true;
 				}
@@ -184,19 +210,28 @@ class UserToolComponent extends Component {
 	}
 
 /**
+ *
+ */
+	public function setUserCookie($user = [], $options) {
+		$options = $this->_mergeOptions($this->settings['userCookie'], $options);
+		$this->_Collection->Cookie->write($this->settings['userModel'], $user);
+	}
+
+/**
  * Logout
  *
+ * @param array $options
  * @return void
  */
-	public function logout($options = array()) {
-		$options = Hash::merge($this->settings['login'], $options);
-
+	public function logout($options = []) {
+		$options = $this->_mergeOptions($this->settings['login'], $options);
 		$user = $this->Auth->user();
+
 		$this->Session->destroy();
 		if (isset($_COOKIE[$this->Cookie->name])) {
 			$this->Cookie->destroy();
 		}
-		$this->Session->setFlash(__d('user_tools', '%s you have successfully logged out'), 'test');
+		$this->Session->setFlash(__d('user_tools', '%s you have successfully logged out'), $user['username']);
 		$this->Controller->redirect($this->Auth->logout());
 	}
 
@@ -207,20 +242,64 @@ class UserToolComponent extends Component {
  * @param array $options
  * @return void
  */
-	public function register($options = array()) {
+	public function register($options = []) {
 		if ($this->settings['registration'] === false) {
 			throw new NotFoundException();
 		}
 
-		$options = Hash::merge($this->settings['registration'], $options);
+		$options = $this->_mergeOptions($this->settings['registration'], $options);
 
 		if (!$this->Controller->request->is('get')) {
-			if ($this->Controller->{$this->Controller->modelClass}->register($this->Controller->request->data)) {
+			if ($this->UserModel->register($this->Controller->request->data)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
+	}
+
+/**
+ * Verify Token
+ *
+ * @throws NotFoundException
+ * @param array
+ * @return mixed
+ */
+	public function verifyToken($options = []) {
+		$options = $this->_mergeOptions(array('queryParam' => 'token', 'type' => 'Email'), $options);
+
+		if (!isset($this->Contoller->request->params[$options['queryParam']])) {
+			throw new NotFoundException(__d('user_tools', 'No token present!'));
+		}
+
+		$methodName = 'verify' . $options['type'] . 'Token';
+		$result = $this->UserModel->$methodName($this->Contoller->request->params[$options['queryParam']]);
+
+		if ($result !== false) {
+			$this->handleFlashAndRedirect('success', $options);
+		} else {
+			$this->handleFlashAndRedirect('error', $options);
+		}
+
+		return $result;
+	}
+
+/**
+ * @todo finish me
+ */
+	public function requestPasswordChange() {
+		if (!$this->Controller->request->is('get')) {
+			$this->UserModel->requestPasswordChange($this->Contoller->request->data);
+		}
+	}
+
+/**
+ * @todo finish me
+ */
+	public function changePassword() {
+		$this->verifyToken(array(
+			'type' => 'Password'
+		));
 	}
 
 /**
@@ -231,15 +310,27 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function handleFlashAndRedirect($type, $options) {
-		if (is_string($options[$type . 'Message'])) {
-			$this->Session->setFlash($options[$type . 'Message']);
-		}
-		if (is_array($options[$type . 'Message'])) {
-			$this->Session->setFlash($options[$type . 'Message']['message'], $options[$type . 'Message']['key'], $options[$type . 'Message']['message']);
+		if ($options[$type . 'Message'] !== false) {
+			if (is_string($options[$type . 'Message'])) {
+				$this->Session->setFlash($options[$type . 'Message']);
+			}
+			if (is_array($options[$type . 'Message'])) {
+				$this->Session->setFlash($options[$type . 'Message']['message'], $options[$type . 'Message']['key'], $options[$type . 'Message']['message']);
+			}
 		}
 		if ($options[$type . 'RedirectUrl'] !== false) {
 			$this->Controller->redirect($options[$type . 'RedirectUrl']);
 		}
 	}
 
+/**
+ * Wrapper around Hash::merge
+ *
+ * @param array
+ * @param array
+ * @return array
+ */
+	protected function _mergeOptions($array, $array2) {
+		return Hash::merge($array, $array2);
+	}
 }

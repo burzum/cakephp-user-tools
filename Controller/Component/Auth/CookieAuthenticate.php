@@ -31,6 +31,13 @@ App::uses('Router', 'Routing');
  */
 class CookieAuthenticate extends BaseAuthenticate {
 
+/**
+ * Constructor
+ *
+ * @var ComponentCollection $collection
+ * @var array $settings
+ * @return CookieAuthenticate
+ */
 	public function __construct(ComponentCollection $collection, $settings) {
 		$this->settings['cookie'] = array(
 			'name' => 'RememberMe',
@@ -56,7 +63,7 @@ class CookieAuthenticate extends BaseAuthenticate {
 		}
 
 		$this->_Collection->Cookie->type($this->settings['crypt']);
-		list(, $model) = pluginSplit($this->settings['userModel']);
+		list($plugin, $model) = pluginSplit($this->settings['userModel']);
 
 		$data = $this->_Collection->Cookie->read($model);
 		if (empty($data)) {
@@ -76,10 +83,23 @@ class CookieAuthenticate extends BaseAuthenticate {
 		return false;
 	}
 
+/**
+ * authenticate
+ *
+ * @param CakeRequest $request
+ * @param CakeResponse $response
+ * @return array
+ */
 	public function authenticate(CakeRequest $request, CakeResponse $response) {
 		return $this->getUser($request);
 	}
 
+/**
+ * Logout
+ *
+ * @var array $user
+ * @return void
+ */
 	public function logout($user) {
 		$this->_Collection->Cookie->destroy();
 	}

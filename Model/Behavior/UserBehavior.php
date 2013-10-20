@@ -58,8 +58,8 @@ class UserBehavior extends ModelBehavior {
  * @param array $config
  * @return void
  */
-	public function setup(Model $Model, $config = array()) {
-		$this->settings[$Model->alias] = Hash::merge($this->_defaults, $config);
+	public function setup(Model $Model, $config = []) {
+		$this->settings[$Model->alias] = $this->_mergeOptions($this->_defaults, $config);
 		if ($this->settings[$Model->alias]['defaultValidation'] === true) {
 			$this->setupValidationDefaults($Model);
 		}
@@ -75,7 +75,7 @@ class UserBehavior extends ModelBehavior {
  */
 	protected function _field($Model, $field) {
 		if (!isset($this->settings[$Model->alias]['fieldMap'][$field])) {
-			throw new \RuntimeException(__('Invalid field %s!', $field));
+			throw new \RuntimeException(__d('user_tools', 'Invalid field %s!', $field));
 		}
 		return $this->settings[$Model->alias]['fieldMap'][$field];
 	}
@@ -87,7 +87,7 @@ class UserBehavior extends ModelBehavior {
  * @return void
  */
 	public function setupValidationDefaults(Model $Model) {
-		$Model->validate = Hash::merge(
+		$Model->validate = $this->_mergeOptions(
 			array(
 				$this->_field($Model, 'username') => array(
 					'notEmpty' => array(
@@ -219,7 +219,7 @@ class UserBehavior extends ModelBehavior {
  * @param array $options
  * @return string Hash
  */
-	public function hashPassword(Model $Model, $password, $options = array()) {
+	public function hashPassword(Model $Model, $password, $options = []) {
 		return $this->hash($Model, $password);
 	}
 
@@ -236,7 +236,7 @@ class UserBehavior extends ModelBehavior {
  */
 	protected function _beforeRegister(Model $Model, $postData, $options) {
 		$Model->set($postData);
-		extract(Hash::merge($this->settings[$Model->alias]['register'], $options));
+		extract($this->_mergeOptions($this->settings[$Model->alias]['register'], $options));
 
 		if ($userActive === true) {
 			$postData[$Model->alias][$this->_field($Model, 'active')] = 1;
@@ -282,12 +282,12 @@ class UserBehavior extends ModelBehavior {
  * @param array options
  * @return boolean
  */
-	public function register(Model $Model, $postData, $options = array()) {
+	public function register(Model $Model, $postData, $options = []) {
 		if (!$Model->saveAll($postData, array('validate' => 'only'))) {
 			return false;
 		}
 
-		$this->settings[$Model->alias] = Hash::merge($this->settings[$Model->alias], $options);
+		$this->settings[$Model->alias] = $this->_mergeOptions($this->settings[$Model->alias], $options);
 
 		if ($this->settings[$Model->alias]['register']['beforeRegister'] === true) {
 			$Model->set($this->_beforeRegister($Model, $postData, $options));
@@ -308,7 +308,7 @@ class UserBehavior extends ModelBehavior {
 
 			if ($this->settings[$Model->alias]['register']['emailVerification'] === true) {
 				$this->sendVerificationEmail($Model, $Model->data, array(
-					'receiver' => $Model->data[$Model->alias][$this->_field($Model, 'email')]
+					'to' => $Model->data[$Model->alias][$this->_field($Model, 'email')]
 				));
 			}
 
@@ -329,16 +329,16 @@ class UserBehavior extends ModelBehavior {
  * @param Model $Model
  * @param string $token
  * @param array $options
- * @return boolean Returns false if the token has expired
+ * @return boolean|array Returns false if the token has expired
  */
-	public function verifyToken(Model $Model, $token, $options = array()) {
+	public function verifyToken(Model $Model, $token, $options = []) {
 		$defaults = array(
 			'tokenField' => $this->_field($Model, 'emailToken'),
 			'expirationField' => $this->_field($Model, 'emailTokenExpires'),
 			'returnData' => false,
 		);
 
-		$options = Hash::merge($defaults, $options);
+		$options = $this->_mergeOptions($defaults, $options);
 
 		$result = $Model->find('first', array(
 			'conditions' => array(
@@ -347,10 +347,10 @@ class UserBehavior extends ModelBehavior {
 		));
 
 		if (empty($result)) {
-			throw new NotFoundException(__('Invalid token'));
+			throw new NotFoundException(__d('user_tools', 'Invalid token'));
 		}
 
-		$isExpired = $result[$Model->alias][$this->_field($Model, 'emailTokenExpires')] > date('Y-m-d H:i:s');;
+		$isExpired = $result[$Model->alias][$this->_field($Model, 'emailTokenExpires')] <= date('Y-m-d H:i:s');
 
 		if ($options['returnData'] === true) {
 			$result[$Model->alias]['is_expired'] = $isExpired;
@@ -361,6 +361,42 @@ class UserBehavior extends ModelBehavior {
 	}
 
 /**
+ * Verify the email token
+ *
+ * @throws NotFoundException if the token was not found at all
+ * @param Model $Model
+ * @param string $token
+ * @param array $options
+ * @return boolean Returns false if the token has expired
+ */
+	public function verifyEmailToken(Model $Model, $token, $options = []) {
+		$defaults = array(
+			'tokenField' => $this->_field($Model, 'emailToken'),
+			'expirationField' => $this->_field($Model, 'emailTokenExpires'),
+		);
+		$options = $this->_mergeOptions($defaults, $options);
+		$this->verifyToken($Model, $token, $options);
+	}
+
+/**
+ * Verify the password reset token
+ *
+ * @throws NotFoundException if the token was not found at all
+ * @param Model $Model
+ * @param string $token
+ * @param array $options
+ * @return boolean Returns false if the token has expired
+ */
+	public function verifyPasswordResetToken(Model $Model, $token, $options = []) {
+		$defaults = array(
+			'tokenField' => $this->_field($Model, 'passwordToken'),
+			'expirationField' => $this->_field($Model, 'passwordTokenExpires'),
+		);
+		$options = $this->_mergeOptions($defaults, $options);
+		$this->verifyToken($Model, $token, $options);
+	}
+
+/**
  * Generates a password
  *
  * @param Model $Model
@@ -368,11 +404,11 @@ class UserBehavior extends ModelBehavior {
  * @param array $options
  * @return string
  */
-	public function generatePassword(Model $Model, $length = 8, $options = array()) {
+	public function generatePassword(Model $Model, $length = 8, $options = []) {
 		srand((double)microtime() * 1000000);
 
 		$defaults = array(
-			'vovels' => array(
+			'vowels' => array(
 				'a', 'e', 'i', 'o', 'u'
 			),
 			'cons' => array(
@@ -390,7 +426,7 @@ class UserBehavior extends ModelBehavior {
 			unset($defaults['vowels']);
 		}
 
-		$options = Hash::merge($defaults, $options);
+		$options = $this->_mergeOptions($defaults, $options);
 
 		for ($i = 0; $i < $length; $i++) {
 			$password =
@@ -431,63 +467,89 @@ class UserBehavior extends ModelBehavior {
  * @param array $conditions
  * @return void
  */
-	public function removeExpiredRegistrations(Model $Model, $conditions = array()) {
+	public function removeExpiredRegistrations(Model $Model, $conditions = []) {
 		$defaults = array(
 			$Model->alias . '.' . $this->_field($Model, 'emailVerified') => 0,
 			$Model->alias . '.' . $this->_field($Model, 'emailTokenExpires') . ' <' => date('Y-m-d H:i:s')
 		);
 
-		$Model->deleteAll(Hash::merge($defaults, $conditions));
+		$Model->deleteAll($this->_mergeOptions($defaults, $conditions));
 	}
 
 /**
  * Returns an email instance
  *
  * @param Model $Model
+ * @param array $config
  * @return CakeEmail CakeEmail instance
  */
-	public function getMailInstance(Model $Model) {
-		return new CakeEmail($this->settings[$Model->alias]['emailConfig']);
+	public function getMailInstance(Model $Model, $config = null) {
+		if (empty($config)) {
+			$config = $this->settings[$Model->alias]['emailConfig'];
+		}
+		return new CakeEmail($config);
 	}
 
 /**
+ * sendRegistrationConfirmation
  *
+ * @param Model $Model
+ * @param array $data
+ * @param array $options
  */
-	public function sendRegistrationConfirmation(Model $Model, $data, $options = array()) {
+	public function sendRegistrationConfirmation(Model $Model, $data, $options = []) {
 		$defaults = array(
-			'subject' => __('Please verify your Email'),
+			'subject' => __d('user_tools', 'Please verify your Email'),
+			'template' => 'UserTools.registration_confirmation',
 			'viewVars' => array(
 				'data' => $data
 			)
 		);
-		$this->sendEmail($Model, Hash::merge($defaults, $options));
+		$this->sendEmail($Model, $this->_mergeOptions($defaults, $options));
 	}
 
 /**
+ * sendVerificationEmail
  *
+ * @param Model $Model
+ * @param array $data
+ * @param array $options
  */
-	public function sendVerificationEmail(Model $Model, $data, $options = array()) {
+	public function sendVerificationEmail(Model $Model, $data, $options = []) {
 		$defaults = array(
-			'subject' => __('Please verify your Email'),
+			'subject' => __d('user_tools', 'Please verify your Email'),
+			'template' => 'UserTools.Users/verification_email',
 			'viewVars' => array(
 				'data' => $data
 			)
 		);
-		$this->sendEmail($Model, Hash::merge($defaults, $options));
+		$this->sendEmail($Model, $this->_mergeOptions($defaults, $options));
 	}
 
 /**
+ * sendEmail
  *
+ * @param Model $Model
+ * @param array $options
+ * @return boolean
  */
-	public function sendEmail(Model $Model, $options = array()) {
-		/*
+	public function sendEmail(Model $Model, $options = []) {
 		$Email = $this->getMailInstance($Model);
-		$Email->subject($options['subject'])
-			->to($options['receiver'])
-			->viewVars($options['viewVars'])
-			->template($options['template'])
-			->send();
-		*/
+		foreach ($options as $option => $value) {
+			$Email->{$option}($value);
+		}
+		return $Email->send();
+	}
+
+/**
+ * Wrapper around Hash::merge
+ *
+ * @param array $array1
+ * @param array $array2
+ * @return array
+ */
+	protected function _mergeOptions($array1, $array2) {
+		return Hash::merge($array1, $array2);
 	}
 
 }

@@ -10,16 +10,22 @@ App::uses('Model', 'Model');
  */
 class UserToolUser extends Model {
 	public $name = 'User';
+	public $alias = 'User';
 	public $useTable = 'users';
+	public $actsAs = array(
+		'UserTools.User'
+	);
 }
 
 /**
- *
+ * UserBehaviorTest
  */
 class UserBehaviorTest extends CakeTestCase {
 
 /**
+ * Fixtures
  *
+ * @var array
  */
 	public $fixtures = array(
 		'plugin.UserTools.User'
@@ -31,7 +37,7 @@ class UserBehaviorTest extends CakeTestCase {
  * @return void
  */
 	public function setUp() {
-		$this->User = ClassRegistry::init('User');
+		$this->User = ClassRegistry::init('UserToolUser');
 	}
 
 /**
@@ -40,6 +46,7 @@ class UserBehaviorTest extends CakeTestCase {
  * @return void
  */
 	public function tearDown() {
+		unset($this->User);
 		ClassRegistry::flush();
 	}
 
@@ -59,7 +66,7 @@ class UserBehaviorTest extends CakeTestCase {
 		);
 
 		$result = $this->User->register($data);
-		$this->assertTrue(is_array($result));
+		$this->assertTrue($result);
 	}
 
 /**
@@ -67,7 +74,7 @@ class UserBehaviorTest extends CakeTestCase {
  *
  * @return void
  */
-	public function generatePassword() {
+	public function testGeneratePassword() {
 		$result = $this->User->generatePassword();
 		$this->assertTrue(is_string($result));
 		$this->assertEqual(strlen($result), 8);
@@ -93,6 +100,39 @@ class UserBehaviorTest extends CakeTestCase {
 	}
 
 /**
+ * testVerifyToken
+ *
+ * @return void
+ */
+	public function testVerifyToken() {
+		$this->User->save(array(
+			'User' => array(
+				'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
+				'id' => 2
+			),
+		), array(
+			'validate' => false
+		));
+		$result = $this->User->verifyToken('secondusertesttoken');
+		$this->assertTrue($result);
+
+		$result = $this->User->verifyToken('secondusertesttoken', array(
+			'returnData' => true
+		));
+		$this->assertTrue(is_array($result));
+	}
+
+/**
+ * testVerifyTokenNotFoundException
+ *
+ * @expectedException NotFoundException
+ * @return void
+ */
+	public function testVerifyTokenNotFoundException() {
+		$this->User->verifyToken('DOES-NOT-EXIST');
+	}
+
+/**
  * testSetupValidationDefaults
  *
  * @return void
@@ -105,11 +145,32 @@ class UserBehaviorTest extends CakeTestCase {
 		);
 		$this->loadBehaviour();
 		$this->assertEqual($this->User->validate, array(
+			'password' => array(
+				'notEmpty' => array(
+					'rule' => array('notEmpty'),
+					'message' => 'You must fill this field.',
+				),
+				'between' => array(
+					'rule' => array('between', 6, 64),
+					'message' => 'Between 3 to 16 characters'
+				),
+				'confirmPassword' => array(
+					'rule' => array('confirmPassword'),
+					'message' => 'The passwords don\'t match!',
+				)
+			),
 			'username' => array(
+				'notEmpty' => array(
+					'rule' => array(
+						0 => 'notEmpty'
+					),
+					'message' => 'You must fill this field.'
+				),
 				'alphaNumeric' => array(
-					'rule' => 'alphaNumeric',
-					'required' => true,
-					'message' => 'Alphabets and numbers only'
+					'rule' => array(
+						0 => 'alphaNumeric'
+					),
+					'message' => 'The username must be alphanumeric.'
 				),
 				'between' => array(
 					'rule' => array(
@@ -121,9 +182,10 @@ class UserBehaviorTest extends CakeTestCase {
 				),
 				'unique' => array(
 					'rule' => array(
-						0 => 'isUnique'
+						0 => 'isUnique',
+						1 => 'username'
 					),
-					'message' => 'The username is already taken'
+					'message' => 'This username is already in use.'
 				)
 			),
 			'email' => array(
@@ -135,9 +197,24 @@ class UserBehaviorTest extends CakeTestCase {
 				),
 				'unique' => array(
 					'rule' => array(
-						0 => 'isUnique'
+						0 => 'isUnique',
+						1 => 'email'
 					),
 					'message' => 'The email is already in use'
+				)
+			),
+			'confirm_password' => array(
+				'notEmpty' => array(
+					'rule' => array(
+						0 => 'notEmpty'
+					),
+					'message' => 'You must fill this field.'
+				),
+				'confirmPassword' => array(
+					'rule' => array(
+						0 => 'confirmPassword'
+					),
+					'message' => 'The passwords don\'t match!'
 				)
 			),
 			'something' => array(
@@ -152,7 +229,7 @@ class UserBehaviorTest extends CakeTestCase {
  * @param array $options
  * @return void
  */
-	public function loadBehaviour($options = array()) {
+	public function loadBehaviour($options = []) {
 		$this->User->Behaviors->load('UserTools.User', $options);
 	}
 

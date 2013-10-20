@@ -28,7 +28,7 @@ class AuthHelper extends AppHelper {
  *
  * @array
  */
-	protected $_userData = array();
+	protected $_userData = [];
 
 /**
  * Constructor
@@ -38,7 +38,7 @@ class AuthHelper extends AppHelper {
  * @throws RuntimeException
  * @return AuthHelper
  */
-	public function __construct(View $View, $settings = array()) {
+	public function __construct(View $View, $settings = []) {
 		parent::__construct($View, $settings);
 		$settings = Hash::merge($this->defaults, $settings);
 		$this->settings = $settings;

@@ -2,11 +2,11 @@
 
 This plugin works very similar like the CakeDC users plugin and is a derivative work but instead of providing a full stack that is more or less hard to change and extend this plugin just provides you the building blocks for everything around users.
 
-Requires CakePHP 2.4 or greater.
+Requires CakePHP >= 2.4 and php >= 5.4.
 
 ## The UserTool component
 
-If you want to go for a kick start and use the component as it is you can simply use it as it is preconfigured.
+If you want to go for a kick start and use the component as it is you can simply use it as it is preconfigured. This component is thought to be used with a controller that is your users controller, not any none user related controllers.
 
 ```php
 class UsersController extends AppController {
@@ -30,7 +30,7 @@ By default the users component will intercept the calls to some methods if not c
 
 ## The User Behavior
 
-This behavior contains almost everything that is commonly needed for dealing with user registration, password reset and every days tasks.
+This behavior contains almost everything that is commonly needed for dealing with user registration, password reset and every days tasks. The behaviour is thought to be used with your user model, not any none user related model.
 
 ```php
 class User extends AppModel {
