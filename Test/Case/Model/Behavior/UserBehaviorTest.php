@@ -133,6 +133,15 @@ class UserBehaviorTest extends CakeTestCase {
 	}
 
 /**
+ * testRemoveExpiredRegistrations
+ *
+ * @return void
+ */
+	public function testRemoveExpiredRegistrations() {
+		$this->User->removeExpiredRegistrations();
+	}
+
+/**
  * testSetupValidationDefaults
  *
  * @return void

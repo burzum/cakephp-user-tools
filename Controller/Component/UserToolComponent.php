@@ -94,14 +94,14 @@ class UserToolComponent extends Component {
 		parent::initialize($Controller, $settings);
 
 		$this->settings = Set::merge($this->_defaults, $settings);
-		$this->Controller = $Controller;
+		$this->Controller = $this->_Collection->getController();
 
 		$this->setUserModel($this->settings['userModel']);
 		$this->loadUserBehaviour();
 	}
 
 /**
- * loadUserBehaviour
+ * Loads the User behavior for the user model if its not already loaded
  *
  * @return void
  */
@@ -124,7 +124,7 @@ class UserToolComponent extends Component {
  */
 	public function setUserModel($modelClass = null) {
 		if ($modelClass === null) {
-			$this->UserModel = $this->Controller{$this->Controller->modelClass};
+			$this->UserModel = $this->Controller->{$this->Controller->modelClass};
 		} else {
 			if (is_object($modelClass)) {
 				if (!is_a($modelClass, 'Model')) {
@@ -196,10 +196,6 @@ class UserToolComponent extends Component {
 			$this->Auth->request = $this->Controller->request;
 			$this->Auth->response = $this->Controller->response;
 			if ($this->Auth->login()) {
-				if ($options['cookie'] !== false) {
-					$this->setUserCookie($this->Auth->user());
-				}
-
 				if ($options['redirect'] === false) {
 					return true;
 				}
@@ -209,12 +205,8 @@ class UserToolComponent extends Component {
 		return false;
 	}
 
-/**
- *
- */
-	public function setUserCookie($user = [], $options) {
-		$options = $this->_mergeOptions($this->settings['userCookie'], $options);
-		$this->_Collection->Cookie->write($this->settings['userModel'], $user);
+	public function setUserCookie($user = []) {
+
 	}
 
 /**
@@ -237,6 +229,12 @@ class UserToolComponent extends Component {
 
 /**
  * User registration
+ *
+ * - `enabled` Disables/enables the registration. If false a NotFoundException is thrown. Default true.
+ * - `successMessage` The success flash message.
+ * - `successRedirectUrl` => Success redirect url. Default /.
+ * - `errorMessage` => The error flash message.
+ * - `errorRedirectUrl` The error redirect url.
  *
  * @throws NotFoundException
  * @param array $options

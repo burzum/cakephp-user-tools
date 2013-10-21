@@ -235,7 +235,6 @@ class UserBehavior extends ModelBehavior {
  * @return void
  */
 	protected function _beforeRegister(Model $Model, $postData, $options) {
-		$Model->set($postData);
 		extract($this->_mergeOptions($this->settings[$Model->alias]['register'], $options));
 
 		if ($userActive === true) {
@@ -258,13 +257,15 @@ class UserBehavior extends ModelBehavior {
 
 		if ($generatePassword !== false) {
 			$password = $this->generatePassword($Model, (int)$generatePassword);
-			$Model->data[$Model->alias][$this->_field($Model, 'password')] = $password;
-			$Model->data[$Model->alias]['clear_password'] = $password;
+			$postData[$Model->alias][$this->_field($Model, 'password')] = $password;
+			$postData[$Model->alias]['clear_password'] = $password;
 		}
 
 		if ($hashPassword === true) {
-			$Model->data[$Model->alias][$this->_field($Model, 'password')] = $this->hashPassword($Model, $Model->data[$Model->alias][$this->_field($Model, 'password')]);
+			$postData[$Model->alias][$this->_field($Model, 'password')] = $this->hashPassword($Model, $postData[$Model->alias][$this->_field($Model, 'password')]);
 		}
+
+		return $postData;
 	}
 
 /**
@@ -288,9 +289,8 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		$this->settings[$Model->alias] = $this->_mergeOptions($this->settings[$Model->alias], $options);
-
 		if ($this->settings[$Model->alias]['register']['beforeRegister'] === true) {
-			$Model->set($this->_beforeRegister($Model, $postData, $options));
+			$postData = $this->_beforeRegister($Model, $postData, $options);
 		}
 
 		if (method_exists($Model, 'beforeRegister')) {
@@ -299,12 +299,11 @@ class UserBehavior extends ModelBehavior {
 			}
 		}
 
-		$data = $Model->data;
-		$result = $Model->saveAll($Model->data, array('validate' => false));
+		$result = $Model->saveAll($postData, array('validate' => false));
 
 		if ($result) {
-			$data[$Model->alias][$Model->primaryKey] = $Model->getLastInsertID();
-			$Model->data = $data;
+			$postData[$Model->alias][$Model->primaryKey] = $Model->getLastInsertID();
+			$Model->data = $postData;
 
 			if ($this->settings[$Model->alias]['register']['emailVerification'] === true) {
 				$this->sendVerificationEmail($Model, $Model->data, array(
@@ -320,6 +319,7 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		return false;
+
 	}
 
 /**
@@ -488,24 +488,6 @@ class UserBehavior extends ModelBehavior {
 			$config = $this->settings[$Model->alias]['emailConfig'];
 		}
 		return new CakeEmail($config);
-	}
-
-/**
- * sendRegistrationConfirmation
- *
- * @param Model $Model
- * @param array $data
- * @param array $options
- */
-	public function sendRegistrationConfirmation(Model $Model, $data, $options = []) {
-		$defaults = array(
-			'subject' => __d('user_tools', 'Please verify your Email'),
-			'template' => 'UserTools.registration_confirmation',
-			'viewVars' => array(
-				'data' => $data
-			)
-		);
-		$this->sendEmail($Model, $this->_mergeOptions($defaults, $options));
 	}
 
 /**
