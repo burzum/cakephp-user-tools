@@ -427,9 +427,10 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		$options = $this->_mergeOptions($defaults, $options);
+		$password = '';
 
 		for ($i = 0; $i < $length; $i++) {
-			$password =
+			$password .=
 				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
 				$options['vowels'][mt_rand(0, count($options['vowels']) - 1)];
 		}
