@@ -33,6 +33,12 @@ class UserToolComponent extends Component {
 		'directMapping' => false,
 		'userModel' => null,
 		'passwordReset' => 'token',
+		'auth' => array(
+			AuthComponent::ALL => array(
+				'userModel' => 'User'
+			),
+			'Form'
+		),
 		'registration' => array(
 			'enabled' => true,
 			'successMessage' => 'Thank you for signing up!',
@@ -41,7 +47,7 @@ class UserToolComponent extends Component {
 			'errorRedirectUrl' => false,
 		),
 		'login' => array(
-			'redirect' => true,
+			'redirect' => '/',
 			'successMessage' => 'Thank you for signing up!',
 			'successRedirectUrl' => '/',
 			'errorMessage' => 'Please check your inputs',
@@ -65,6 +71,10 @@ class UserToolComponent extends Component {
 			'logout' => array(
 				'method' => 'logout',
 				'view' => null
+			),
+			'verify_email' => array(
+				'method' => 'verifyEmailToken',
+				'view' => 'UserTools.UserTools/verify_email',
 			)
 		)
 	);
@@ -190,19 +200,21 @@ class UserToolComponent extends Component {
  * @return bool
  */
 	public function login($options = []) {
+		$Controller = $this->_Collection->getController();
 		$options = $this->_mergeOptions($this->settings['login'], $options);
 
-		if (!$this->Controller->request->is('get')) {
-			$this->Auth->request = $this->Controller->request;
-			$this->Auth->response = $this->Controller->response;
-			if ($this->Auth->login()) {
-				if ($options['redirect'] === false) {
-					return true;
-				}
-				$this->Controller->redirect($options['redirect']);
-			}
+		$Auth = $this->_getAuthObject();
+		//die(debug($Auth->login($Controller->request->data)));
+		die(debug($Auth->login()));
+		if (!$Auth->login()) {
+			return false;
 		}
-		return false;
+
+		if ($options['redirect'] === false) {
+			//return true;
+		}
+die('TEST');
+		//$Controller->redirect($options['redirect']);
 	}
 
 	public function setUserCookie($user = []) {
@@ -216,15 +228,17 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function logout($options = []) {
+		$Controller = $this->_Collection->getController();
+		$Auth = $this->_getAuthObject();
 		$options = $this->_mergeOptions($this->settings['login'], $options);
-		$user = $this->Auth->user();
+		$user = $Auth->user();
 
 		$this->Session->destroy();
 		if (isset($_COOKIE[$this->Cookie->name])) {
 			$this->Cookie->destroy();
 		}
 		$this->Session->setFlash(__d('user_tools', '%s you have successfully logged out'), $user['username']);
-		$this->Controller->redirect($this->Auth->logout());
+		$this->Controller->redirect($Auth->logout());
 	}
 
 /**
@@ -257,6 +271,21 @@ class UserToolComponent extends Component {
 	}
 
 /**
+ * verifyEmailToken
+ */
+	public function verifyEmailToken() {
+		$defaults = array(
+			'queryParam' => 'token',
+			'type' => 'Email',
+			'successMessage' => __d('user_tools', 'Email verified, you can now login!'),
+			'successRedirectUrl' => array('action' => 'login'),
+			'errorMessage' => __d('user_tools', 'Invalid email token!'),
+			'errorRedirectUrl' => '/'
+		);
+		return $this->verifyToken($this->_mergeOptions($defaults, $options));
+	}
+
+/**
  * Verify Token
  *
  * @throws NotFoundException
@@ -264,14 +293,24 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function verifyToken($options = []) {
-		$options = $this->_mergeOptions(array('queryParam' => 'token', 'type' => 'Email'), $options);
+		$Controller = $this->_Collection->getController();
+		$options = $this->_mergeOptions(
+			array(
+				'queryParam' => 'token',
+				'type' => 'Email',
+				'successMessage' => __d('user_tools', 'Token verified!'),
+				'successRedirectUrl' => array('action' => 'login'),
+				'errorMessage' => __d('user_tools', 'Invalid token!'),
+				'errorRedirectUrl' => '/'
+			),
+			$options);
 
-		if (!isset($this->Contoller->request->params[$options['queryParam']])) {
+		if (!isset($Controller->request->query[$options['queryParam']])) {
 			throw new NotFoundException(__d('user_tools', 'No token present!'));
 		}
 
 		$methodName = 'verify' . $options['type'] . 'Token';
-		$result = $this->UserModel->$methodName($this->Contoller->request->params[$options['queryParam']]);
+		$result = $this->UserModel->$methodName($Controller->request->query[$options['queryParam']]);
 
 		if ($result !== false) {
 			$this->handleFlashAndRedirect('success', $options);
@@ -329,6 +368,25 @@ class UserToolComponent extends Component {
  * @return array
  */
 	protected function _mergeOptions($array, $array2) {
-		return Hash::merge($array, $array2);
+		if (class_exists('Hash')) {
+			return Hash::merge($array, $array2);
+		}
+		return Set::merge($array, $array2);
 	}
+
+	protected function _getAuthObject() {
+		$Controller = $this->_Collection->getController();
+		if (!$this->_Collection->loaded('Auth')) {
+			$Auth = $this->_Collection->load('Auth', $this->settings['auth']);
+			$Auth->request = $Controller->request;
+			$Auth->response = $Controller->response;
+			return $Auth;
+		} else {
+			if (isset($Controller->Auth) && is_a($Controller->Auth, 'AuthComponent')) {
+				return $Controller->Auth;
+			}
+		}
+		throw InternalErrorException(__('user_tools', 'Could not load Auth component!'));
+	}
+
 }

@@ -242,7 +242,7 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		if ($emailVerification === true) {
-			$postData[$Model->alias][$this->_field($Model, 'emailToken')] = $this->generateToken($Model);
+			$postData[$Model->alias][$this->_field($Model, 'emailToken')] = $this->generateToken($Model, 16);
 			if ($verificationExpirationTime !== false) {
 				$postData[$Model->alias][$this->_field($Model, 'emailTokenExpires')] = $this->expirationTime($Model, $verificationExpirationTime);
 			}
@@ -497,6 +497,7 @@ class UserBehavior extends ModelBehavior {
  * @param Model $Model
  * @param array $data
  * @param array $options
+ * @return boolean
  */
 	public function sendVerificationEmail(Model $Model, $data, $options = []) {
 		$defaults = array(
@@ -506,7 +507,7 @@ class UserBehavior extends ModelBehavior {
 				'data' => $data
 			)
 		);
-		$this->sendEmail($Model, $this->_mergeOptions($defaults, $options));
+		return $this->sendEmail($Model, $this->_mergeOptions($defaults, $options));
 	}
 
 /**
@@ -525,14 +526,17 @@ class UserBehavior extends ModelBehavior {
 	}
 
 /**
- * Wrapper around Hash::merge
+ * Wrapper around Hash::merge and Set::merge
  *
  * @param array $array1
  * @param array $array2
  * @return array
  */
 	protected function _mergeOptions($array1, $array2) {
-		return Hash::merge($array1, $array2);
+		if (class_exists('Hash')) {
+			return Hash::merge($array1, $array2);
+		}
+		return Set::merge($array1, $array2);
 	}
 
 }
