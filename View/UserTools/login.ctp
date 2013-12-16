@@ -1,7 +1,7 @@
 <?php
 echo $this->Form->create($userModel);
-echo $this->Form->input('username', array(
-	'label' => __d('user_tools', 'Username'),
+echo $this->Form->input('email', array(
+	'label' => __d('user_tools', 'Email'),
 	'required' => false,
 ));
 echo $this->Form->input('password', array(

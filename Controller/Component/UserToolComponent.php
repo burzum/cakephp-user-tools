@@ -18,7 +18,6 @@ class UserToolComponent extends Component {
  */
 	public $components = array(
 		'Session',
-		'Auth',
 		'Cookie'
 	);
 
@@ -34,10 +33,22 @@ class UserToolComponent extends Component {
 		'userModel' => null,
 		'passwordReset' => 'token',
 		'auth' => array(
-			AuthComponent::ALL => array(
-				'userModel' => 'User'
-			),
-			'Form'
+			'authenticate' => array(
+				'Authenticate.MultiColumn' => array(
+					'userModel' => 'User',
+					'fields' => array(
+						'username' => 'email',
+						'password' => 'password'
+					),
+					'columns' => array(
+						'username',
+						'email'
+					),
+					'scope' => array(
+						'User.email_verified' => 1
+					)
+				)
+			)
 		),
 		'registration' => array(
 			'enabled' => true,
@@ -203,18 +214,24 @@ class UserToolComponent extends Component {
 		$Controller = $this->_Collection->getController();
 		$options = $this->_mergeOptions($this->settings['login'], $options);
 
-		$Auth = $this->_getAuthObject();
-		//die(debug($Auth->login($Controller->request->data)));
-		die(debug($Auth->login()));
-		if (!$Auth->login()) {
-			return false;
-		}
+		if ($Controller->request->is('post')) {
+			$Auth = $this->_getAuthObject();
 
-		if ($options['redirect'] === false) {
-			//return true;
+			if (!$Auth->login()) {
+				$this->Session->setFlash(
+					__d('user_tools', 'Username or password is incorrect'),
+					'default',
+					array(),
+					'auth'
+				);
+				return false;
+			}
+
+			if ($options['redirect'] === false) {
+				return true;
+			}
+			$Controller->redirect($options['redirect']);
 		}
-die('TEST');
-		//$Controller->redirect($options['redirect']);
 	}
 
 	public function setUserCookie($user = []) {
@@ -246,8 +263,8 @@ die('TEST');
  *
  * - `enabled` Disables/enables the registration. If false a NotFoundException is thrown. Default true.
  * - `successMessage` The success flash message.
- * - `successRedirectUrl` => Success redirect url. Default /.
- * - `errorMessage` => The error flash message.
+ * - `successRedirectUrl` Success redirect url. Default /.
+ * - `errorMessage` The error flash message.
  * - `errorRedirectUrl` The error redirect url.
  *
  * @throws NotFoundException
@@ -382,11 +399,8 @@ die('TEST');
 			$Auth->response = $Controller->response;
 			return $Auth;
 		} else {
-			if (isset($Controller->Auth) && is_a($Controller->Auth, 'AuthComponent')) {
-				return $Controller->Auth;
-			}
+			return $this->_Collection->load('Auth');
 		}
-		throw InternalErrorException(__('user_tools', 'Could not load Auth component!'));
 	}
 
 }
