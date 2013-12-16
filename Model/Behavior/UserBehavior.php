@@ -294,7 +294,7 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		if (method_exists($Model, 'beforeRegister')) {
-			if (!$Model->beforeRegister()) {
+			if (!$Model->beforeRegister($postData, $options)) {
 				return false;
 			}
 		}
@@ -319,7 +319,6 @@ class UserBehavior extends ModelBehavior {
 		}
 
 		return false;
-
 	}
 
 /**
@@ -537,6 +536,37 @@ class UserBehavior extends ModelBehavior {
 			return Hash::merge($array1, $array2);
 		}
 		return Set::merge($array1, $array2);
+	}
+
+/**
+ * Gets an users record by id or slug
+ *
+ * @throws NotFoundException
+ * @param Model $model
+ * @param mixed $userId
+ * @param array $options
+ * @return array
+ */
+	public function getUser(Model $Model, $userId, $options = []) {
+		$defaults = array(
+			'recursive' => -1,
+			'contain' => array(),
+			'conditions' => array(
+				'OR' => array(
+					$Model->alias . '.' . $Model->primaryKey => $userId,
+					$Model->alias . '.slug' => $userId,
+				),
+				$Model->alias . '.email_verified' => 1
+			),
+		);
+
+		$result = $Model->find('first', Hash::merge($defaults = $options));
+
+		if (empty($result)) {
+			throw new NotFoundException(__d('user_tools', 'User not found!'));
+		}
+
+		return $result;
 	}
 
 }

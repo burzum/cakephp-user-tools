@@ -1,15 +1,16 @@
 Kick Start
 ==========
 
-If you database follows the schema the plugin expects to work with you can simply kick start your users in the application by adding the component.
+If you database follows the schema the plugin expects to work with you can simply kick start your users in the application by just adding the component and helper.
 
 ```php
 UsersController extends AppController {
-
 	public $components = array(
-		'UserTools.UserTool
+		'UserTools.UserTool'
 	);
-
+	public $helpers = array(
+		'UserTools.Auth'
+	);
 }
 ```
 

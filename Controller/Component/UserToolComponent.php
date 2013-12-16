@@ -378,7 +378,7 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * Wrapper around Hash::merge
+ * Wrapper around Hash::merge and Set::merge
  *
  * @param array
  * @param array
@@ -391,6 +391,11 @@ class UserToolComponent extends Component {
 		return Set::merge($array, $array2);
 	}
 
+/**
+ * Gets the auth component object
+ *
+ * @return AuthComponent
+ */
 	protected function _getAuthObject() {
 		$Controller = $this->_Collection->getController();
 		if (!$this->_Collection->loaded('Auth')) {
