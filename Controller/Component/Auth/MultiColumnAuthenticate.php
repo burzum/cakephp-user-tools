@@ -1,6 +1,4 @@
 <?php
-App::uses('FormAuthenticate', 'Controller/Component/Auth');
-
 /**
  * An authentication adapter for AuthComponent.  Provides the ability to authenticate using POST
  * data. The username form input can be checked against multiple table columns, for instance username and email
@@ -24,6 +22,9 @@ App::uses('FormAuthenticate', 'Controller/Component/Auth');
  * @license MIT
  * @link https://github.com/ceeram/Authenticate
  */
+namespace UserTools\Controller\Component\Auth;
+
+use Cake\Controller\Component\Auth\FormAuthenticate;
 
 class MultiColumnAuthenticate extends FormAuthenticate {
 

@@ -1,4 +1,4 @@
-Kick Start
+Quick Start
 ==========
 
 If you database follows the schema the plugin expects to work with you can simply kick start your users in the application by just adding the component and helper.

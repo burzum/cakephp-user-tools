@@ -1,6 +1,4 @@
 <?php
-App::uses('BaseAuthenticate', 'Controller/Component/Auth');
-
 /**
  * An authentication adapter for AuthComponent.  Provides the ability to authenticate using Token
  *
@@ -25,6 +23,10 @@ App::uses('BaseAuthenticate', 'Controller/Component/Auth');
  * @license MIT
  * @link https://github.com/ceeram/Authenticate
  */
+namespace UserTools\Controller\Component\Auth;
+
+use Cake\Controller\Component\Auth\BaseAuthenticate;
+
 class TokenAuthenticate extends BaseAuthenticate {
 
 /**
