@@ -1,5 +1,5 @@
 The Auth Helper
----------------
+===============
 
 The Auth helper allows you to access the user data in a convenient way like through the components AuthComponent::user().
 

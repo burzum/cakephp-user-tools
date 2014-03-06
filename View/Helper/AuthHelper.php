@@ -50,7 +50,7 @@ class AuthHelper extends Helper {
 /**
  * Sets up the user data from session or view var
  *
- * @throws RuntimeException
+ * @throws \RuntimeException
  * @return void
  */
 	protected function _setupUserData() {
@@ -59,7 +59,7 @@ class AuthHelper extends Helper {
 		} else {
 			if (!isset($this->_View->viewVars[$this->settings['viewVar']])) {
 				if ($this->settings['viewVarException'] === true) {
-					throw new RuntimeException(__d('user_tools', 'View var %s not present!'));
+					throw new \RuntimeException(__d('user_tools', 'View var %s not present!'));
 				}
 			} else {
 				$this->_userData = $this->_View->viewVars[$this->settings['viewVar']];
