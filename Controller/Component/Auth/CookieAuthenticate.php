@@ -1,8 +1,4 @@
 <?php
-App::uses('BaseAuthenticate', 'Controller/Component/Auth');
-App::uses('AuthComponent', 'Controller/Component');
-App::uses('Router', 'Routing');
-
 /**
  * An authentication adapter for AuthComponent.  Provides the ability to authenticate using COOKIE
  *
@@ -29,6 +25,10 @@ App::uses('Router', 'Routing');
  * @license MIT
  * @link https://github.com/ceeram/Authenticate
  */
+namespace UserTools\Controller\Component\Auth;
+
+use Cake\Controller\Component\Auth\BaseAuthenticate;
+
 class CookieAuthenticate extends BaseAuthenticate {
 
 /**

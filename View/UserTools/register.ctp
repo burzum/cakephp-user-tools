@@ -1,5 +1,5 @@
 <?php
-echo $this->Form->create($userModel);
+echo $this->Form->create();
 echo $this->Form->input('username', array(
 	'label' => __d('user_tools', 'Username')
 ));

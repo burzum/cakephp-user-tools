@@ -1,6 +1,4 @@
 <?php
-App::uses('Component', 'Controller');
-
 /**
  * UserToolComponent
  *
@@ -9,6 +7,15 @@ App::uses('Component', 'Controller');
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
+namespace UserTools\Controller\Component;
+
+use Cake\Controller\Component;
+use Cake\Utility;
+use Cake\Event\Event;
+use Cake\Controller\ComponentRegistry;
+use Cake\Utility\Hash;
+use Cake\Error\NotFoundException;
+
 class UserToolComponent extends Component {
 
 /**
@@ -34,7 +41,7 @@ class UserToolComponent extends Component {
 		'passwordReset' => 'token',
 		'auth' => array(
 			'authenticate' => array(
-				'Authenticate.MultiColumn' => array(
+				'UserTools.MultiColumn' => array(
 					'userModel' => 'User',
 					'fields' => array(
 						'username' => 'email',
@@ -98,24 +105,36 @@ class UserToolComponent extends Component {
 	public $settings = [];
 
 /**
- * User Model
+ * User Table
  *
- * @var Model
+ * @var \Cake\ORM\Table $UserTable
  */
-	public $UserModel = null;
+	public $UserTable = null;
+
+/**
+ * Constructor. Parses the accepted content types accepted by the client using HTTP_ACCEPT
+ *
+ * @param ComponentRegistry $collection ComponentRegistry object.
+ * @param array $settings Array of settings.
+ */
+	public function __construct(ComponentRegistry $collection, $settings = array()) {
+		parent::__construct($collection, $settings);
+		$this->Collection = $collection;
+		$this->Controller = $collection->getController();
+		$this->request = $this->Controller->request;
+		$this->response = $this->Controller->response;
+	}
 
 /**
  * Initializes the component
  *
- * @param Controller $Controller
+ * @param Event $Event
  * @param array $settings
  * @return void
  */
-	public function initialize(Controller $Controller, $settings = []) {
-		parent::initialize($Controller, $settings);
-
-		$this->settings = Set::merge($this->_defaults, $settings);
-		$this->Controller = $this->_Collection->getController();
+	public function initialize(Event $Event, $settings = []) {
+		$this->settings = Hash::merge($this->_defaults, $settings);
+		$this->Controller = $Event->subject();
 
 		$this->setUserModel($this->settings['userModel']);
 		$this->loadUserBehaviour();
@@ -127,11 +146,11 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function loadUserBehaviour() {
-		if ($this->settings['autoloadBehavior'] && !$this->UserModel->Behaviors->loaded('UserTools.User')) {
+		if ($this->settings['autoloadBehavior'] && !$this->UserTable->hasBehavior('UserTools.User')) {
 			if (is_array($this->settings['autoloadBehavior'])) {
-				$this->UserModel->Behaviors->load('UserTools.User', $this->settings['autoloadBehavior']);
+				$this->UserTable->addBehavior('UserTools.User', $this->settings['autoloadBehavior']);
 			} else {
-				$this->UserModel->Behaviors->load('UserTools.User');
+				$this->UserTable->addBehavior('UserTools.User');
 			}
 		}
 	}
@@ -140,35 +159,33 @@ class UserToolComponent extends Component {
  * Sets or instantiates the user model class
  *
  * @param mixed $modelClass
- * @throws RuntimeException
+ * @throws \RuntimeException
  * @return void
  */
 	public function setUserModel($modelClass = null) {
 		if ($modelClass === null) {
-			$this->UserModel = $this->Controller->{$this->Controller->modelClass};
+			$this->UserTable = $this->Controller->{$this->Controller->modelClass};
 		} else {
 			if (is_object($modelClass)) {
 				if (!is_a($modelClass, 'Model')) {
-					throw new RuntimeException(__d('user_tools', 'Passed object is not of type Model'));
+					throw new \RuntimeException(__d('user_tools', 'Passed object is not of type Model'));
 				}
-				$this->UserModel = $modelClass;
+				$this->UserTable = $modelClass;
 			}
 			if (is_string($modelClass)) {
-				$this->UserModel = ClassRegistry::init($modelClass);
+				$this->UserTable = ClassRegistry::init($modelClass);
 			}
 		}
-		$this->Controller->set('userModel', $this->UserModel->alias);
+		$this->Controller->set('userModel', $this->UserTable->alias());
 	}
 
 /**
  * Start up
  *
- * @param Controller $Controller
+ * @param Event $Event
  * @return void
  */
-	public function startup(Controller $Controller) {
-		parent::startup($Controller);
-
+	public function startup(Event $Event) {
 		if ($this->settings['actionMapping'] === true) {
 			$this->mapAction();
 		}
@@ -177,11 +194,10 @@ class UserToolComponent extends Component {
 /**
  * Maps a called controller action to a component method
  *
- * @throws MissingActionException
- * @return void
+ * @return boolean False if the action could not be mapped
  */
 	public function mapAction() {
-		$action = $this->Controller->action;
+		$action = $this->request->params['action'];
 
 		if ($this->settings['directMapping'] === true) {
 			if (!method_exists($this, $action)) {
@@ -211,7 +227,7 @@ class UserToolComponent extends Component {
  * @return bool
  */
 	public function login($options = []) {
-		$Controller = $this->_Collection->getController();
+		$Controller = $this->Controller;
 		$options = $this->_mergeOptions($this->settings['login'], $options);
 
 		if ($Controller->request->is('post')) {
@@ -279,7 +295,8 @@ class UserToolComponent extends Component {
 		$options = $this->_mergeOptions($this->settings['registration'], $options);
 
 		if (!$this->Controller->request->is('get')) {
-			if ($this->UserModel->register($this->Controller->request->data)) {
+			die(debug($this->Controller->request));
+			if ($this->UserTable->register($this->Controller->request->data)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
@@ -327,7 +344,7 @@ class UserToolComponent extends Component {
 		}
 
 		$methodName = 'verify' . $options['type'] . 'Token';
-		$result = $this->UserModel->$methodName($Controller->request->query[$options['queryParam']]);
+		$result = $this->UserTable->$methodName($Controller->request->query[$options['queryParam']]);
 
 		if ($result !== false) {
 			$this->handleFlashAndRedirect('success', $options);
@@ -343,7 +360,7 @@ class UserToolComponent extends Component {
  */
 	public function requestPasswordChange() {
 		if (!$this->Controller->request->is('get')) {
-			$this->UserModel->requestPasswordChange($this->Contoller->request->data);
+			$this->UserTable->requestPasswordChange($this->Contoller->request->data);
 		}
 	}
 
@@ -378,17 +395,14 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * Wrapper around Hash::merge and Set::merge
+ * Wrapper around Hash::merge()
  *
  * @param array
  * @param array
  * @return array
  */
 	protected function _mergeOptions($array, $array2) {
-		if (class_exists('Hash')) {
-			return Hash::merge($array, $array2);
-		}
-		return Set::merge($array, $array2);
+		return Hash::merge($array, $array2);
 	}
 
 /**
@@ -397,14 +411,13 @@ class UserToolComponent extends Component {
  * @return AuthComponent
  */
 	protected function _getAuthObject() {
-		$Controller = $this->_Collection->getController();
-		if (!$this->_Collection->loaded('Auth')) {
-			$Auth = $this->_Collection->load('Auth', $this->settings['auth']);
-			$Auth->request = $Controller->request;
-			$Auth->response = $Controller->response;
+		if (!$this->Collection->loaded('Auth')) {
+			$Auth = $this->Collection->load('Auth', $this->settings['auth']);
+			$Auth->request = $this->Controller->request;
+			$Auth->response = $this->Controller->response;
 			return $Auth;
 		} else {
-			return $this->_Collection->load('Auth');
+			return $this->Collection->load('Auth');
 		}
 	}
 

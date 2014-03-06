@@ -1,7 +1,4 @@
 <?php
-App::uses('AppHelper', 'View/Helper');
-App::uses('CakeSession', 'Model/Datasource');
-
 /**
  * AuthHelper
  *
@@ -9,19 +6,24 @@ App::uses('CakeSession', 'Model/Datasource');
  * @copyright 2013 Florian Krämer
  * @license MIT
  */
-class AuthHelper extends AppHelper {
+namespace UserTools\View\Helper;
+
+use Cake\Utility\Hash;
+use Cake\View\Helper;
+
+class AuthHelper extends Helper {
 
 /**
  * Default settings
  *
  * @var array
  */
-	public $defaults = array(
+	public $defaults = [
 		'session' => false,
 		'viewVar' => 'userData',
 		'viewVarException' => true,
 		'roleField' => 'role'
-	);
+	];
 
 /**
  * User data
