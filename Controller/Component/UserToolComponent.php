@@ -214,7 +214,7 @@ class UserToolComponent extends Component {
 			$this->{$this->settings['actionMap'][$action]['method']}();
 			$this->Controller->response = $this->Controller->render($this->settings['actionMap'][$action]['view']);
 			$this->Controller->response->send();
-			$this->Controller->_stop();
+			exit;
 		}
 
 		return false;
@@ -295,7 +295,6 @@ class UserToolComponent extends Component {
 		$options = $this->_mergeOptions($this->settings['registration'], $options);
 
 		if (!$this->Controller->request->is('get')) {
-			die(debug($this->Controller->request));
 			if ($this->UserTable->register($this->Controller->request->data)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {

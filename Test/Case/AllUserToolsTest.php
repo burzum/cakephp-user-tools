@@ -1,4 +1,9 @@
 <?php
+namespace Crud\Test\TestSuite;
+
+use Cake\TestSuite\TestSuite;
+use Cake\Core\App;
+
 class AllUserToolsTest extends PHPUnit_Framework_TestSuite {
 
 /**
@@ -7,11 +12,9 @@ class AllUserToolsTest extends PHPUnit_Framework_TestSuite {
  * @return void
  */
 	public static function suite() {
-		$suite = new PHPUnit_Framework_TestSuite('All Tags Plugin Tests');
-		$basePath = CakePlugin::path('UserTools') . DS . 'Test' . DS . 'Case' . DS;
-
-		$suite->addTestFile($basePath . 'Controller' . DS . 'Component' . DS . 'UserToolComponentTest.php');
-		$suite->addTestFile($basePath . 'Model' . DS . 'Behavior' . DS . 'UserBehaviorTest.php');
+		$suite = new TestSuite('All User Tools Plugin Tests');
+		$basePath = App::pluginPath('UserTools') . DS . 'Test' . DS . 'Case' . DS;
+		$suite->addTestDirectoryRecursive($basePath);
 		return $suite;
 	}
 

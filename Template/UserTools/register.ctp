@@ -8,4 +8,5 @@ echo $this->Form->input('password');
 echo $this->Form->input('confirm_password', array(
 	'type' => 'password',
 ));
-echo $this->Form->end(__d('user_tools', 'Sign up'));
+echo $this->Form->submit(__d('user_tools', 'Sign up'));
+echo $this->Form->end();

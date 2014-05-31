@@ -9,21 +9,28 @@
  */
 namespace UserTools\Model\Behavior;
 
-use Cake\Event\Event;
 use Cake\ORM\Behavior;
-use Cake\ORM\Entity;
 use Cake\ORM\Table;
+use Cake\Utility\Hash;
+use Cake\Utility\Security;
+use Cake\Utility\String;
+use Cake\Error\NotFoundException;
+use Cake\Network\Email\Email;
+use Cake\Event\EventManager;
+use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
 /**
- * Default setting
+ * Default config
  *
  * @var array
  */
-	protected $_defaults = array(
+	protected $_defaultConfig = array(
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
+		'entityClass' => '\Cake\ORM\Entity',
+		'useUuid' => true,
 		'register' => array(
 			'defaultRole' => null,
 			'hashPassword' => true,
@@ -62,55 +69,69 @@ class UserBehavior extends Behavior {
  * Constructor
  *
  * @param Table $table The table this behavior is attached to.
- * @param array $settings The settings for this behavior.
+ * @param array $config The settings for this behavior.
  */
-	public function __construct(Table $table, array $settings = []) {
-		$this->settings = array_merge($this->_defaults, $settings);
-		parent::__construct($table, $settings);
+	public function __construct(Table $table, array $config = []) {
+		parent::__construct($table, $config);
 		$this->_table = $table;
+
+		$eventManager = null;
+		if (!empty($config['eventManager'])) {
+			$eventManager = $config['eventManager'];
+		}
+		$this->_eventManager = $eventManager ?: new EventManager();
+
+		if ($this->_config['defaultValidation'] === true) {
+			$this->setupValidationDefaults($this->_table);
+		}
 	}
 
 /**
- * Setup
+ * Get the Model callbacks this table is interested in.
  *
- * - defaultValidation: Automatically sets up validation rules, default is true
- * - emailVerification: Email verification process via token, default is true
- * - defaultRole: Used for a role, default is null, enter a string if you want a default role
- * - fieldMap: Internal field names used by the behavior mapped to the real db fields, change the array values to your table names as needed
+ * By implementing the conventional methods a table class is assumed
+ * to be interested in the related event.
  *
- * @param Model $Model
- * @param array $config
- * @return void
+ * Override this method if you need to add non-conventional event listeners.
+ * Or if you want you table to listen to non-standard events.
+ *
+ * @return array
  */
-	public function setup($config = []) {
-		$this->settings[$this->_table->alias] = $this->_mergeOptions($this->_defaults, $config);
-		if ($this->settings[$this->_table->alias]['defaultValidation'] === true) {
-			$this->setupValidationDefaults($Model);
-		}
+	public function implementedEvents() {
+		return [
+			'UserBehavior.beforeRegister' => 'beforeRegister',
+			'UserBehavior.afterRegister' => 'afterRegister',
+		];
 	}
 
 /**
  * Gets the mapped field name of the model
  *
  * @param string $field
- * @throws RuntimeException
+ * @throws \RuntimeException
  * @return string field name of the model
  */
 	protected function _field($field) {
-		if (!isset($this->settings[$this->_table->alias]['fieldMap'][$field])) {
+		if (!isset($this->_config['fieldMap'][$field])) {
 			throw new \RuntimeException(__d('user_tools', 'Invalid field %s!', $field));
 		}
-		return $this->settings[$this->_table->alias]['fieldMap'][$field];
+		return $this->_config['fieldMap'][$field];
 	}
 
 /**
  * Sets validation rules up
  *
- * @param Model $Model
  * @return void
  */
 	public function setupValidationDefaults() {
-		$this->_table->validate = $this->_mergeOptions(
+		$Validator = new Validator($this->_table);
+		$Validator->add('username', 'not-empty', ['rule' => 'notEmpty']);
+		$Validator->add('email', 'valid-email', ['rule' => 'email']);
+		$Validator->add('username', 'not-empty', ['rule' => 'notEmpty']);
+		$this->_table->validator('userRegistration', $Validator);
+
+		/*
+		$this->_table->validate = Hash::merge(
 			array(
 				$this->_field('username') => array(
 					'notEmpty' => array(
@@ -167,20 +188,20 @@ class UserBehavior extends Behavior {
 			),
 			$this->_table->validate
 		);
+		*/
 	}
 
 /**
  * Custom validation method to ensure that the two entered passwords match
  *
- * @param Model $Model
  * @param string $password Password
  * @return boolean Success
  */
 	public function confirmPassword($password = null) {
 		$passwordCheck = $this->_field('passwordCheck');
 		$password = $this->_field('password');
-		if ((isset($this->_table->data[$this->_table->alias][$passwordCheck]) && isset($this->_table->data[$this->_table->alias][$password]))
-			&& ($this->_table->data[$this->_table->alias][$passwordCheck] === $this->_table->data[$this->_table->alias][$password])) {
+		if ((isset($this->_table->data[$this->_table->alias()][$passwordCheck]) && isset($this->_table->data[$this->_table->alias()][$password]))
+			&& ($this->_table->data[$this->_table->alias()][$passwordCheck] === $this->_table->data[$this->_table->alias()][$password])) {
 			return true;
 		}
 		return false;
@@ -189,7 +210,6 @@ class UserBehavior extends Behavior {
 /**
  * Returns a datetime in the format Y-m-d H:i:s
  *
- * @param Model $Model
  * @param string strtotime compatible string, default is "+1 day"
  * @param string date() compatible date format string
  * @return string
@@ -201,10 +221,9 @@ class UserBehavior extends Behavior {
 /**
  * Updates a given field with the current date time in the format Y-m-d H:i:s
  *
- * @param Model $Model
  * @param string $userId User id
  * @param string $field Default is "last_action", changing it allows you to use this method also for "last_login" for example
- * @param string date() compatible date format string
+ * @param string $dateFormat compatible date format string
  * @return boolean True on success
  */
 	public function updateLastActivity($userId = null, $field = 'last_action', $dateFormat = 'Y-m-d H:i:s') {
@@ -223,7 +242,6 @@ class UserBehavior extends Behavior {
  *
  * Override this method to use a different hashing method
  *
- * @param Model $Model
  * @param string $string String to hash
  * @param string $type Method to use (sha1/sha256/md5)
  * @param boolean $salt If true, automatically appends the application's salt
@@ -237,13 +255,12 @@ class UserBehavior extends Behavior {
 /**
  * Hash password
  *
- * @param Model $Model
  * @param $password
  * @param array $options
  * @return string Hash
  */
 	public function hashPassword($password, $options = []) {
-		return $this->hash($Model, $password);
+		return $this->hash($password);
 	}
 
 /**
@@ -252,40 +269,39 @@ class UserBehavior extends Behavior {
  * This method deals with most of the settings for the registration that can be
  * applied before the actual user record is saved.
  *
- * @param Model $Model
  * @param array $postData
  * @param array $options
  * @return void
  */
 	protected function _beforeRegister($postData, $options) {
-		extract($this->_mergeOptions($this->settings[$this->_table->alias]['register'], $options));
+		extract(Hash::merge($this->_config['register'], $options));
 
 		if ($userActive === true) {
-			$postData[$this->_table->alias][$this->_field('active')] = 1;
+			$postData->{$this->_field('active')} = 1;
 		}
 
 		if ($emailVerification === true) {
-			$postData[$this->_table->alias][$this->_field('emailToken')] = $this->generateToken($Model, 16);
+			$postData->{$this->_field('emailToken')} = $this->generateToken(16);
 			if ($verificationExpirationTime !== false) {
-				$postData[$this->_table->alias][$this->_field('emailTokenExpires')] = $this->expirationTime($Model, $verificationExpirationTime);
+				$postData->{$this->_field('emailTokenExpires')} = $this->expirationTime($verificationExpirationTime);
 			}
-			$postData[$this->_table->alias][$this->_field('emailVerified')] = 0;
+			$postData->{$this->_field('emailVerified')} = 0;
 		} else {
-			$postData[$this->_table->alias][$this->_field('emailVerified')] = 1;
+			$postData->{$this->_field('emailVerified')} = 1;
 		}
 
-		if (!isset($postData[$this->_table->alias][$this->_field('role')])) {
-			$postData[$this->_table->alias][$this->_field('role')] = $defaultRole;
+		if (!isset($postData->{$this->_field('role')})) {
+			$postData->{$this->_field('role')} = $defaultRole;
 		}
 
 		if ($generatePassword !== false) {
-			$password = $this->generatePassword($Model, (int)$generatePassword);
-			$postData[$this->_table->alias][$this->_field('password')] = $password;
-			$postData[$this->_table->alias]['clear_password'] = $password;
+			$password = $this->generatePassword((int)$generatePassword);
+			$postData->{$this->_field('password')} = $password;
+			$postData->clear_password = $password;
 		}
 
 		if ($hashPassword === true) {
-			$postData[$this->_table->alias][$this->_field('password')] = $this->hashPassword($Model, $postData[$this->_table->alias][$this->_field('password')]);
+			$postData->{$this->_field('password')} = $this->hashPassword($postData->{$this->_field('password')});
 		}
 
 		return $postData;
@@ -301,40 +317,45 @@ class UserBehavior extends Behavior {
  * - saves the user data
  * - calls Model::afterRegister if implemented
  *
- * @param Model $Model
  * @param array post data
  * @param array options
  * @return boolean
  */
 	public function register($postData, $options = []) {
-		if (!$this->_table->save($postData, array('validate' => 'only'))) {
+		$options = array_merge($this->_config['register'], $options);
+
+		if (is_array($postData)) {
+			$postData = new $this->_config['entityClass']($postData);
+		}
+
+		if (!$this->_table->validate($postData, ['validate' => 'userRegistration'])) {
 			return false;
 		}
 
-		$this->settings[$this->_table->alias] = $this->_mergeOptions($this->settings[$this->_table->alias], $options);
-		if ($this->settings[$this->_table->alias]['register']['beforeRegister'] === true) {
-			$postData = $this->_beforeRegister($Model, $postData, $options);
+
+		if ($options['beforeRegister'] === true) {
+			$postData = $this->_beforeRegister($postData, $options);
 		}
 
-		if (method_exists($Model, 'beforeRegister')) {
+		if (method_exists($this->_table, 'beforeRegister')) {
 			if (!$this->_table->beforeRegister($postData, $options)) {
 				return false;
 			}
 		}
 
-		$result = $this->_table->saveAll($postData, array('validate' => false));
+		if ($this->_config['useUuid'] === true) {
+			$postData->id = String::uuid();
+		}
+		$result = $this->_table->save($postData, array('validate' => false));
 
 		if ($result) {
-			$postData[$this->_table->alias][$this->_table->primaryKey] = $this->_table->getLastInsertID();
-			$this->_table->data = $postData;
-
-			if ($this->settings[$this->_table->alias]['register']['emailVerification'] === true) {
-				$this->sendVerificationEmail($Model, $this->_table->data, array(
-					'to' => $this->_table->data[$this->_table->alias][$this->_field('email')]
+			if ($options['emailVerification'] === true) {
+				$this->sendVerificationEmail($result, array(
+					'to' => $result->{$this->_field('email')}
 				));
 			}
 
-			if (method_exists($Model, 'afterRegister')) {
+			if (method_exists($this->_table, 'afterRegister')) {
 				return $this->_table->afterRegister();
 			}
 
@@ -347,7 +368,7 @@ class UserBehavior extends Behavior {
 /**
  * Verify the email token
  *
- * @throws NotFoundException if the token was not found at all
+ * @throws \Cake\Error\NotFoundException if the token was not found at all
  * @param string $token
  * @param array $options
  * @return boolean|array Returns false if the token has expired
@@ -359,7 +380,7 @@ class UserBehavior extends Behavior {
 			'returnData' => false,
 		);
 
-		$options = $this->_mergeOptions($defaults, $options);
+		$options = Hash::merge($defaults, $options);
 
 		$result = $this->_table->find('first', array(
 			'conditions' => array(
@@ -371,10 +392,10 @@ class UserBehavior extends Behavior {
 			throw new NotFoundException(__d('user_tools', 'Invalid token'));
 		}
 
-		$isExpired = $result[$this->_table->alias][$this->_field('emailTokenExpires')] <= date('Y-m-d H:i:s');
+		$isExpired = $result[$this->_table->alias()][$this->_field('emailTokenExpires')] <= date('Y-m-d H:i:s');
 
 		if ($options['returnData'] === true) {
-			$result[$this->_table->alias]['is_expired'] = $isExpired;
+			$result[$this->_table->alias()]['is_expired'] = $isExpired;
 			return $result;
 		}
 
@@ -385,7 +406,6 @@ class UserBehavior extends Behavior {
  * Verify the email token
  *
  * @throws NotFoundException if the token was not found at all
- * @param Model $Model
  * @param string $token
  * @param array $options
  * @return boolean Returns false if the token has expired
@@ -395,15 +415,14 @@ class UserBehavior extends Behavior {
 			'tokenField' => $this->_field('emailToken'),
 			'expirationField' => $this->_field('emailTokenExpires'),
 		);
-		$options = $this->_mergeOptions($defaults, $options);
-		$this->verifyToken($Model, $token, $options);
+		$options = Hash::merge($defaults, $options);
+		$this->verifyToken($token, $options);
 	}
 
 /**
  * Verify the password reset token
  *
  * @throws NotFoundException if the token was not found at all
- * @param Model $Model
  * @param string $token
  * @param array $options
  * @return boolean Returns false if the token has expired
@@ -413,14 +432,13 @@ class UserBehavior extends Behavior {
 			'tokenField' => $this->_field('passwordToken'),
 			'expirationField' => $this->_field('passwordTokenExpires'),
 		);
-		$options = $this->_mergeOptions($defaults, $options);
-		$this->verifyToken($Model, $token, $options);
+		$options = Hash::merge($defaults, $options);
+		$this->verifyToken($token, $options);
 	}
 
 /**
- * Generates a password
+ * Generates a random password that is more or less user friendly
  *
- * @param Model $Model
  * @param int $length Password length
  * @param array $options
  * @return string
@@ -447,7 +465,7 @@ class UserBehavior extends Behavior {
 			unset($defaults['vowels']);
 		}
 
-		$options = $this->_mergeOptions($defaults, $options);
+		$options = Hash::merge($defaults, $options);
 		$password = '';
 
 		for ($i = 0; $i < $length; $i++) {
@@ -462,8 +480,6 @@ class UserBehavior extends Behavior {
 /**
  * Generate token used by the user registration system
  *
- * @parem Model $Model
- * @param Model $Model
  * @param integer $length Token Length
  * @param string $chars
  * @return string
@@ -483,39 +499,36 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Removes all users from the user table that are outdated
+ * Removes all users from the user table that did not complete the registration
  *
- * @param Model $Model
  * @param array $conditions
  * @return void
  */
 	public function removeExpiredRegistrations($conditions = []) {
 		$defaults = array(
-			$this->_table->alias . '.' . $this->_field('emailVerified') => 0,
-			$this->_table->alias . '.' . $this->_field('emailTokenExpires') . ' <' => date('Y-m-d H:i:s')
+			$this->_table->alias() . '.' . $this->_field('emailVerified') => 0,
+			$this->_table->alias() . '.' . $this->_field('emailTokenExpires') . ' <' => date('Y-m-d H:i:s')
 		);
 
-		$this->_table->deleteAll($this->_mergeOptions($defaults, $conditions));
+		$this->_table->deleteAll(Hash::merge($defaults, $conditions));
 	}
 
 /**
  * Returns an email instance
  *
- * @param Model $Model
  * @param array $config
  * @return CakeEmail CakeEmail instance
  */
 	public function getMailInstance($config = null) {
 		if (empty($config)) {
-			$config = $this->settings[$this->_table->alias]['emailConfig'];
+			$config = $this->_config['emailConfig'];
 		}
-		return new CakeEmail($config);
+		return new Email($config);
 	}
 
 /**
  * sendVerificationEmail
  *
- * @param Model $Model
  * @param array $data
  * @param array $options
  * @return boolean
@@ -528,18 +541,17 @@ class UserBehavior extends Behavior {
 				'data' => $data
 			)
 		);
-		return $this->sendEmail($Model, $this->_mergeOptions($defaults, $options));
+		return $this->sendEmail(Hash::merge($defaults, $options));
 	}
 
 /**
  * sendEmail
  *
- * @param Model $Model
  * @param array $options
  * @return boolean
  */
 	public function sendEmail($options = []) {
-		$Email = $this->getMailInstance($Model);
+		$Email = $this->getMailInstance();
 		foreach ($options as $option => $value) {
 			$Email->{$option}($value);
 		}
@@ -547,24 +559,9 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Wrapper around Hash::merge and Set::merge
- *
- * @param array $array1
- * @param array $array2
- * @return array
- */
-	protected function _mergeOptions($array1, $array2) {
-		if (class_exists('Hash')) {
-			return Hash::merge($array1, $array2);
-		}
-		return Set::merge($array1, $array2);
-	}
-
-/**
  * Gets an users record by id or slug
  *
- * @throws NotFoundException
- * @param Model $model
+ * @throws \Cake\Error\NotFoundException
  * @param mixed $userId
  * @param array $options
  * @return array
@@ -575,14 +572,14 @@ class UserBehavior extends Behavior {
 			'contain' => array(),
 			'conditions' => array(
 				'OR' => array(
-					$this->_table->alias . '.' . $this->_table->primaryKey => $userId,
-					$this->_table->alias . '.slug' => $userId,
+					$this->_table->alias() . '.' . $this->_table->primaryKey() => $userId,
+					$this->_table->alias() . '.slug' => $userId,
 				),
-				$this->_table->alias . '.email_verified' => 1
+				$this->_table->alias() . '.email_verified' => 1
 			),
 		);
 
-		$result = $this->_table->find('first', Hash::merge($defaults = $options));
+		$result = $this->_table->find('first', Hash::merge($defaults, $options));
 
 		if (empty($result)) {
 			throw new NotFoundException(__d('user_tools', 'User not found!'));
@@ -591,4 +588,12 @@ class UserBehavior extends Behavior {
 		return $result;
 	}
 
+/**
+ * Get the event manager for this Table.
+ *
+ * @return \Cake\Event\EventManager
+ */
+	public function getEventManager() {
+		return $this->_eventManager;
+	}
 }
