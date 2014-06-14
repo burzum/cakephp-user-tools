@@ -125,9 +125,21 @@ class UserBehavior extends Behavior {
  */
 	public function setupValidationDefaults() {
 		$Validator = new Validator($this->_table);
-		$Validator->add('username', 'not-empty', ['rule' => 'notEmpty']);
-		$Validator->add('email', 'valid-email', ['rule' => 'email']);
-		$Validator->add('username', 'not-empty', ['rule' => 'notEmpty']);
+		$Validator->add('username', 'not-empty', [
+			'rule' => 'notEmpty'
+		]);
+		$Validator->add('username', 'between', [
+			'rule' => ['between', 3, 16]
+		]);
+		$Validator->add('username', 'alpha-numeric', [
+			'rule' => 'alphaNumeric'
+		]);
+		$Validator->add('email', 'valid-email', [
+			'rule' => 'email'
+		]);
+		$Validator->add('email', 'not-empty', [
+			'rule' => 'notEmpty'
+		]);
 		$this->_table->validator('userRegistration', $Validator);
 
 		/*
@@ -230,7 +242,7 @@ class UserBehavior extends Behavior {
 		if (!empty($userId)) {
 			$this->_table->id = $userId;
 		}
-		if ($this->_table->exists()) {
+		if ($this->_table->exists([$this->_table->alias() . '.' . $this->_table->primaryKey()])) {
 			return $this->_table->saveField($field, date($dateFormat));
 		}
 		return false;
@@ -329,9 +341,9 @@ class UserBehavior extends Behavior {
 		}
 
 		if (!$this->_table->validate($postData, ['validate' => 'userRegistration'])) {
+			$this->_table->entity = $postData;
 			return false;
 		}
-
 
 		if ($options['beforeRegister'] === true) {
 			$postData = $this->_beforeRegister($postData, $options);

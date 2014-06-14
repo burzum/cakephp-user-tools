@@ -78,6 +78,10 @@ class UserToolComponent extends Component {
 
 		),
 		'actionMap' => array(
+			'index' => array(
+				'method' => 'listing',
+				'view' => 'UserTools.UserTools/index',
+			),
 			'register' => array(
 				'method' => 'register',
 				'view' => 'UserTools.UserTools/register'
@@ -138,6 +142,16 @@ class UserToolComponent extends Component {
 
 		$this->setUserModel($this->settings['userModel']);
 		$this->loadUserBehaviour();
+	}
+
+/**
+ * User listing with pagination
+ *
+ * @param array $options Pagination options
+ * @return \Cake\ORM\Query
+ */
+	public function listing($options = []) {
+		$this->Controller->set('users', $this->Controller->paginate($this->UserTable, $options));
 	}
 
 /**
@@ -228,7 +242,7 @@ class UserToolComponent extends Component {
  */
 	public function login($options = []) {
 		$Controller = $this->Controller;
-		$options = $this->_mergeOptions($this->settings['login'], $options);
+		$options = Hash::merge($this->settings['login'], $options);
 
 		if ($Controller->request->is('post')) {
 			$Auth = $this->_getAuthObject();
@@ -263,7 +277,7 @@ class UserToolComponent extends Component {
 	public function logout($options = []) {
 		$Controller = $this->_Collection->getController();
 		$Auth = $this->_getAuthObject();
-		$options = $this->_mergeOptions($this->settings['login'], $options);
+		$options = Hash::merge($this->settings['login'], $options);
 		$user = $Auth->user();
 
 		$this->Session->destroy();
@@ -283,7 +297,7 @@ class UserToolComponent extends Component {
  * - `errorMessage` The error flash message.
  * - `errorRedirectUrl` The error redirect url.
  *
- * @throws NotFoundException
+ * @throws \Cake\Error\NotFoundException
  * @param array $options
  * @return void
  */
@@ -292,21 +306,24 @@ class UserToolComponent extends Component {
 			throw new NotFoundException();
 		}
 
-		$options = $this->_mergeOptions($this->settings['registration'], $options);
+		$options = Hash::merge($this->settings['registration'], $options);
 
 		if (!$this->Controller->request->is('get')) {
 			if ($this->UserTable->register($this->Controller->request->data)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
+				$this->Controller->set('usersEntity', $this->UserTable->entity);
 			}
+		} else {
+			$this->Controller->set('usersEntity', null);
 		}
 	}
 
 /**
  * verifyEmailToken
  */
-	public function verifyEmailToken() {
+	public function verifyEmailToken($options) {
 		$defaults = array(
 			'queryParam' => 'token',
 			'type' => 'Email',
@@ -315,7 +332,7 @@ class UserToolComponent extends Component {
 			'errorMessage' => __d('user_tools', 'Invalid email token!'),
 			'errorRedirectUrl' => '/'
 		);
-		return $this->verifyToken($this->_mergeOptions($defaults, $options));
+		return $this->verifyToken(Hash::merge($defaults, $options));
 	}
 
 /**
@@ -327,7 +344,7 @@ class UserToolComponent extends Component {
  */
 	public function verifyToken($options = []) {
 		$Controller = $this->_Collection->getController();
-		$options = $this->_mergeOptions(
+		$options = Hash::merge(
 			array(
 				'queryParam' => 'token',
 				'type' => 'Email',
@@ -391,17 +408,6 @@ class UserToolComponent extends Component {
 		if ($options[$type . 'RedirectUrl'] !== false) {
 			$this->Controller->redirect($options[$type . 'RedirectUrl']);
 		}
-	}
-
-/**
- * Wrapper around Hash::merge()
- *
- * @param array
- * @param array
- * @return array
- */
-	protected function _mergeOptions($array, $array2) {
-		return Hash::merge($array, $array2);
 	}
 
 /**

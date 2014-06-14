@@ -1,5 +1,10 @@
 <?php
-echo $this->Form->create();
+echo $this->Form->create($usersEntity, [
+	'novalidate' => 'novalidate',
+	'context' => array(
+		'table' => 'users'
+	)
+]);
 echo $this->Form->input('username', array(
 	'label' => __d('user_tools', 'Username')
 ));
