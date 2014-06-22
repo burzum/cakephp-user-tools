@@ -25,7 +25,9 @@ class UserToolComponent extends Component {
  */
 	public $components = array(
 		'Session',
-		'Cookie'
+		'Cookie',
+		'Flash',
+		'FlashMessage'
 	);
 
 /**
@@ -42,7 +44,7 @@ class UserToolComponent extends Component {
 		'auth' => array(
 			'authenticate' => array(
 				'UserTools.MultiColumn' => array(
-					'userModel' => 'User',
+					'userModel' => 'Users',
 					'fields' => array(
 						'username' => 'email',
 						'password' => 'password'
@@ -52,7 +54,7 @@ class UserToolComponent extends Component {
 						'email'
 					),
 					'scope' => array(
-						'User.email_verified' => 1
+						'Users.email_verified' => 1
 					)
 				)
 			)
@@ -247,14 +249,16 @@ class UserToolComponent extends Component {
 		if ($Controller->request->is('post')) {
 			$Auth = $this->_getAuthObject();
 
-			if (!$Auth->login()) {
-				$this->Session->setFlash(
-					__d('user_tools', 'Username or password is incorrect'),
-					'default',
-					array(),
-					'auth'
-				);
-				return false;
+			$user = $Auth->identify();
+
+			if ($user) {
+				$Auth->setUser($user);
+				return $this->redirect($Auth->redirectUrl());
+			} else {
+				$this->Flash->set(__('Username or password is incorrect'), [
+					'element' => 'error',
+					'key' => 'auth'
+				]);
 			}
 
 			if ($options['redirect'] === false) {

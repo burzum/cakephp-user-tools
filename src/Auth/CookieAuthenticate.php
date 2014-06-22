@@ -25,9 +25,9 @@
  * @license MIT
  * @link https://github.com/ceeram/Authenticate
  */
-namespace UserTools\Controller\Component\Auth;
+namespace UserTools\Auth;
 
-use Cake\Controller\Component\Auth\BaseAuthenticate;
+use Cake\Auth;
 
 class CookieAuthenticate extends BaseAuthenticate {
 

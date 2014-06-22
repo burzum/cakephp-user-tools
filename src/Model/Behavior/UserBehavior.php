@@ -12,12 +12,12 @@ namespace UserTools\Model\Behavior;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\Utility\Hash;
-use Cake\Utility\Security;
 use Cake\Utility\String;
 use Cake\Error\NotFoundException;
 use Cake\Network\Email\Email;
 use Cake\Event\EventManager;
 use Cake\Validation\Validator;
+use Cake\Auth\PasswordHasherFactory;
 
 class UserBehavior extends Behavior {
 
@@ -31,6 +31,7 @@ class UserBehavior extends Behavior {
 		'defaultValidation' => true,
 		'entityClass' => '\Cake\ORM\Entity',
 		'useUuid' => true,
+		'passwordHasher' => 'Simple',
 		'register' => array(
 			'defaultRole' => null,
 			'hashPassword' => true,
@@ -64,6 +65,13 @@ class UserBehavior extends Behavior {
  * @var array
  */
 	protected $_table;
+
+/**
+ * Password hasher instance.
+ *
+ * @var AbstractPasswordHasher
+ */
+	protected $_passwordHasher;
 
 /**
  * Constructor
@@ -249,30 +257,14 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Create a hash from string using given method.
- * Fallback on next available method.
- *
- * Override this method to use a different hashing method
- *
- * @param string $string String to hash
- * @param string $type Method to use (sha1/sha256/md5)
- * @param boolean $salt If true, automatically appends the application's salt
- *     value to $string (Security.salt)
- * @return string Hash
- */
-	public function hash($string, $type = 'sha1', $salt = true) {
-		return Security::hash($string, $type, $salt);
-	}
-
-/**
  * Hash password
  *
  * @param $password
- * @param array $options
  * @return string Hash
  */
-	public function hashPassword($password, $options = []) {
-		return $this->hash($password);
+	public function hashPassword($password) {
+		$Hasher = $this->passwordHasher();
+		return $Hasher->hash($password);
 	}
 
 /**
@@ -607,5 +599,21 @@ class UserBehavior extends Behavior {
  */
 	public function getEventManager() {
 		return $this->_eventManager;
+	}
+
+/**
+ * Return password hasher object
+ *
+ * @return AbstractPasswordHasher Password hasher instance
+ * @throws \RuntimeException If password hasher class not found or
+ *   it does not extend AbstractPasswordHasher
+ */
+	public function passwordHasher() {
+		if ($this->_passwordHasher) {
+			return $this->_passwordHasher;
+		}
+
+		$passwordHasher = $this->_config['passwordHasher'];
+		return $this->_passwordHasher = PasswordHasherFactory::build($passwordHasher);
 	}
 }

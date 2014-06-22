@@ -11,8 +11,8 @@
  *				'password' => 'password'
  *	 		),
  *			'columns' => array('username', 'email'),
- *			'userModel' => 'User',
- *			'scope' => array('User.active' => 1)
+ *			'userModel' => 'Users',
+ *			'scope' => array('Users.active' => 1)
  *		)
  *	)
  * }}}
@@ -22,9 +22,10 @@
  * @license MIT
  * @link https://github.com/ceeram/Authenticate
  */
-namespace UserTools\Controller\Component\Auth;
+namespace UserTools\Auth;
 
-use Cake\Controller\Component\Auth\FormAuthenticate;
+use Cake\Auth\FormAuthenticate;
+use Cake\ORM\TableRegistry;
 
 class MultiColumnAuthenticate extends FormAuthenticate {
 
@@ -35,47 +36,51 @@ class MultiColumnAuthenticate extends FormAuthenticate {
  * @return mixed
  */
 	protected function _findUser($username, $password = null) {
-		$userModel = $this->settings['userModel'];
-		list($plugin, $model) = pluginSplit($userModel);
-		$fields = $this->settings['fields'];
+		$userModel = $this->_config['userModel'];
+		list(, $model) = pluginSplit($userModel);
+		$fields = $this->_config['fields'];
 
 		if (is_array($username)) {
 			$conditions = $username;
 		} else {
 			$conditions = array($model . '.' . $fields['username'] => $username);
-			if ($this->settings['columns'] && is_array($this->settings['columns'])) {
+			if ($this->_config['columns'] && is_array($this->_config['columns'])) {
 				$columns = [];
-				foreach ($this->settings['columns'] as $column) {
+				foreach ($this->_config['columns'] as $column) {
 					$columns[] = array($model . '.' . $column => $username);
 				}
 				$conditions = array('OR' => $columns);
 			}
 		}
 
-		if (!empty($this->settings['scope'])) {
-			$conditions = array_merge($conditions, $this->settings['scope']);
+		if (!empty($this->_config['scope'])) {
+			$conditions = array_merge($conditions, $this->_config['scope']);
 		}
 
-		$result = ClassRegistry::init($userModel)->find('first', array(
-			'conditions' => $conditions,
-			'recursive' => $this->settings['recursive'],
-			'contain' => $this->settings['contain'],
-		));
-		if (empty($result[$model])) {
-			$this->passwordHasher()->hash($password);
+		$table = TableRegistry::get($userModel)->find('all');
+		$result = $table
+			->where($conditions)
+			//->contain($this->_config['contain'])
+			->hydrate(false)
+			->first();
+
+		if (empty($result)) {
 			return false;
 		}
 
-		$user = $result[$model];
-		if ($password) {
-			if (!$this->passwordHasher()->check($password, $user[$fields['password']])) {
+		if ($password !== null) {
+			$hasher = $this->passwordHasher();
+			$hashedPassword = $result[$fields['password']];
+			if (!$hasher->check($password, $hashedPassword)) {
+				die('TEST PW');
 				return false;
 			}
-			unset($user[$fields['password']]);
+
+			$this->_needsPasswordRehash = $hasher->needsRehash($hashedPassword);
+			unset($result[$fields['password']]);
 		}
 
-		unset($result[$model]);
-		return array_merge($user, $result);
+		return $result;
 	}
 
 }
