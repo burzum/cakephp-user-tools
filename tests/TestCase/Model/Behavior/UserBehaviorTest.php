@@ -41,7 +41,9 @@ class UserBehaviorTest extends TestCase {
  * @return void
  */
 	public function setUp() {
-		$this->User = TableRegistry::init('UserToolUser');
+		parent::setUp();
+		$this->User = TableRegistry::get('UserToolUser');
+		$this->User->addBehavior('UserTools.User');
 	}
 
 /**

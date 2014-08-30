@@ -2,6 +2,8 @@
 namespace UserTools\Test\TestCase\View\Helper;
 
 use Cake\TestSuite\TestCase;
+use Cake\View\View;
+use UserTools\View\Helper\AuthHelper;
 
 /**
  * AuthHelperTestCase

@@ -18,7 +18,7 @@ class UserFixture extends TestFixture {
  * @var array
  */
 	public $fields = [
-		'id' => ['type' => 'string', 'null' => false, 'length' => 36, 'key' => 'primary'],
+		'id' => ['type' => 'string', 'null' => false, 'length' => 36],
 		'username' => ['type' => 'string', 'null' => false, 'default' => null],
 		'slug' => ['type' => 'string', 'null' => false, 'default' => null],
 		'password' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
@@ -35,8 +35,11 @@ class UserFixture extends TestFixture {
 		'role' => ['type' => 'string', 'null' => true, 'default' => null],
 		'created' => ['type' => 'datetime', 'null' => true, 'default' => null],
 		'modified' => ['type' => 'datetime', 'null' => true, 'default' => null],
-		'indexes' => [
-			'PRIMARY' => ['column' => 'id', 'unique' => 1]]
+		'_constraints' => [
+			'primary' => ['type' => 'primary', 'columns' => ['id']],
+			'unique_username' => ['type' => 'unique', 'columns' => ['username']],
+			'unique_email' => ['type' => 'unique', 'columns' => ['email']]
+		]
 	];
 
 /**
