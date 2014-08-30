@@ -1,6 +1,8 @@
 <?php
-App::uses('Controller', 'Controller');
-App::uses('UserTools', 'Controller/Component');
+namespace UserTools\Test\TestCase\Controller\Component;
+
+use Cake\ORM\TableRegistry;
+use Cake\TestSuite\TestCase;
 
 /**
  * UserToolComponent
@@ -9,16 +11,16 @@ App::uses('UserTools', 'Controller/Component');
  * @copyright 2013 Florian Krämer
  * @license MIT
  */
-class UserToolComponent extends CakeTestCase {
+class UserToolComponent extends TestCase {
 
 /**
  * Fixtures
  *
  * @var array
  */
-	public $fixtures = array(
-		'plugin.UserTools.User'
-	);
+	public $fixtures = [
+		//'plugin.user_tools.user'
+	];
 
 /**
  * setup
@@ -26,7 +28,7 @@ class UserToolComponent extends CakeTestCase {
  * @return void
  */
 	public function setUp() {
-
+		parent::setUp();
 	}
 
 /**
@@ -35,8 +37,7 @@ class UserToolComponent extends CakeTestCase {
  * @return void
  */
 	public function tearDown() {
-
-		ClassRegistry::flush();
+		parent::tearDown();
 	}
 
 /**

@@ -1,5 +1,9 @@
 <?php
-App::uses('Model', 'Model');
+namespace UserTools\Test\TestCase\Model\Behavior;
+
+use Cake\ORM\TableRegistry;
+use Cake\ORM\Table;
+use Cake\TestSuite\TestCase;
 
 /**
  * UserBehaviorTest
@@ -8,7 +12,7 @@ App::uses('Model', 'Model');
  * @copyright 2013 Florian Krämer
  * @license MIT
  */
-class UserToolUser extends Model {
+class UserToolUser extends Table {
 	public $name = 'User';
 	public $alias = 'User';
 	public $useTable = 'users';
@@ -20,7 +24,7 @@ class UserToolUser extends Model {
 /**
  * UserBehaviorTest
  */
-class UserBehaviorTest extends CakeTestCase {
+class UserBehaviorTest extends TestCase {
 
 /**
  * Fixtures
@@ -28,7 +32,7 @@ class UserBehaviorTest extends CakeTestCase {
  * @var array
  */
 	public $fixtures = array(
-		'plugin.UserTools.User'
+		'plugin.user_tools.user'
 	);
 
 /**
@@ -37,7 +41,7 @@ class UserBehaviorTest extends CakeTestCase {
  * @return void
  */
 	public function setUp() {
-		$this->User = ClassRegistry::init('UserToolUser');
+		$this->User = TableRegistry::init('UserToolUser');
 	}
 
 /**
@@ -47,7 +51,6 @@ class UserBehaviorTest extends CakeTestCase {
  */
 	public function tearDown() {
 		unset($this->User);
-		ClassRegistry::flush();
 	}
 
 /**

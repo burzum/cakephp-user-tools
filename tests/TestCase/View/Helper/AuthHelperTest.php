@@ -1,6 +1,7 @@
 <?php
-App::uses('View', 'View');
-App::uses('AuthHelper', 'UserTools.View/Helper');
+namespace UserTools\Test\TestCase\View\Helper;
+
+use Cake\TestSuite\TestCase;
 
 /**
  * AuthHelperTestCase
@@ -9,7 +10,7 @@ App::uses('AuthHelper', 'UserTools.View/Helper');
  * @copyright 2013 Florian Krämer
  * @license MIT
  */
-class AuthHelperTestCase extends CakeTestCase {
+class AuthHelperTestCase extends TestCase {
 
 /**
  * setUp method

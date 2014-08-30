@@ -1,5 +1,7 @@
 <?php
-App::uses('Security', 'Utility');
+namespace UserTools\Test\Fixture;
+
+use Cake\TestSuite\Fixture\TestFixture;
 
 /**
  * UserFixture
@@ -8,105 +10,79 @@ App::uses('Security', 'Utility');
  * @copyright 2013 Florian Krämer
  * @license MIT
  */
-class UserFixture extends CakeTestFixture {
-
-/**
- * Name
- *
- * @var string $name
- */
-	public $name = 'User';
-
-/**
- * Table
- *
- * @var array $table
- */
-	public $table = 'users';
+class UserFixture extends TestFixture {
 
 /**
  * Fields
  *
  * @var array
  */
-	public $fields = array(
-			'id' => array('type'=>'string', 'null' => false, 'length' => 36, 'key' => 'primary'),
-			'username' => array('type'=>'string', 'null' => false, 'default' => NULL),
-			'slug' => array('type'=>'string', 'null' => false, 'default' => NULL),
-			'password' => array('type'=>'string', 'null' => true, 'default' => NULL, 'length' => 128),
-			'password_token' => array('type'=>'string', 'null' => true, 'default' => NULL, 'length' => 128),
-			'email' => array('type'=>'string', 'null' => true, 'default' => NULL),
-			'email_verified' => array('type'=>'boolean', 'null' => true, 'default' => '0'),
-			'email_token' => array('type'=>'string', 'null' => true, 'default' => NULL),
-			'email_token_expires' => array('type'=>'datetime', 'null' => true, 'default' => NULL),
-			'tos' => array('type'=>'boolean', 'null' => true, 'default' => '0'),
-			'active' => array('type'=>'boolean', 'null' => true, 'default' => '0'),
-			'last_action' => array('type'=>'datetime', 'null' => true, 'default' => NULL),
-			'last_login' => array('type'=>'datetime', 'null' => true, 'default' => NULL),
-			'is_admin' => array('type'=>'boolean', 'null' => true, 'default' => '0'),
-			'role' => array('type'=>'string', 'null' => true, 'default' => NULL),
-			'created' => array('type'=>'datetime', 'null' => true, 'default' => NULL),
-			'modified' => array('type'=>'datetime', 'null' => true, 'default' => NULL),
-			'indexes' => array(
-				'PRIMARY' => array('column' => 'id', 'unique' => 1))
-			);
+	public $fields = [
+		'id' => ['type' => 'string', 'null' => false, 'length' => 36, 'key' => 'primary'],
+		'username' => ['type' => 'string', 'null' => false, 'default' => null],
+		'slug' => ['type' => 'string', 'null' => false, 'default' => null],
+		'password' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
+		'password_token' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
+		'email' => ['type' => 'string', 'null' => true, 'default' => null],
+		'email_verified' => ['type' => 'boolean', 'null' => true, 'default' => '0'],
+		'email_token' => ['type' => 'string', 'null' => true, 'default' => null],
+		'email_token_expires' => ['type' => 'datetime', 'null' => true, 'default' => null],
+		'tos' => ['type' => 'boolean', 'null' => true, 'default' => '0'],
+		'active' => ['type' => 'boolean', 'null' => true, 'default' => '0'],
+		'last_action' => ['type' => 'datetime', 'null' => true, 'default' => null],
+		'last_login' => ['type' => 'datetime', 'null' => true, 'default' => null],
+		'is_admin' => ['type' => 'boolean', 'null' => true, 'default' => '0'],
+		'role' => ['type' => 'string', 'null' => true, 'default' => null],
+		'created' => ['type' => 'datetime', 'null' => true, 'default' => null],
+		'modified' => ['type' => 'datetime', 'null' => true, 'default' => null],
+		'indexes' => [
+			'PRIMARY' => ['column' => 'id', 'unique' => 1]]
+	];
 
 /**
  * Records
  *
  * @var array
  */
-	public $records = array(
-		array(
-			'id'  => '1',
-			'username'  => 'adminuser',
+	public $records = [
+		[
+			'id' => '1',
+			'username' => 'adminuser',
 			'slug' => 'adminuser',
-			'password'  => 'test', // test
-			'password_token'  => 'testtoken',
+			'password' => 'test', // test
+			'password_token' => 'testtoken',
 			'email' => 'adminuser@cakedc.com',
 			'email_verified' => 1,
 			'email_token' => 'testtoken',
 			'email_token_expires' => '2008-03-25 02:45:46',
 			'tos' => 1,
 			'active' => 1,
-			'last_action'  => '2008-03-25 02:45:46',
+			'last_action' => '2008-03-25 02:45:46',
 			'last_login' => '2008-03-25 02:45:46',
 			'is_admin' => 1,
-			'role' => 'admin',			
-			'created'  => '2008-03-25 02:45:46',
-			'modified'  => '2008-03-25 02:45:46'
-		),
-		array(
-			'id'  => '2',
-			'username'  => 'newuser',
+			'role' => 'admin',
+			'created' => '2008-03-25 02:45:46',
+			'modified' => '2008-03-25 02:45:46'
+		],
+		[
+			'id' => '2',
+			'username' => 'newuser',
 			'slug' => 'newuser',
-			'password'  => 'test', // test
-			'password_token'  => 'newusertoken',
+			'password' => 'test', // test
+			'password_token' => 'newusertoken',
 			'email' => 'newuser@cakedc.com',
 			'email_verified' => 1,
 			'email_token' => 'secondusertesttoken',
 			'email_token_expires' => '2008-03-25 02:45:46',
 			'tos' => 1,
 			'active' => 1,
-			'last_action'  => '2008-03-25 02:45:46',
+			'last_action' => '2008-03-25 02:45:46',
 			'last_login' => '2008-03-25 02:45:46',
 			'is_admin' => 1,
 			'role' => 'admin',
-			'created'  => '2008-03-25 02:45:46',
-			'modified'  => '2008-03-25 02:45:46'
-		)
-	);
-
-/**
- * Constructor
- *
- *
- */
-	public function __construct() {
-		foreach ($this->records as &$record) {
-			$record['password'] = Security::hash($record['password'], null, true);
-		}
-		parent::__construct();
-	}
+			'created' => '2008-03-25 02:45:46',
+			'modified' => '2008-03-25 02:45:46'
+		]
+	];
 
 }

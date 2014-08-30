@@ -12,11 +12,25 @@
 			"homepage": "http://florian-kraemer.net"
 		}
 	],
-	"minimum-stability": "dev",
 	"require": {
-		"composer/installers":"*",
-		"cakephp/cakephp": "3.0.x-dev",
-		"php": ">=5.4.2"
+		"php": ">=5.4.19",
+		"cakephp/plugin-installer": "dev-master"
+	},
+	"require-dev": {
+		"cakephp/cakephp": "3.0.*-dev",
+		"phpunit/phpunit": "4.1.*"
+	},
+	"autoload": {
+		"psr-4": {
+			"UserTools\\": "src",
+			"UserTools\\Test\\Fixture\\": "tests\\Fixture"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Cake\\Test\\": "vendor/cakephp/cakephp/tests",
+			"UserTools\\Test\\": "tests"
+		}
 	},
 	"extra": {
 		"installer-name": "UserTools"
