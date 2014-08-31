@@ -29,7 +29,7 @@ $loader = new \Cake\Core\ClassLoader;
 $loader->register();
 
 $loader->addNamespace('TestApp', APP);
-$loader->addNamespace('DebugkitTestPlugin', APP . 'Plugin' . DS . 'TestPlugin' . DS . 'src');
+//$loader->addNamespace('DebugkitTestPlugin', APP . 'Plugin' . DS . 'TestPlugin' . DS . 'src');
 
 require_once CORE_PATH . 'config/bootstrap.php';
 
@@ -94,7 +94,7 @@ $config = [
 
 // Use the test connection for 'debug_kit' as well.
 ConnectionManager::config('test', $config);
-ConnectionManager::config('test_debug_kit', $config);
+//ConnectionManager::config('test_debug_kit', $config);
 
 
 Log::config([

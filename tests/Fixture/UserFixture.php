@@ -7,7 +7,7 @@ use Cake\TestSuite\Fixture\TestFixture;
  * UserFixture
  *
  * @author Florian Krämer
- * @copyright 2013 Florian Krämer
+ * ]@copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
 class UserFixture extends TestFixture {

@@ -8,7 +8,7 @@ use Cake\TestSuite\TestCase;
  * UserToolComponent
  *
  * @author Florian Krämer
- * @copyright 2013 Florian Krämer
+ * ]@copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
 class UserToolComponent extends TestCase {
@@ -19,7 +19,7 @@ class UserToolComponent extends TestCase {
  * @var array
  */
 	public $fixtures = [
-		//'plugin.user_tools.user'
+		'plugin.user_tools.user'
 	];
 
 /**

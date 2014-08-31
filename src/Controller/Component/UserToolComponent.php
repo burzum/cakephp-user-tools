@@ -3,7 +3,7 @@
  * UserToolComponent
  *
  * @author Florian Krämer
- * @copyright 2013 Florian Krämer
+ * @copyright 2013 - 2014 Florian Krämer
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */

@@ -3,7 +3,7 @@
  * AuthHelper
  *
  * @author Florian Krämer
- * @copyright 2013 Florian Krämer
+ * ]@copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
 namespace UserTools\View\Helper;
