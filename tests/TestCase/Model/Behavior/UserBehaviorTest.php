@@ -3,6 +3,7 @@ namespace UserTools\Test\TestCase\Model\Behavior;
 
 use Cake\ORM\TableRegistry;
 use Cake\ORM\Table;
+use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
 
 /**
@@ -82,11 +83,11 @@ class UserBehaviorTest extends TestCase {
 	public function testGeneratePassword() {
 		$result = $this->User->generatePassword();
 		$this->assertTrue(is_string($result));
-		$this->assertEqual(strlen($result), 8);
+		$this->assertEquals(strlen($result), 8);
 
 		$result = $this->User->generatePassword(5);
 		$this->assertTrue(is_string($result));
-		$this->assertEqual(strlen($result), 5);
+		$this->assertEquals(strlen($result), 5);
 	}
 
 /**
@@ -97,11 +98,11 @@ class UserBehaviorTest extends TestCase {
 	public function testGenerateToken() {
 		$result = $this->User->generateToken();
 		$this->assertTrue(is_string($result));
-		$this->assertEqual(strlen($result), 10);
+		$this->assertEquals(strlen($result), 10);
 
 		$result = $this->User->generateToken(5);
 		$this->assertTrue(is_string($result));
-		$this->assertEqual(strlen($result), 5);
+		$this->assertEquals(strlen($result), 5);
 	}
 
 /**
@@ -110,12 +111,10 @@ class UserBehaviorTest extends TestCase {
  * @return void
  */
 	public function testVerifyToken() {
-		$this->User->save(array(
-			'User' => array(
+		$this->User->save(new Entity([
 				'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
 				'id' => 2
-			),
-		), array(
+		]), array(
 			'validate' => false
 		));
 		$result = $this->User->verifyToken('secondusertesttoken');
@@ -158,7 +157,7 @@ class UserBehaviorTest extends TestCase {
 			),
 		);
 		$this->loadBehaviour();
-		$this->assertEqual($this->User->validate, array(
+		$this->assertEquals($this->User->validate, array(
 			'password' => array(
 				'notEmpty' => array(
 					'rule' => array('notEmpty'),

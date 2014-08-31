@@ -10,6 +10,7 @@ namespace UserTools\View\Helper;
 
 use Cake\Utility\Hash;
 use Cake\View\Helper;
+use Cake\View\View;
 
 class AuthHelper extends Helper {
 
@@ -18,7 +19,7 @@ class AuthHelper extends Helper {
  *
  * @var array
  */
-	public $defaults = [
+	public $_defaultSettings = [
 		'session' => false,
 		'viewVar' => 'userData',
 		'viewVarException' => true,
@@ -35,15 +36,13 @@ class AuthHelper extends Helper {
 /**
  * Constructor
  *
- * @param View $View
+ * @param \Cake\View\View $View
  * @param array $settings
  * @throws RuntimeException
  * @return AuthHelper
  */
-	public function __construct(View $View, $settings = []) {
+	public function __construct(\Cake\View\View $View, $settings = []) {
 		parent::__construct($View, $settings);
-		$settings = Hash::merge($this->defaults, $settings);
-		$this->settings = $settings;
 		$this->_setupUserData();
 	}
 

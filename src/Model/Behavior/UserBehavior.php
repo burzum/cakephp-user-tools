@@ -31,7 +31,7 @@ class UserBehavior extends Behavior {
 		'defaultValidation' => true,
 		'entityClass' => '\Cake\ORM\Entity',
 		'useUuid' => true,
-		'passwordHasher' => 'Simple',
+		'passwordHasher' => 'Default',
 		'register' => array(
 			'defaultRole' => null,
 			'hashPassword' => true,
