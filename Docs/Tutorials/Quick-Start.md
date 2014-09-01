@@ -16,6 +16,6 @@ UsersController extends AppController {
 
 The component will take the main model of the controller and load the ```UserBehavior``` with it's default settings.
 
-Go to /users/register and try to register, make sure your email config is set up properly.
+Go to ```/users/register``` and try to register, make sure your email config is set up properly.
 
-You should receive an email notification with a token and a verification URL. After verifying your user go to /users/login and try to login.
+You should receive an email notification with a token and a verification URL. After verifying your user go to ```/users/login``` and try to login.

@@ -5,6 +5,12 @@ This plugin works very similar like the CakeDC users plugin and is a derivative 
 
 Requires CakePHP >= 3.0 and php >= 5.4
 
+Requirements
+------------
+
+* CakePHP 3.0+
+* PHP 5.4.19
+
 Documentation
 -------------
 
@@ -32,11 +38,6 @@ Pull request *must* be made against the develop branch!
 License
 -------
 
-Copyright 2013-2014 Florian Krämer
+Copyright 2013 - 2014 Florian Krämer
 
-Licensed under [The MIT License](http://www.opensource.org/licenses/mit-license.php)<br/>
-Redistributions of files must retain the above copyright notice.
-
-## Copyright ###
-
-Copyright 2013 Florian Krämer
+Licensed under the [MIT](http://www.opensource.org/licenses/mit-license.php) License. Redistributions of the source code included in this repository must retain the copyright notice found in each file.
