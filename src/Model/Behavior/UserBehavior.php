@@ -19,6 +19,7 @@ use Cake\Event\EventManager;
 use Cake\Validation\Validator;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\ORM\Exception\RecordNotFoundException;
+use Cake\Event\Event;
 
 class UserBehavior extends Behavior {
 
@@ -91,7 +92,7 @@ class UserBehavior extends Behavior {
 		$this->_eventManager = $eventManager ?: new EventManager();
 
 		if ($this->_config['defaultValidation'] === true) {
-			$this->setupValidationDefaults($this->_table);
+			$this->setupRegistrationValidation($this->_table);
 		}
 	}
 
@@ -132,7 +133,7 @@ class UserBehavior extends Behavior {
  *
  * @return void
  */
-	public function setupValidationDefaults() {
+	public function setupRegistrationValidation() {
 		$Validator = new Validator($this->_table);
 		$Validator->add('username', 'not-empty', [
 			'rule' => 'notEmpty'
@@ -140,85 +141,48 @@ class UserBehavior extends Behavior {
 		$Validator->add('username', 'minimum', [
 			'rule' => ['lengthBetween', 3, 16]
 		]);
+		$Validator->add('username', 'unique', [
+			'rule' => ['validateUnique', ['scope' => 'username']],
+			'provider' => 'table'
+		]);
 		$Validator->add('username', 'alpha-numeric', [
 			'rule' => 'alphaNumeric'
 		]);
+
 		$Validator->add('email', 'valid-email', [
 			'rule' => 'email'
 		]);
 		$Validator->add('email', 'not-empty', [
 			'rule' => 'notEmpty'
 		]);
-		$this->_table->validator('userRegistration', $Validator);
+		$Validator->add('email', 'unique', [
+			'rule' => ['validateUnique', ['scope' => 'email']],
+			'provider' => 'table'
+		]);
 
-		/*
-		$this->_table->validate = Hash::merge(
-			array(
-				$this->_field('username') => array(
-					'notEmpty' => array(
-						'rule' => array('notEmpty'),
-						'message' => 'You must fill this field.',
-					),
-					'alphaNumeric' => array(
-						'rule' => array('alphaNumeric'),
-						'message' => 'The username must be alphanumeric.'
-					),
-					'between' => array(
-						'rule' => array('between', 3, 16),
-						'message' => 'Between 3 to 16 characters'
-					),
-					'unique' => array(
-						'rule' => array('isUnique', $this->_field('username')),
-						'message' => 'This username is already in use.',
-					),
-				),
-				$this->_field('email') => array(
-					'email' => array(
-						'rule' => array('email'),
-						'message' => 'This is not a valid email'
-					),
-					'unique' => array(
-						'rule' => array('isUnique', $this->_field('email')),
-						'message' => 'The email is already in use'
-					)
-				),
-				$this->_field('password') => array(
-					'notEmpty' => array(
-						'rule' => array('notEmpty'),
-						'message' => 'You must fill this field.',
-					),
-					'between' => array(
-						'rule' => array('between', 6, 64),
-						'message' => 'Between 3 to 16 characters'
-					),
-					'confirmPassword' => array(
-						'rule' => array('confirmPassword'),
-						'message' => 'The passwords don\'t match!',
-					)
-				),
-				$this->_field('passwordCheck') => array(
-					'notEmpty' => array(
-						'rule' => array('notEmpty'),
-						'message' => 'You must fill this field.',
-					),
-					'confirmPassword' => array(
-						'rule' => array('confirmPassword'),
-						'message' => 'The passwords don\'t match!',
-					)
-				),
-			),
-			$this->_table->validate
-		);
-		*/
+		$Validator->add('password', 'not-empty', [
+			'rule' => 'notEmpty'
+		]);
+		$Validator->add('password', 'minimum', [
+			'rule' => ['minLength', 6]
+		]);
+		$Validator->add('password_check', 'not-empty', [
+			'rule' => 'notEmpty'
+		]);
+
+		$this->_table->validator('userRegistration', $Validator);
 	}
 
 /**
  * Custom validation method to ensure that the two entered passwords match
  *
- * @param string $password Password
- * @return boolean Success
+ * @todo finish me
+ * @param mixed $value The value of column to be checked for uniqueness
+ * @param array $options The options array, optionally containing the 'scope' key
+ * @param array $context The validation context as provided by the validation routine
+ * @return bool true if the value is unique
  */
-	public function confirmPassword($password = null) {
+	public function confirmPassword($value, array $options, array $context = []) {
 		$passwordCheck = $this->_field('passwordCheck');
 		$password = $this->_field('password');
 		if ((isset($this->_table->data[$this->_table->alias()][$passwordCheck]) && isset($this->_table->data[$this->_table->alias()][$password]))
@@ -574,7 +538,6 @@ class UserBehavior extends Behavior {
  */
 	public function getUser($userId, $options = []) {
 		$defaults = array(
-			'recursive' => -1,
 			'contain' => array(),
 			'conditions' => array(
 				'OR' => array(
@@ -585,8 +548,7 @@ class UserBehavior extends Behavior {
 			),
 		);
 
-		$result = $this->_table->find('all', Hash::merge($defaults, $options));
-		$result = $result->first();
+		$result = $this->_table->find('all', Hash::merge($defaults, $options))->first();
 
 		if (empty($result)) {
 			throw new RecordNotFoundException(__d('user_tools', 'User not found!'));
@@ -615,8 +577,20 @@ class UserBehavior extends Behavior {
 		if ($this->_passwordHasher) {
 			return $this->_passwordHasher;
 		}
+		return $this->_passwordHasher = PasswordHasherFactory::build($this->_config['passwordHasher']);
+	}
 
-		$passwordHasher = $this->_config['passwordHasher'];
-		return $this->_passwordHasher = PasswordHasherFactory::build($passwordHasher);
+/**
+ * beforeSave callback.
+ *
+ * Makes sure to update counter cache when a new record is created or updated.
+ *
+ * @param \Cake\Event\Event $event The afterSave event that was fired.
+ * @param \Cake\ORM\Entity|\UserTools\Model\Behavior\Entity $entity The entity that was saved.
+ * @param \ArrayObject|\UserTools\Model\Behavior\ArrayObject $options the options passed to the save method
+ * @return void
+ */
+	public function beforeSave(Event $event, Entity $entity, ArrayObject $options) {
+		$entity->{$this->_field('password')} = $this->_passwordHasher->hash($entity->{$this->_field('password')});
 	}
 }
