@@ -10,6 +10,7 @@
 namespace UserTools\Controller\Component;
 
 use Cake\Controller\Component;
+use Cake\ORM\TableRegistry;
 use Cake\Utility;
 use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
@@ -27,88 +28,86 @@ class UserToolComponent extends Component {
 		'Session',
 		'Cookie',
 		'Flash',
-		'FlashMessage'
 	);
 
 /**
- * Default settings
+ * Default config
+ *
+ * These are merged with user-provided config when the component is used.
  *
  * @var array
  */
-	protected $_defaults = array(
+	protected $_defaultConfig = [
 		'autoloadBehavior' => true,
 		'actionMapping' => true,
 		'directMapping' => false,
 		'userModel' => null,
 		'passwordReset' => 'token',
-		'auth' => array(
-			'authenticate' => array(
-				'UserTools.MultiColumn' => array(
+		'auth' => [
+			'authenticate' => [
+				'UserTools.MultiColumn' => [
 					'userModel' => 'Users',
-					'fields' => array(
+					'fields' => [
 						'username' => 'email',
 						'password' => 'password'
-					),
-					'columns' => array(
+					],
+					'columns' => [
 						'username',
 						'email'
-					),
-					'scope' => array(
+					],
+					'scope' => [
 						'Users.email_verified' => 1
-					)
-				)
-			)
-		),
-		'registration' => array(
+					]
+				]
+			]
+		],
+		'registration' => [
 			'enabled' => true,
 			'successMessage' => 'Thank you for signing up!',
+			'successFlashOptions' => [],
 			'successRedirectUrl' => '/',
 			'errorMessage' => 'Please check your inputs',
+			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
-		),
-		'login' => array(
+		],
+		'login' => [
 			'redirect' => '/',
 			'successMessage' => 'Thank you for signing up!',
+			'successFlashOptions' => [],
 			'successRedirectUrl' => '/',
 			'errorMessage' => 'Please check your inputs',
+			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
-		),
-		'verifyEmail' => array(
+		],
+		'verifyEmail' => [
 
-		),
-		'requestPasswordChange' => array(
+		],
+		'requestPasswordChange' => [
 
-		),
-		'actionMap' => array(
-			'index' => array(
+		],
+		'actionMap' => [
+			'index' => [
 				'method' => 'listing',
 				'view' => 'UserTools.UserTools/index',
-			),
-			'register' => array(
+			],
+			'register' => [
 				'method' => 'register',
 				'view' => 'UserTools.UserTools/register'
-			),
-			'login' => array(
+			],
+			'login' => [
 				'method' => 'login',
 				'view' => 'UserTools.UserTools/login',
-			),
-			'logout' => array(
+			],
+			'logout' => [
 				'method' => 'logout',
 				'view' => null
-			),
-			'verify_email' => array(
+			],
+			'verify_email' => [
 				'method' => 'verifyEmailToken',
 				'view' => 'UserTools.UserTools/verify_email',
-			)
-		)
-	);
-
-/**
- * Settings of the component
- *
- * @var array
- */
-	public $settings = [];
+			]
+		]
+	];
 
 /**
  * User Table
@@ -118,31 +117,41 @@ class UserToolComponent extends Component {
 	public $UserTable = null;
 
 /**
+ * Events supported by this component.
+ *
+ * @return array
+ */
+	public function implementedEvents() {
+		return [
+			'Controller.initialize' => 'initialize',
+			'Controller.startup' => 'startup',
+		];
+	}
+
+/**
  * Constructor. Parses the accepted content types accepted by the client using HTTP_ACCEPT
  *
- * @param ComponentRegistry $collection ComponentRegistry object.
- * @param array $settings Array of settings.
+ * @param ComponentRegistry $registry ComponentRegistry object.
+ * @param array $config Array of settings.
  */
-	public function __construct(ComponentRegistry $collection, $settings = array()) {
-		parent::__construct($collection, $settings);
-		$this->Collection = $collection;
-		$this->Controller = $collection->getController();
+	public function __construct(ComponentRegistry $registry, $config = []) {
+		parent::__construct($registry, $config);
+
+		$this->Controller = $registry->getController();
 		$this->request = $this->Controller->request;
 		$this->response = $this->Controller->response;
+		$this->_methods = $this->Controller->methods;
 	}
 
 /**
  * Initializes the component
  *
  * @param Event $Event
- * @param array $settings
  * @return void
  */
-	public function initialize(Event $Event, $settings = []) {
-		$this->settings = Hash::merge($this->_defaults, $settings);
+	public function initialize(Event $Event) {
 		$this->Controller = $Event->subject();
-
-		$this->setUserModel($this->settings['userModel']);
+		$this->setUserTable($this->_config['userModel']);
 		$this->loadUserBehaviour();
 	}
 
@@ -157,14 +166,14 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * Loads the User behavior for the user model if its not already loaded
+ * Loads the User behavior for the user model if it is not already loaded
  *
  * @return void
  */
 	public function loadUserBehaviour() {
-		if ($this->settings['autoloadBehavior'] && !$this->UserTable->hasBehavior('UserTools.User')) {
-			if (is_array($this->settings['autoloadBehavior'])) {
-				$this->UserTable->addBehavior('UserTools.User', $this->settings['autoloadBehavior']);
+		if ($this->_config['autoloadBehavior'] && !$this->UserTable->hasBehavior('UserTools.User')) {
+			if (is_array($this->_config['autoloadBehavior'])) {
+				$this->UserTable->addBehavior('UserTools.User', $this->_config['autoloadBehavior']);
 			} else {
 				$this->UserTable->addBehavior('UserTools.User');
 			}
@@ -174,25 +183,25 @@ class UserToolComponent extends Component {
 /**
  * Sets or instantiates the user model class
  *
- * @param mixed $modelClass
+ * @param mixed $table
  * @throws \RuntimeException
  * @return void
  */
-	public function setUserModel($modelClass = null) {
-		if ($modelClass === null) {
+	public function setUserTable($table = null) {
+		if ($table === null) {
 			$this->UserTable = $this->Controller->{$this->Controller->modelClass};
 		} else {
-			if (is_object($modelClass)) {
-				if (!is_a($modelClass, 'Model')) {
-					throw new \RuntimeException(__d('user_tools', 'Passed object is not of type Model'));
+			if (is_object($table)) {
+				if (!is_a($table, '\Cake\ORM\Table')) {
+					throw new \RuntimeException(__d('user_tools', 'Passed object is not of type \Cake\ORM\Table!'));
 				}
-				$this->UserTable = $modelClass;
+				$this->UserTable = $table;
 			}
-			if (is_string($modelClass)) {
-				$this->UserTable = ClassRegistry::init($modelClass);
+			if (is_string($table)) {
+				$this->UserTable = TableRegistry::get($table);
 			}
 		}
-		$this->Controller->set('userModel', $this->UserTable->alias());
+		$this->Controller->set('userTable', $this->UserTable->alias());
 	}
 
 /**
@@ -202,7 +211,7 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function startup(Event $Event) {
-		if ($this->settings['actionMapping'] === true) {
+		if ($this->_config['actionMapping'] === true) {
 			$this->mapAction();
 		}
 	}
@@ -215,7 +224,7 @@ class UserToolComponent extends Component {
 	public function mapAction() {
 		$action = $this->request->params['action'];
 
-		if ($this->settings['directMapping'] === true) {
+		if ($this->_config['directMapping'] === true) {
 			if (!method_exists($this, $action)) {
 				return false;
 			}
@@ -226,9 +235,9 @@ class UserToolComponent extends Component {
 			$this->Controller->_stop();
 		}
 
-		if (isset($this->settings['actionMap'][$action]) && method_exists($this, $this->settings['actionMap'][$action]['method'])) {
-			$this->{$this->settings['actionMap'][$action]['method']}();
-			$this->Controller->response = $this->Controller->render($this->settings['actionMap'][$action]['view']);
+		if (isset($this->_config['actionMap'][$action]) && method_exists($this, $this->_config['actionMap'][$action]['method'])) {
+			$this->{$this->_config['actionMap'][$action]['method']}();
+			$this->Controller->response = $this->Controller->render($this->_config['actionMap'][$action]['view']);
 			$this->Controller->response->send();
 			exit;
 		}
@@ -244,7 +253,7 @@ class UserToolComponent extends Component {
  */
 	public function login($options = []) {
 		$Controller = $this->Controller;
-		$options = Hash::merge($this->settings['login'], $options);
+		$options = Hash::merge($this->_config['login'], $options);
 
 		if ($Controller->request->is('post')) {
 			$Auth = $this->_getAuthObject();
@@ -268,10 +277,6 @@ class UserToolComponent extends Component {
 		}
 	}
 
-	public function setUserCookie($user = []) {
-
-	}
-
 /**
  * Logout
  *
@@ -281,14 +286,14 @@ class UserToolComponent extends Component {
 	public function logout($options = []) {
 		$Controller = $this->_Collection->getController();
 		$Auth = $this->_getAuthObject();
-		$options = Hash::merge($this->settings['login'], $options);
+		$options = Hash::merge($this->_config['login'], $options);
 		$user = $Auth->user();
 
 		$this->Session->destroy();
 		if (isset($_COOKIE[$this->Cookie->name])) {
 			$this->Cookie->destroy();
 		}
-		$this->Session->setFlash(__d('user_tools', '%s you have successfully logged out'), $user['username']);
+		$this->Flash->set(__d('user_tools', '%s you have successfully logged out'), $user['username']);
 		$this->Controller->redirect($Auth->logout());
 	}
 
@@ -306,13 +311,13 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function register($options = []) {
-		if ($this->settings['registration'] === false) {
+		if ($this->_config['registration'] === false) {
 			throw new NotFoundException();
 		}
 
-		$options = Hash::merge($this->settings['registration'], $options);
+		$options = Hash::merge($this->_config['registration'], $options);
 
-		if (!$this->Controller->request->is('get')) {
+		if ($this->Controller->request->is('post')) {
 			if ($this->UserTable->register($this->Controller->request->data)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
@@ -403,10 +408,11 @@ class UserToolComponent extends Component {
 	public function handleFlashAndRedirect($type, $options) {
 		if ($options[$type . 'Message'] !== false) {
 			if (is_string($options[$type . 'Message'])) {
-				$this->Session->setFlash($options[$type . 'Message']);
-			}
-			if (is_array($options[$type . 'Message'])) {
-				$this->Session->setFlash($options[$type . 'Message']['message'], $options[$type . 'Message']['key'], $options[$type . 'Message']['message']);
+				$flashOptions = [];
+				if (isset($options[$type . 'FlashOptions'])) {
+					$flashOptions = $options[$type . 'FlashOptions'];
+				}
+				$this->Flash->set($options[$type . 'Message'], $flashOptions);
 			}
 		}
 		if ($options[$type . 'RedirectUrl'] !== false) {
@@ -421,7 +427,7 @@ class UserToolComponent extends Component {
  */
 	protected function _getAuthObject() {
 		if (!$this->Collection->loaded('Auth')) {
-			$Auth = $this->Collection->load('Auth', $this->settings['auth']);
+			$Auth = $this->Collection->load('Auth', $this->_config['auth']);
 			$Auth->request = $this->Controller->request;
 			$Auth->response = $this->Controller->response;
 			return $Auth;
