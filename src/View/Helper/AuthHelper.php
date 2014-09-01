@@ -19,7 +19,7 @@ class AuthHelper extends Helper {
  *
  * @var array
  */
-	public $_defaultSettings = [
+	protected $_defaultConfig = [
 		'session' => false,
 		'viewVar' => 'userData',
 		'viewVarException' => true,
@@ -53,15 +53,15 @@ class AuthHelper extends Helper {
  * @return void
  */
 	protected function _setupUserData() {
-		if (is_string($this->settings['session'])) {
-			$this->_userData = CakeSession::read($this->settings['session']);
+		if (is_string($this->_config['session'])) {
+			$this->_userData = CakeSession::read($this->_config['session']);
 		} else {
-			if (!isset($this->_View->viewVars[$this->settings['viewVar']])) {
-				if ($this->settings['viewVarException'] === true) {
+			if (!isset($this->_View->viewVars[$this->_config['viewVar']])) {
+				if ($this->_config['viewVarException'] === true) {
 					throw new \RuntimeException(__d('user_tools', 'View var %s not present!'));
 				}
 			} else {
-				$this->_userData = $this->_View->viewVars[$this->settings['viewVar']];
+				$this->_userData = $this->_View->viewVars[$this->_config['viewVar']];
 			}
 		}
 	}
@@ -94,7 +94,7 @@ class AuthHelper extends Helper {
  * @return mixed
  */
 	public function user($key) {
-		return Hash::get($this->_userData, $key);
+		return $this->_userData->{$key};
 	}
 
 /**
@@ -104,7 +104,7 @@ class AuthHelper extends Helper {
  * @return boolean
  */
 	public function hasRole($role) {
-		$roles = $this->user($this->settings['roleField']);
+		$roles = $this->user($this->_config['roleField']);
 		if (is_string($roles)) {
 			return ($role === $roles);
 		}

@@ -43,7 +43,7 @@ class UserBehaviorTest extends TestCase {
  */
 	public function setUp() {
 		parent::setUp();
-		$this->User = TableRegistry::get('UserToolUser');
+		$this->User = TableRegistry::get('Users');
 		$this->User->addBehavior('UserTools.User');
 	}
 
@@ -63,12 +63,10 @@ class UserBehaviorTest extends TestCase {
  */
 	public function testRegister() {
 		$data = array(
-			'User' => array(
-				'username' => 'foobar',
-				'email' => 'foobar@foobar.com',
-				'password' => 'password',
-				'confirm_password' => 'password'
-			)
+			'username' => 'foobar',
+			'email' => 'foobar@foobar.com',
+			'password' => 'password',
+			'confirm_password' => 'password'
 		);
 
 		$result = $this->User->register($data);
@@ -123,13 +121,14 @@ class UserBehaviorTest extends TestCase {
 		$result = $this->User->verifyToken('secondusertesttoken', array(
 			'returnData' => true
 		));
-		$this->assertTrue(is_array($result));
+		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
+		$this->assertTrue($result->is_expired);
 	}
 
 /**
  * testVerifyTokenNotFoundException
  *
- * @expectedException NotFoundException
+ * @expectedException \Cake\ORM\Exception\RecordNotFoundException
  * @return void
  */
 	public function testVerifyTokenNotFoundException() {
@@ -157,6 +156,7 @@ class UserBehaviorTest extends TestCase {
 			),
 		);
 		$this->loadBehaviour();
+
 		$this->assertEquals($this->User->validate, array(
 			'password' => array(
 				'notEmpty' => array(
@@ -237,13 +237,34 @@ class UserBehaviorTest extends TestCase {
 	}
 
 /**
+ * testGetUser
+ *
+ * @return void
+ */
+	public function testGetUser() {
+		$result = $this->User->getUser('1');
+		$this->assertEquals($result->id, '1');
+		$this->assertEquals($result->username, 'adminuser');
+	}
+
+/**
+ * testGetUserRecordNotFoundException
+ *
+ * @expectedException \Cake\ORM\Exception\RecordNotFoundException
+ * @return void
+ */
+	public function testGetUserRecordNotFoundException() {
+		$this->User->getUser('DOES-NOT-EXIST');
+	}
+
+/**
  * loadBehaviour helper method
  *
  * @param array $options
  * @return void
  */
 	public function loadBehaviour($options = []) {
-		$this->User->Behaviors->load('UserTools.User', $options);
+		$this->User->addBehavior('UserTools.User', $options);
 	}
 
 }

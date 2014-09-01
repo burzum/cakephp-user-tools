@@ -3,6 +3,7 @@ namespace UserTools\Test\TestCase\View\Helper;
 
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use Cake\ORM\Entity;
 use UserTools\View\Helper\AuthHelper;
 
 /**
@@ -23,12 +24,12 @@ class AuthHelperTestCase extends TestCase {
 		parent::setUp();
 		$this->View = new View(null);
 		$this->View->viewVars = array(
-			'userData' => array(
+			'userData' => new Entity([
 				'id' => 'user-1',
 				'username' => 'florian',
 				'role' => 'admin',
 				'something' => 'some value'
-			)
+			])
 		);
 	}
 

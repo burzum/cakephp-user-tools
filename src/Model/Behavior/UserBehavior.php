@@ -18,6 +18,7 @@ use Cake\Network\Email\Email;
 use Cake\Event\EventManager;
 use Cake\Validation\Validator;
 use Cake\Auth\PasswordHasherFactory;
+use Cake\ORM\Exception\RecordNotFoundException;
 
 class UserBehavior extends Behavior {
 
@@ -136,8 +137,8 @@ class UserBehavior extends Behavior {
 		$Validator->add('username', 'not-empty', [
 			'rule' => 'notEmpty'
 		]);
-		$Validator->add('username', 'between', [
-			'rule' => ['between', 3, 16]
+		$Validator->add('username', 'minimum', [
+			'rule' => ['lengthBetween', 3, 16]
 		]);
 		$Validator->add('username', 'alpha-numeric', [
 			'rule' => 'alphaNumeric'
@@ -372,7 +373,7 @@ class UserBehavior extends Behavior {
 /**
  * Verify the email token
  *
- * @throws \Cake\Error\NotFoundException if the token was not found at all
+ * @throws \Cake\ORM\Exception\RecordNotFoundException if the token was not found at all
  * @param string $token
  * @param array $options
  * @return boolean|array Returns false if the token has expired
@@ -386,20 +387,19 @@ class UserBehavior extends Behavior {
 
 		$options = Hash::merge($defaults, $options);
 
-		$result = $this->_table->find('first', array(
-			'conditions' => array(
-				$options['tokenField'] => $token
-			)
-		));
+		$result = $this->_table->find()
+			->where([$options['tokenField'] => $token])
+			->first();
 
 		if (empty($result)) {
-			throw new NotFoundException(__d('user_tools', 'Invalid token'));
+			throw new RecordNotFoundException(__d('user_tools', 'Invalid token'));
 		}
 
-		$isExpired = $result[$this->_table->alias()][$this->_field('emailTokenExpires')] <= date('Y-m-d H:i:s');
+		$time = new \Cake\Utility\Time();
+		$isExpired = $result->{$this->_field('emailTokenExpires')} <= $time;
 
 		if ($options['returnData'] === true) {
-			$result[$this->_table->alias()]['is_expired'] = $isExpired;
+			$result->is_expired = $isExpired;
 			return $result;
 		}
 
@@ -559,13 +559,15 @@ class UserBehavior extends Behavior {
 		foreach ($options as $option => $value) {
 			$Email->{$option}($value);
 		}
+		$transport = new \Cake\Network\Email\DebugTransport();
+		$Email->transport($transport);
 		return $Email->send();
 	}
 
 /**
  * Gets an users record by id or slug
  *
- * @throws \Cake\Error\NotFoundException
+ * @throws \Cake\ORM\Exception\RecordNotFoundException
  * @param mixed $userId
  * @param array $options
  * @return array
@@ -583,10 +585,11 @@ class UserBehavior extends Behavior {
 			),
 		);
 
-		$result = $this->_table->find('first', Hash::merge($defaults, $options));
+		$result = $this->_table->find('all', Hash::merge($defaults, $options));
+		$result = $result->first();
 
 		if (empty($result)) {
-			throw new NotFoundException(__d('user_tools', 'User not found!'));
+			throw new RecordNotFoundException(__d('user_tools', 'User not found!'));
 		}
 
 		return $result;
