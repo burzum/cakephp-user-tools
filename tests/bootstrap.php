@@ -92,10 +92,7 @@ $config = [
 	'timezone' => 'UTC'
 ];
 
-// Use the test connection for 'debug_kit' as well.
 ConnectionManager::config('test', $config);
-//ConnectionManager::config('test_debug_kit', $config);
-
 
 Log::config([
 	'debug' => [

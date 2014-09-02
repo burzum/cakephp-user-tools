@@ -11,6 +11,7 @@ namespace UserTools\Model\Behavior;
 
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
+use Cake\ORM\Entity;
 use Cake\Utility\Hash;
 use Cake\Utility\String;
 use Cake\Error\NotFoundException;
@@ -31,6 +32,7 @@ class UserBehavior extends Behavior {
 	protected $_defaultConfig = array(
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
+		'validatorClass' => '\UserTools\Validation\UserRegistrationValidator',
 		'entityClass' => '\Cake\ORM\Entity',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
@@ -115,15 +117,15 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Gets the mapped field name of the model
+ * Gets the mapped field name of the table
  *
  * @param string $field
  * @throws \RuntimeException
- * @return string field name of the model
+ * @return string field name of the table
  */
 	protected function _field($field) {
 		if (!isset($this->_config['fieldMap'][$field])) {
-			throw new \RuntimeException(__d('user_tools', 'Invalid field %s!', $field));
+			throw new \RuntimeException(__d('user_tools', 'Invalid field "%s"!', $field));
 		}
 		return $this->_config['fieldMap'][$field];
 	}
@@ -134,42 +136,7 @@ class UserBehavior extends Behavior {
  * @return void
  */
 	public function setupRegistrationValidation() {
-		$Validator = new Validator($this->_table);
-		$Validator->add('username', 'not-empty', [
-			'rule' => 'notEmpty'
-		]);
-		$Validator->add('username', 'minimum', [
-			'rule' => ['lengthBetween', 3, 16]
-		]);
-		$Validator->add('username', 'unique', [
-			'rule' => ['validateUnique', ['scope' => 'username']],
-			'provider' => 'table'
-		]);
-		$Validator->add('username', 'alpha-numeric', [
-			'rule' => 'alphaNumeric'
-		]);
-
-		$Validator->add('email', 'valid-email', [
-			'rule' => 'email'
-		]);
-		$Validator->add('email', 'not-empty', [
-			'rule' => 'notEmpty'
-		]);
-		$Validator->add('email', 'unique', [
-			'rule' => ['validateUnique', ['scope' => 'email']],
-			'provider' => 'table'
-		]);
-
-		$Validator->add('password', 'not-empty', [
-			'rule' => 'notEmpty'
-		]);
-		$Validator->add('password', 'minimum', [
-			'rule' => ['minLength', 6]
-		]);
-		$Validator->add('password_check', 'not-empty', [
-			'rule' => 'notEmpty'
-		]);
-
+		$Validator = new $this->_config['validatorClass']($this->_table);
 		$this->_table->validator('userRegistration', $Validator);
 	}
 
@@ -383,8 +350,7 @@ class UserBehavior extends Behavior {
 			'tokenField' => $this->_field('emailToken'),
 			'expirationField' => $this->_field('emailTokenExpires'),
 		);
-		$options = Hash::merge($defaults, $options);
-		$this->verifyToken($token, $options);
+		$this->verifyToken($token, Hash::merge($defaults, $options));
 	}
 
 /**
@@ -400,8 +366,7 @@ class UserBehavior extends Behavior {
 			'tokenField' => $this->_field('passwordToken'),
 			'expirationField' => $this->_field('passwordTokenExpires'),
 		);
-		$options = Hash::merge($defaults, $options);
-		$this->verifyToken($token, $options);
+		$this->verifyToken($token, Hash::merge($defaults, $options));
 	}
 
 /**
@@ -414,16 +379,16 @@ class UserBehavior extends Behavior {
 	public function generatePassword($length = 8, $options = []) {
 		srand((double)microtime() * 1000000);
 
-		$defaults = array(
-			'vowels' => array(
+		$defaults = [
+			'vowels' => [
 				'a', 'e', 'i', 'o', 'u'
-			),
-			'cons' => array(
+			],
+			'cons' => [
 				'b', 'c', 'd', 'g', 'h', 'j', 'k', 'l', 'm', 'n',
 				'p', 'r', 's', 't', 'u', 'v', 'w', 'tr', 'cr', 'br', 'fr', 'th',
 				'dr', 'ch', 'ph', 'wr', 'st', 'sp', 'sw', 'pr', 'sl', 'cl'
-			)
-		);
+			]
+		];
 
 		if (isset($options['cons'])) {
 			unset($defaults['cons']);
@@ -455,7 +420,6 @@ class UserBehavior extends Behavior {
 	public function generateToken($length = 10, $chars = '0123456789abcdefghijklmnopqrstuvwxyz') {
 		$token = '';
 		$i = 0;
-
 		while ($i < $length) {
 			$char = substr($chars, mt_rand(0, strlen($chars) - 1), 1);
 			if (!stristr($token, $char)) {
@@ -473,19 +437,53 @@ class UserBehavior extends Behavior {
  * @return void
  */
 	public function removeExpiredRegistrations($conditions = []) {
-		$defaults = array(
+		$defaults = [
 			$this->_table->alias() . '.' . $this->_field('emailVerified') => 0,
 			$this->_table->alias() . '.' . $this->_field('emailTokenExpires') . ' <' => date('Y-m-d H:i:s')
-		);
-
+		];
 		$this->_table->deleteAll(Hash::merge($defaults, $conditions));
+	}
+
+/**
+ * @todo finish me
+ */
+	public function sendNewPassword($email, $options = []) {
+		$result = $this->_table->find()
+			->conditions([
+				$this->_table->alias() . '.' . $this->_field('email') => $email
+			])
+			->first();
+		if (empty($result)) {
+			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+		}
+		$result->password = $result->clear_password = $this->generatePassword();
+		$this->_table->save($result);
+		$this->sendNewPasswordEmail($result);
+	}
+
+/**
+ * sendNewPasswordEmail
+ *
+ * @param \Cake\ORM\Entity $user
+ * @param array $options
+ * @return void
+ */
+	public function sendNewPasswordEmail(Entity $user, $options = []) {
+		$defaults = [
+			'subject' => __d('user_tools', 'Your new password'),
+			'template' => 'UserTools.Users/verification_email',
+			'viewVars' => [
+				'data' => $user
+			]
+		];
+		return $this->sendEmail(Hash::merge($defaults, $options));
 	}
 
 /**
  * Returns an email instance
  *
  * @param array $config
- * @return CakeEmail CakeEmail instance
+ * @return \Cake\Network\Email\Email Email instance
  */
 	public function getMailInstance($config = null) {
 		if (empty($config)) {
@@ -523,8 +521,6 @@ class UserBehavior extends Behavior {
 		foreach ($options as $option => $value) {
 			$Email->{$option}($value);
 		}
-		$transport = new \Cake\Network\Email\DebugTransport();
-		$Email->transport($transport);
 		return $Email->send();
 	}
 
@@ -555,15 +551,6 @@ class UserBehavior extends Behavior {
 		}
 
 		return $result;
-	}
-
-/**
- * Get the event manager for this Table.
- *
- * @return \Cake\Event\EventManager
- */
-	public function getEventManager() {
-		return $this->_eventManager;
 	}
 
 /**

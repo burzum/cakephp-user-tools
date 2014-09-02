@@ -72,10 +72,10 @@ class UserToolComponent extends Component {
 		],
 		'login' => [
 			'redirect' => '/',
-			'successMessage' => 'Thank you for signing up!',
+			'successMessage' => 'You are logged in!',
 			'successFlashOptions' => [],
 			'successRedirectUrl' => '/',
-			'errorMessage' => 'Please check your inputs',
+			'errorMessage' => 'Invalid login credentials.',
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
 		],
@@ -295,6 +295,17 @@ class UserToolComponent extends Component {
 	}
 
 /**
+ * View
+ *
+ * @param array $options
+ * @return void
+ */
+	public function viewUser($options = []) {
+		$this->Controller->set('user', $this->UserTable->view());
+		$this->Controller->set('_serialize', ['user']);
+	}
+
+/**
  * Logout
  *
  * @param array $options
@@ -401,7 +412,7 @@ class UserToolComponent extends Component {
  * @todo finish me
  */
 	public function requestPasswordChange() {
-		if (!$this->Controller->request->is('get')) {
+		if ($this->Controller->request->is('post')) {
 			$this->UserTable->requestPasswordChange($this->Contoller->request->data);
 		}
 	}
@@ -410,16 +421,18 @@ class UserToolComponent extends Component {
  * @todo finish me
  */
 	public function changePassword() {
-		$this->verifyToken(array(
-			'type' => 'Password'
-		));
+		if ($this->Controller->request->is('post')) {
+			$this->UserTable->verifyToken([
+				'type' => 'Password'
+			]);
+		}
 	}
 
 /**
- * Handles flashes and redirects if needed
+ * Handles flashes and redirects
  *
- * @param string
- * @param array $options
+ * @param string $type "success" or "error"
+ * @param array $options Options
  * @return void
  */
 	public function handleFlashAndRedirect($type, $options) {
