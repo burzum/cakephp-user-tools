@@ -125,6 +125,7 @@ class UserToolComponent extends Component {
 		return [
 			'Controller.initialize' => 'initialize',
 			'Controller.startup' => 'startup',
+			'Controller.beforeRender' => 'beforeRender',
 		];
 	}
 
@@ -136,7 +137,7 @@ class UserToolComponent extends Component {
  */
 	public function __construct(ComponentRegistry $registry, $config = []) {
 		parent::__construct($registry, $config);
-
+		$this->Collection = $registry;
 		$this->Controller = $registry->getController();
 		$this->request = $this->Controller->request;
 		$this->response = $this->Controller->response;
@@ -153,6 +154,22 @@ class UserToolComponent extends Component {
 		$this->Controller = $Event->subject();
 		$this->setUserTable($this->_config['userModel']);
 		$this->loadUserBehaviour();
+		//$this->loadHelpers();
+	}
+
+/**
+ *
+ */
+	public function loadHelpers() {
+		$helpers = ['Flash', 'UserTools.Auth'];
+		foreach ($helpers as $helper) {
+			if (
+				!in_array($helper, $this->Controller->helpers) &&
+				!array_key_exists($helper, $this->Controller->helpers)
+			) {
+				$this->Controller->helpers[] = $helper;
+			}
+		}
 	}
 
 /**
@@ -436,4 +453,7 @@ class UserToolComponent extends Component {
 		}
 	}
 
+	public function beforeRender(Event $Event) {
+		$this->Controller->set('userData', $this->_getAuthObject()->user());
+	}
 }
