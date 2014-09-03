@@ -27,7 +27,6 @@ class UserToolComponent extends Component {
  */
 	public $components = array(
 		'Session',
-		'Cookie',
 		'Flash',
 	);
 
@@ -102,6 +101,14 @@ class UserToolComponent extends Component {
 			'logout' => [
 				'method' => 'logout',
 				'view' => null
+			],
+			'reset_password' => [
+				'method' => 'resetPassword',
+				'view' => 'UserTools.UserTools/reset_password',
+			],
+			'request_password' => [
+				'method' => 'requestPassword',
+				'view' => 'UserTools.UserTools/request_password',
 			],
 			'verify_email' => [
 				'method' => 'verifyEmailToken',
@@ -369,15 +376,51 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function verifyEmailToken($options = []) {
-		$defaults = array(
+		$defaults = [
 			'queryParam' => 'token',
 			'type' => 'Email',
 			'successMessage' => __d('user_tools', 'Email verified, you can now login!'),
 			'successRedirectUrl' => array('action' => 'login'),
 			'errorMessage' => __d('user_tools', 'Invalid email token!'),
 			'errorRedirectUrl' => '/'
-		);
+		];
 		return $this->verifyToken(Hash::merge($defaults, $options));
+	}
+
+/**
+ * The user can request a new password reset token, an email is send to him
+ *
+ * @param array $options
+ * @return void
+ */
+	public function requestPassword($options = []) {
+		$defaults = [
+			'field' => 'email'
+		];
+		$options = Hash::merge($defaults, $options);
+
+		if ($this->request->is('post')) {
+			debug($this->request->data);
+			//$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
+			// @todo flash & redirect
+		}
+	}
+
+/**
+ * Allows the user to enter a new password
+ *
+ * @param array $options
+ * @return void
+ */
+	public function resetPassword($options = []) {
+		$defaults = [
+			'queryParam' => 'token',
+		];
+		$options = Hash::merge($defaults, $options);
+		$this->verifyToken(Hash::merge($defaults, $options));
+		if ($this->request->is('post')) {
+			// @todo
+		}
 	}
 
 /**
@@ -416,26 +459,6 @@ class UserToolComponent extends Component {
 		}
 
 		return $result;
-	}
-
-/**
- * @todo finish me
- */
-	public function requestPasswordChange() {
-		if ($this->request->is('post')) {
-			$this->UserTable->requestPasswordChange($this->Contoller->request->data);
-		}
-	}
-
-/**
- * @todo finish me
- */
-	public function changePassword() {
-		if ($this->request->is('post')) {
-			$this->UserTable->verifyToken([
-				'type' => 'Password'
-			]);
-		}
 	}
 
 /**

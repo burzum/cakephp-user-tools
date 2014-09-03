@@ -67,6 +67,15 @@ class UserBehavior extends Behavior {
 		'initPasswordReset' => [
 			'tokenLength' => 10,
 			'expires' => '+1 day'
+		],
+		'sendVerificationEmail' => [
+			'template' => 'UserTools.Users/verification_email',
+		],
+		'sendNewPasswordEmail' => [
+			'template' => 'UserTools.Users/new_password',
+		],
+		'sendPasswordResetToken' => [
+			'template' => 'UserTools.Users/password_reset',
 		]
 	];
 
@@ -466,24 +475,52 @@ class UserBehavior extends Behavior {
 /**
  * Initializes a password reset process
  *
+ * @param mixed $value
+ * @param array $options
  * @return boolean
  */
-	public function initPasswordReset($email, $options = []) {
-		$options = Hash::merge($this->_config['initPasswordReset'], $options);
+	public function initPasswordReset($value, $options = []) {
+		$defaults = [
+			'field' => [
+				$this->_table->alias() . '.' . $this->_field('email'),
+				$this->_table->alias() . '.' . $this->_field('username')
+			]
+		];
+		$options = Hash::merge($defaults, $this->_config['initPasswordReset'], $options);
+		$result = $this->_findUserForPasswordReset($value, $options);
+		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
+		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
+		$this->_table->save($result, ['validate' => false]);
+		return $this->sendNewPasswordEmail($result);
+	}
 
-		$result = $this->_table->find()
-			->conditions([
-				$this->_table->alias() . '.' . $this->_field('email') => $email
-			])
-			->first();
+/**
+ * Finds the user for the password reset
+ *
+ * Extend the behavior and override this method if the configuration options
+ * are not sufficient.
+ *
+ * @param mixed $value
+ * @param array $options
+ * @throws \Cake\ORM\Exception\RecordNotFoundException
+ * @return \Cake\ORM\Entity
+ */
+	protected function _findUserForPasswordReset($value, $options) {
+		$query = $this->_table->find();
+		if (is_array($options['field'])) {
+			$orConditions = [];
+			foreach ($options['field'] as $field) {
+				$orConditions[$field] = $value;
+			}
+			$query->orWhere($orConditions);
+		} else {
+			$query->where([$options['field'] => $value]);
+		}
+		$result = $query->first();
 		if (empty($result)) {
 			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
 		}
-
-		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
-		$result->{$this->_field('passwordTokenExpires')} = date('Y-m-d H:i:s', strtotime($options['expires']));
-		$this->_table->save($result, ['validate' => false]);
-		return $this->sendNewPasswordEmail($result);
+		return $result;
 	}
 
 /**
@@ -511,69 +548,6 @@ class UserBehavior extends Behavior {
 		$result->password = $this->hashPassword($result->password);
 		$this->_table->save($result, ['validate' => false]);
 		return $this->sendNewPasswordEmail($result);
-	}
-
-/**
- * sendNewPasswordEmail
- *
- * @param \Cake\ORM\Entity $user
- * @param array $options
- * @return void
- */
-	public function sendNewPasswordEmail(Entity $user, $options = []) {
-		$defaults = [
-			'subject' => __d('user_tools', 'Your new password'),
-			'template' => 'UserTools.Users/new_password_email',
-			'viewVars' => [
-				'user' => $user
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $options));
-	}
-
-/**
- * Returns an email instance
- *
- * @param array $config
- * @return \Cake\Network\Email\Email Email instance
- */
-	public function getMailInstance($config = null) {
-		if (empty($config)) {
-			$config = $this->_config['emailConfig'];
-		}
-		return new Email($config);
-	}
-
-/**
- * sendVerificationEmail
- *
- * @param array $data
- * @param array $options
- * @return boolean
- */
-	public function sendVerificationEmail($data, $options = []) {
-		$defaults = [
-			'subject' => __d('user_tools', 'Please verify your Email'),
-			'template' => 'UserTools.Users/verification_email',
-			'viewVars' => [
-				'user' => $data
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $options));
-	}
-
-/**
- * sendEmail
- *
- * @param array $options
- * @return boolean
- */
-	public function sendEmail($options = []) {
-		$Email = $this->getMailInstance();
-		foreach ($options as $option => $value) {
-			$Email->{$option}($value);
-		}
-		return $Email->send();
 	}
 
 /**
@@ -611,4 +585,81 @@ class UserBehavior extends Behavior {
 		return $this->_passwordHasher = PasswordHasherFactory::build($this->_config['passwordHasher']);
 	}
 
+/**
+ * Returns an email instance
+ *
+ * @param array $config
+ * @return \Cake\Network\Email\Email Email instance
+ */
+	public function getMailInstance($config = null) {
+		if (empty($config)) {
+			$config = $this->_config['emailConfig'];
+		}
+		return new Email($config);
+	}
+
+/**
+ * sendEmail
+ *
+ * @param array $options
+ * @return boolean
+ */
+	public function sendEmail($options = []) {
+		$Email = $this->getMailInstance();
+		foreach ($options as $option => $value) {
+			$Email->{$option}($value);
+		}
+		return $Email->send();
+	}
+
+/**
+ * sendNewPasswordEmail
+ *
+ * @param \Cake\ORM\Entity $user
+ * @param array $options
+ * @return void
+ */
+	public function sendPasswordResetToken(Entity $user, $options = []) {
+		$defaults = [
+			'subject' => __d('user_tools', 'Your password reset'),
+			'viewVars' => [
+				'user' => $user
+			]
+		];
+		return $this->sendEmail(Hash::merge($defaults, $this->_config, $options));
+	}
+
+/**
+ * sendNewPasswordEmail
+ *
+ * @param \Cake\ORM\Entity $user
+ * @param array $options
+ * @return void
+ */
+	public function sendNewPasswordEmail(Entity $user, $options = []) {
+		$defaults = [
+			'subject' => __d('user_tools', 'Your new password'),
+			'viewVars' => [
+				'user' => $user
+			]
+		];
+		return $this->sendEmail(Hash::merge($defaults, $this->_config, $options));
+	}
+
+/**
+ * sendVerificationEmail
+ *
+ * @param array $data
+ * @param array $options
+ * @return boolean
+ */
+	public function sendVerificationEmail($data, $options = []) {
+		$defaults = [
+			'subject' => __d('user_tools', 'Please verify your Email'),
+			'viewVars' => [
+				'user' => $data
+			]
+		];
+		return $this->sendEmail(Hash::merge($defaults, $this->_config, $options));
+	}
 }
