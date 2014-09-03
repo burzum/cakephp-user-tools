@@ -138,13 +138,13 @@ class UserToolComponent extends Component {
  * Constructor. Parses the accepted content types accepted by the client using HTTP_ACCEPT
  *
  * @param ComponentRegistry $registry ComponentRegistry object.
- * @param array $config Array of settings.
+ * @param array $config Config options array
  */
 	public function __construct(ComponentRegistry $registry, $config = []) {
 		parent::__construct($registry, $config);
 		$this->Collection = $registry;
 		$this->Controller = $registry->getController();
-		$this->request = $this->request->;
+		$this->request = $this->Controller->request;
 		$this->response = $this->Controller->response;
 		$this->_methods = $this->Controller->methods;
 	}
@@ -304,26 +304,27 @@ class UserToolComponent extends Component {
  * @param array $options
  * @return void
  */
-	public function getUser($options = []) {
-		$this->Controller->set('user', $this->UserTable->getUser());
+	public function getUser($userId = null, $options = []) {
+		if (is_null($userId)) {
+			if (isset($this->request->params['pass'][0])) {
+				$userId = $this->request->params['pass'][0];
+			}
+		}
+		$this->Controller->set('user', $this->UserTable->getUser($userId));
 		$this->Controller->set('_serialize', ['user']);
 	}
 
 /**
  * Logout
  *
- * @param array $options
  * @return void
  */
-	public function logout($options = []) {
-		$options = Hash::merge($this->_config['logout'], $options);
-
+	public function logout() {
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
-
-		$this->Session->destroy();
-		if (isset($_COOKIE[$this->Cookie->name])) {
-			$this->Cookie->destroy();
+		if (empty($user)) {
+			$this->Controller->redirect($this->Controller->referer());
+			return;
 		}
 		$this->Flash->set(__d('user_tools', '%s you have successfully logged out'), $user->username);
 		$this->Controller->redirect($Auth->logout());
@@ -467,7 +468,7 @@ class UserToolComponent extends Component {
 	protected function _getAuthObject() {
 		if (!$this->Collection->loaded('Auth')) {
 			$Auth = $this->Collection->load('Auth', $this->_config['auth']);
-			$Auth->request = $this->request->;
+			$Auth->request = $this->Controller->request;
 			$Auth->response = $this->Controller->response;
 			return $Auth;
 		} else {

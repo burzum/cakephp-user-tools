@@ -21,19 +21,19 @@ The behavior has a good amount of settings that allow you to configure the behav
 The behavior doesn't force you to match your users table field names to the behavior. The behavior can be configured to use any fields and is using mapping for that. The following array is the *default* configuration of the field mapping. You can override that when you configure the behavior. The key is the mapping name and value of the array is the field name.
 
 ```php
-	'fieldMap' => [
-		'username' => 'username',
-		'password' => 'password',
-		'email' => 'email',
-		'passwordCheck' => 'confirm_password',
-		'lastAction' => 'last_action',
-		'lastLogin' => 'last_login',
-		'role' => 'role',
-		'emailToken' => 'email_token',
-		'emailTokenExpires' => 'email_token_expires',
-		'passwordToken' => 'password_token',
-		'passwordTokenExpires' => 'password_token_expires',
-		'emailVerified' => 'email_verified',
-		'active' => 'active',
-	]
+'fieldMap' => [
+	'username' => 'username',
+	'password' => 'password',
+	'email' => 'email',
+	'passwordCheck' => 'confirm_password',
+	'lastAction' => 'last_action',
+	'lastLogin' => 'last_login',
+	'role' => 'role',
+	'emailToken' => 'email_token',
+	'emailTokenExpires' => 'email_token_expires',
+	'passwordToken' => 'password_token',
+	'passwordTokenExpires' => 'password_token_expires',
+	'emailVerified' => 'email_verified',
+	'active' => 'active',
+]
 ```

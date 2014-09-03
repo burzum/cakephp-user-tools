@@ -62,12 +62,12 @@ class UserBehaviorTest extends TestCase {
  * @return void
  */
 	public function testRegister() {
-		$data = array(
+		$data = [
 			'username' => 'foobar',
 			'email' => 'foobar@foobar.com',
 			'password' => 'password',
 			'confirm_password' => 'password'
-		);
+		];
 
 		$result = $this->User->register($data);
 		$this->assertTrue($result);
@@ -141,99 +141,26 @@ class UserBehaviorTest extends TestCase {
  * @return void
  */
 	public function testRemoveExpiredRegistrations() {
-		$this->User->removeExpiredRegistrations();
-	}
+		$result = $this->User
+			->find()
+			->where([
+				'email_verified' => 0,
+				'email_token_expires <' => date('Y-m-d H:is:'
+			)])
+			->count();
+		$this->assertEquals($result, 1);
 
-/**
- * testSetupValidationDefaults
- *
- * @return void
- */
-	public function testSetupValidationDefaults() {
-		$this->User->validate = array(
-			'something' => array(
-				'rule' => 'notEmpty'
-			),
-		);
-		$this->loadBehaviour();
+		$result = $this->User->removeExpiredRegistrations();
+		$this->assertEquals($result, 1);
 
-		$this->assertEquals($this->User->validate, array(
-			'password' => array(
-				'notEmpty' => array(
-					'rule' => array('notEmpty'),
-					'message' => 'You must fill this field.',
-				),
-				'between' => array(
-					'rule' => array('between', 6, 64),
-					'message' => 'Between 3 to 16 characters'
-				),
-				'confirmPassword' => array(
-					'rule' => array('confirmPassword'),
-					'message' => 'The passwords don\'t match!',
-				)
-			),
-			'username' => array(
-				'notEmpty' => array(
-					'rule' => array(
-						0 => 'notEmpty'
-					),
-					'message' => 'You must fill this field.'
-				),
-				'alphaNumeric' => array(
-					'rule' => array(
-						0 => 'alphaNumeric'
-					),
-					'message' => 'The username must be alphanumeric.'
-				),
-				'between' => array(
-					'rule' => array(
-						0 => 'between',
-						1 => 3,
-						2 => 16
-					),
-					'message' => 'Between 3 to 16 characters'
-				),
-				'unique' => array(
-					'rule' => array(
-						0 => 'isUnique',
-						1 => 'username'
-					),
-					'message' => 'This username is already in use.'
-				)
-			),
-			'email' => array(
-				'email' => array(
-					'rule' => array(
-						0 => 'email'
-					),
-					'message' => 'This is not a valid email'
-				),
-				'unique' => array(
-					'rule' => array(
-						0 => 'isUnique',
-						1 => 'email'
-					),
-					'message' => 'The email is already in use'
-				)
-			),
-			'confirm_password' => array(
-				'notEmpty' => array(
-					'rule' => array(
-						0 => 'notEmpty'
-					),
-					'message' => 'You must fill this field.'
-				),
-				'confirmPassword' => array(
-					'rule' => array(
-						0 => 'confirmPassword'
-					),
-					'message' => 'The passwords don\'t match!'
-				)
-			),
-			'something' => array(
-				'rule' => 'notEmpty'
-			)
-		));
+		$result = $this->User
+			->find()
+			->where([
+				'email_verified' => 0,
+				'email_token_expires <' => date('Y-m-d H:is:')
+			])
+			->count();
+		$this->assertEquals($result, 0);
 	}
 
 /**

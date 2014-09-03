@@ -3,7 +3,7 @@
  * UserBehavior
  *
  * @author Florian Krämer
- * ]@copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2014 Florian Krämer
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
@@ -17,7 +17,6 @@ use Cake\Utility\String;
 use Cake\Error\NotFoundException;
 use Cake\Network\Email\Email;
 use Cake\Event\EventManager;
-use Cake\Validation\Validator;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Event\Event;
@@ -29,14 +28,14 @@ class UserBehavior extends Behavior {
  *
  * @var array
  */
-	protected $_defaultConfig = array(
+	protected $_defaultConfig = [
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
 		'validatorClass' => '\UserTools\Validation\UserRegistrationValidator',
 		'entityClass' => '\Cake\ORM\Entity',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
-		'register' => array(
+		'register' => [
 			'defaultRole' => null,
 			'hashPassword' => true,
 			'userActive' => true,
@@ -44,8 +43,8 @@ class UserBehavior extends Behavior {
 			'emailVerification' => true,
 			'verificationExpirationTime' => '+1 day',
 			'beforeRegister' => true
-		),
-		'fieldMap' => array(
+		],
+		'fieldMap' => [
 			'username' => 'username',
 			'password' => 'password',
 			'email' => 'email',
@@ -59,8 +58,17 @@ class UserBehavior extends Behavior {
 			'passwordTokenExpires' => 'password_token_expires',
 			'emailVerified' => 'email_verified',
 			'active' => 'active',
-		)
-	);
+			'slug' => 'slug',
+		],
+		'updateLastActivity' => [
+			'dateFormat' => 'Y-m-d H:i:s',
+			'validate' => false
+		],
+		'initPasswordReset' => [
+			'tokenLength' => 10,
+			'expires' => '+1 day'
+		]
+	];
 
 /**
  * Keeping a reference to the table in order to,
@@ -175,15 +183,16 @@ class UserBehavior extends Behavior {
  *
  * @param string $userId User id
  * @param string $field Default is "last_action", changing it allows you to use this method also for "last_login" for example
- * @param string $dateFormat compatible date format string
+ * @param array $options
  * @return boolean True on success
  */
-	public function updateLastActivity($userId = null, $field = 'last_action', $dateFormat = 'Y-m-d H:i:s') {
-		if (!empty($userId)) {
-			$this->_table->id = $userId;
-		}
+	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
+		$options = Hash::merge($this->_config['updateLastActivity'], $options);
 		if ($this->_table->exists([$this->_table->alias() . '.' . $this->_table->primaryKey()])) {
-			return $this->_table->saveField($field, date($dateFormat));
+			return $this->_table->save(new $this->_config['entityClass']([
+				$this->_table->primaryKey() => $userId,
+				$field => date($options['dateFormat'])
+			]), ['validate' => $options['validate']]);
 		}
 		return false;
 	}
@@ -230,7 +239,7 @@ class UserBehavior extends Behavior {
 			$postData->{$this->_field('role')} = $defaultRole;
 		}
 
-		if ($generatePassword !== false) {
+		if ($generatePassword === true) {
 			$password = $this->generatePassword((int)$generatePassword);
 			$postData->{$this->_field('password')} = $password;
 			$postData->clear_password = $password;
@@ -434,18 +443,60 @@ class UserBehavior extends Behavior {
  * Removes all users from the user table that did not complete the registration
  *
  * @param array $conditions
- * @return void
+ * @return integer Number of removed records
  */
 	public function removeExpiredRegistrations($conditions = []) {
 		$defaults = [
 			$this->_table->alias() . '.' . $this->_field('emailVerified') => 0,
 			$this->_table->alias() . '.' . $this->_field('emailTokenExpires') . ' <' => date('Y-m-d H:i:s')
 		];
-		$this->_table->deleteAll(Hash::merge($defaults, $conditions));
+
+		$conditions = Hash::merge($defaults, $conditions);
+		$count = $this->_table
+			->find()
+			->where($conditions)
+			->count();
+
+		if ($count > 0) {
+			$this->_table->deleteAll($conditions);
+		}
+		return $count;
 	}
 
 /**
- * @todo finish me
+ * Initializes a password reset process
+ *
+ * @return boolean
+ */
+	public function initPasswordReset($email, $options = []) {
+		$options = Hash::merge($this->_config['initPasswordReset'], $options);
+
+		$result = $this->_table->find()
+			->conditions([
+				$this->_table->alias() . '.' . $this->_field('email') => $email
+			])
+			->first();
+		if (empty($result)) {
+			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+		}
+
+		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
+		$result->{$this->_field('passwordTokenExpires')} = date('Y-m-d H:i:s', strtotime($options['expires']));
+		$this->_table->save($result, ['validate' => false]);
+		return $this->sendNewPasswordEmail($result);
+	}
+
+/**
+ * Sends a new password to an user by email
+ *
+ * Note that this is *not* a recommended way to reset an user password. A much
+ * more secure approach is to have the user manually enter a new password and
+ * only send him an URL with a token.
+ *
+ * @param string $email
+ * @param array $options
+ * @throws \Cake\ORM\Exception\RecordNotFoundException
+ * @return boolean
  */
 	public function sendNewPassword($email, $options = []) {
 		$result = $this->_table->find()
@@ -457,8 +508,9 @@ class UserBehavior extends Behavior {
 			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
 		}
 		$result->password = $result->clear_password = $this->generatePassword();
-		$this->_table->save($result);
-		$this->sendNewPasswordEmail($result);
+		$result->password = $this->hashPassword($result->password);
+		$this->_table->save($result, ['validate' => false]);
+		return $this->sendNewPasswordEmail($result);
 	}
 
 /**
@@ -471,9 +523,9 @@ class UserBehavior extends Behavior {
 	public function sendNewPasswordEmail(Entity $user, $options = []) {
 		$defaults = [
 			'subject' => __d('user_tools', 'Your new password'),
-			'template' => 'UserTools.Users/verification_email',
+			'template' => 'UserTools.Users/new_password_email',
 			'viewVars' => [
-				'data' => $user
+				'user' => $user
 			]
 		];
 		return $this->sendEmail(Hash::merge($defaults, $options));
@@ -533,18 +585,10 @@ class UserBehavior extends Behavior {
  * @return array
  */
 	public function getUser($userId, $options = []) {
-		$defaults = array(
-			'contain' => array(),
-			'conditions' => array(
-				'OR' => array(
-					$this->_table->alias() . '.' . $this->_table->primaryKey() => $userId,
-					$this->_table->alias() . '.slug' => $userId,
-				),
-				$this->_table->alias() . '.email_verified' => 1
-			),
-		);
-
-		$result = $this->_table->find('all', Hash::merge($defaults, $options))->first();
+		$result = $this->_table
+			->find()
+			->where([$this->_table->alias() . '.' . $this->_table->primaryKey() => $userId])
+			->first();
 
 		if (empty($result)) {
 			throw new RecordNotFoundException(__d('user_tools', 'User not found!'));
@@ -567,17 +611,4 @@ class UserBehavior extends Behavior {
 		return $this->_passwordHasher = PasswordHasherFactory::build($this->_config['passwordHasher']);
 	}
 
-/**
- * beforeSave callback.
- *
- * Makes sure to update counter cache when a new record is created or updated.
- *
- * @param \Cake\Event\Event $event The afterSave event that was fired.
- * @param \Cake\ORM\Entity|\UserTools\Model\Behavior\Entity $entity The entity that was saved.
- * @param \ArrayObject|\UserTools\Model\Behavior\ArrayObject $options the options passed to the save method
- * @return void
- */
-	public function beforeSave(Event $event, Entity $entity, ArrayObject $options) {
-		$entity->{$this->_field('password')} = $this->_passwordHasher->hash($entity->{$this->_field('password')});
-	}
 }

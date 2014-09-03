@@ -85,7 +85,26 @@ class UserFixture extends TestFixture {
 			'role' => 'admin',
 			'created' => '2008-03-25 02:45:46',
 			'modified' => '2008-03-25 02:45:46'
-		]
+		],
+		[
+			'id' => '3',
+			'username' => 'notverified',
+			'slug' => 'notverified',
+			'password' => 'test', // test
+			'password_token' => 'notverified',
+			'email' => 'notverified@cakedc.com',
+			'email_verified' => 0,
+			'email_token' => 'thirdusertesttoken',
+			'email_token_expires' => '2008-03-25 02:45:46',
+			'tos' => 1,
+			'active' => 1,
+			'last_action' => '2008-03-25 02:45:46',
+			'last_login' => '2008-03-25 02:45:46',
+			'is_admin' => 1,
+			'role' => 'admin',
+			'created' => '2008-03-25 02:45:46',
+			'modified' => '2008-03-25 02:45:46'
+		],
 	];
 
 }
