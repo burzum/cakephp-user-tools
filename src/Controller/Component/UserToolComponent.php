@@ -11,6 +11,7 @@ namespace UserTools\Controller\Component;
 
 use Cake\Controller\Component;
 use Cake\ORM\TableRegistry;
+use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Utility;
 use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
@@ -105,7 +106,11 @@ class UserToolComponent extends Component {
 			'verify_email' => [
 				'method' => 'verifyEmailToken',
 				'view' => 'UserTools.UserTools/verify_email',
-			]
+			],
+			'view' => [
+				'method' => 'getUser',
+				'view' => 'UserTools.UserTools/view',
+			],
 		]
 	];
 
@@ -139,7 +144,7 @@ class UserToolComponent extends Component {
 		parent::__construct($registry, $config);
 		$this->Collection = $registry;
 		$this->Controller = $registry->getController();
-		$this->request = $this->Controller->request;
+		$this->request = $this->request->;
 		$this->response = $this->Controller->response;
 		$this->_methods = $this->Controller->methods;
 	}
@@ -180,6 +185,7 @@ class UserToolComponent extends Component {
  */
 	public function listing($options = []) {
 		$this->Controller->set('users', $this->Controller->paginate($this->UserTable, $options));
+		$this->Controller->set('_serialize', ['users']);
 	}
 
 /**
@@ -245,7 +251,6 @@ class UserToolComponent extends Component {
 			if (!method_exists($this, $action)) {
 				return false;
 			}
-
 			$this->{$action}();
 			$this->Controller->response = $this->Controller->render($action);
 			$this->Controller->response->send();
@@ -274,7 +279,6 @@ class UserToolComponent extends Component {
 
 		if ($Controller->request->is('post')) {
 			$Auth = $this->_getAuthObject();
-
 			$user = $Auth->identify();
 
 			if ($user) {
@@ -300,8 +304,8 @@ class UserToolComponent extends Component {
  * @param array $options
  * @return void
  */
-	public function viewUser($options = []) {
-		$this->Controller->set('user', $this->UserTable->view());
+	public function getUser($options = []) {
+		$this->Controller->set('user', $this->UserTable->getUser());
 		$this->Controller->set('_serialize', ['user']);
 	}
 
@@ -312,16 +316,16 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function logout($options = []) {
-		$Controller = $this->_Collection->getController();
+		$options = Hash::merge($this->_config['logout'], $options);
+
 		$Auth = $this->_getAuthObject();
-		$options = Hash::merge($this->_config['login'], $options);
 		$user = $Auth->user();
 
 		$this->Session->destroy();
 		if (isset($_COOKIE[$this->Cookie->name])) {
 			$this->Cookie->destroy();
 		}
-		$this->Flash->set(__d('user_tools', '%s you have successfully logged out'), $user['username']);
+		$this->Flash->set(__d('user_tools', '%s you have successfully logged out'), $user->username);
 		$this->Controller->redirect($Auth->logout());
 	}
 
@@ -345,8 +349,8 @@ class UserToolComponent extends Component {
 
 		$options = Hash::merge($this->_config['registration'], $options);
 
-		if ($this->Controller->request->is('post')) {
-			if ($this->UserTable->register($this->Controller->request->data)) {
+		if ($this->request->is('post')) {
+			if ($this->UserTable->register($this->request->data)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
@@ -359,8 +363,11 @@ class UserToolComponent extends Component {
 
 /**
  * verifyEmailToken
+ *
+ * @param array $options
+ * @return mixed
  */
-	public function verifyEmailToken($options) {
+	public function verifyEmailToken($options = []) {
 		$defaults = array(
 			'queryParam' => 'token',
 			'type' => 'Email',
@@ -380,29 +387,31 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function verifyToken($options = []) {
-		$Controller = $this->_Collection->getController();
 		$options = Hash::merge(
 			array(
 				'queryParam' => 'token',
 				'type' => 'Email',
 				'successMessage' => __d('user_tools', 'Token verified!'),
-				'successRedirectUrl' => array('action' => 'login'),
-				'errorMessage' => __d('user_tools', 'Invalid token!'),
+				'successRedirectUrl' => ['action' => 'login'],
+				'errorMessage' => null,
 				'errorRedirectUrl' => '/'
 			),
 			$options);
 
-		if (!isset($Controller->request->query[$options['queryParam']])) {
+		if (!isset($this->request->query[$options['queryParam']])) {
 			throw new NotFoundException(__d('user_tools', 'No token present!'));
 		}
 
 		$methodName = 'verify' . $options['type'] . 'Token';
-		$result = $this->UserTable->$methodName($Controller->request->query[$options['queryParam']]);
-
-		if ($result !== false) {
+		try {
+			$result = $this->UserTable->$methodName($this->request->query[$options['queryParam']]);
 			$this->handleFlashAndRedirect('success', $options);
-		} else {
+		} catch (RecordNotFoundException $e) {
+			if (is_null($options['errorMessage'])) {
+				$options['errorMessage'] = $e->getMessage();
+			}
 			$this->handleFlashAndRedirect('error', $options);
+			$result = false;
 		}
 
 		return $result;
@@ -412,7 +421,7 @@ class UserToolComponent extends Component {
  * @todo finish me
  */
 	public function requestPasswordChange() {
-		if ($this->Controller->request->is('post')) {
+		if ($this->request->is('post')) {
 			$this->UserTable->requestPasswordChange($this->Contoller->request->data);
 		}
 	}
@@ -421,7 +430,7 @@ class UserToolComponent extends Component {
  * @todo finish me
  */
 	public function changePassword() {
-		if ($this->Controller->request->is('post')) {
+		if ($this->request->is('post')) {
 			$this->UserTable->verifyToken([
 				'type' => 'Password'
 			]);
@@ -458,7 +467,7 @@ class UserToolComponent extends Component {
 	protected function _getAuthObject() {
 		if (!$this->Collection->loaded('Auth')) {
 			$Auth = $this->Collection->load('Auth', $this->_config['auth']);
-			$Auth->request = $this->Controller->request;
+			$Auth->request = $this->request->;
 			$Auth->response = $this->Controller->response;
 			return $Auth;
 		} else {

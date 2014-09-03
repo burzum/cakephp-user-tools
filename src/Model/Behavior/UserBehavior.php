@@ -307,14 +307,14 @@ class UserBehavior extends Behavior {
  * @throws \Cake\ORM\Exception\RecordNotFoundException if the token was not found at all
  * @param string $token
  * @param array $options
- * @return boolean|array Returns false if the token has expired
+ * @return boolean|\Cake\ORM\Entity Returns false if the token has expired
  */
 	public function verifyToken($token, $options = []) {
-		$defaults = array(
+		$defaults = [
 			'tokenField' => $this->_field('emailToken'),
 			'expirationField' => $this->_field('emailTokenExpires'),
 			'returnData' => false,
-		);
+		];
 
 		$options = Hash::merge($defaults, $options);
 
@@ -346,10 +346,10 @@ class UserBehavior extends Behavior {
  * @return boolean Returns false if the token has expired
  */
 	public function verifyEmailToken($token, $options = []) {
-		$defaults = array(
+		$defaults = [
 			'tokenField' => $this->_field('emailToken'),
 			'expirationField' => $this->_field('emailTokenExpires'),
-		);
+		];
 		$this->verifyToken($token, Hash::merge($defaults, $options));
 	}
 
@@ -500,13 +500,13 @@ class UserBehavior extends Behavior {
  * @return boolean
  */
 	public function sendVerificationEmail($data, $options = []) {
-		$defaults = array(
+		$defaults = [
 			'subject' => __d('user_tools', 'Please verify your Email'),
 			'template' => 'UserTools.Users/verification_email',
-			'viewVars' => array(
-				'data' => $data
-			)
-		);
+			'viewVars' => [
+				'user' => $data
+			]
+		];
 		return $this->sendEmail(Hash::merge($defaults, $options));
 	}
 

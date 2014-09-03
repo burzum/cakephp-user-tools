@@ -64,10 +64,6 @@ class UserRegistrationValidator extends Validator {
 				'rule' => ['minLength', 6],
 				'message' => __d('user_tools', 'The password must have at least 6 characters.')
 			],
-			'validEmail' => [
-				'rule' => 'email',
-				'message' => __d('user_tools', 'Must be a valid email address.')
-			]
 		]);
 
 		$this->add('confirm_password', [
@@ -79,10 +75,6 @@ class UserRegistrationValidator extends Validator {
 				'rule' => ['minLength', 6],
 				'message' => __d('user_tools', 'The password must have at least 6 characters.')
 			],
-			'validEmail' => [
-				'rule' => 'email',
-				'message' => __d('user_tools', 'Must be a valid email address.')
-			]
 		]);
 	}
 }
