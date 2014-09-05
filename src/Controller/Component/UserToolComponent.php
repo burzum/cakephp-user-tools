@@ -17,6 +17,7 @@ use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
 use Cake\Utility\Hash;
 use Cake\Error\NotFoundException;
+use Cake\Core\Configure;
 
 class UserToolComponent extends Component {
 
@@ -76,7 +77,6 @@ class UserToolComponent extends Component {
 		],
 		'verifyEmailToken' => [
 			'queryParam' => 'token',
-			'type' => 'Email',
 			'successRedirectUrl' => [
 				'action' => 'login'
 			],
@@ -100,6 +100,9 @@ class UserToolComponent extends Component {
 			],
 			'errorMessage' => null,
 			'errorRedirectUrl' => '/'
+		],
+		'getUser' => [
+			'viewVar' => 'user'
 		],
 		'actionMap' => [
 			'index' => [
@@ -135,9 +138,6 @@ class UserToolComponent extends Component {
 				'view' => 'UserTools.UserTools/view',
 			],
 		],
-		'getUser' => [
-			'viewVar' => 'user'
-		]
 	];
 
 /**
@@ -226,7 +226,7 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function loadHelpers() {
-		$helpers = ['Flash'];
+		$helpers = ['Flash', 'Paginator'];
 		foreach ($helpers as $helper) {
 			if (
 				!in_array($helper, $this->Controller->helpers) &&

@@ -13,7 +13,7 @@ use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
-use Cake\Utility\String;
+use Cake\Core\Configure;
 use Cake\Error\NotFoundException;
 use Cake\Network\Email\Email;
 use Cake\Event\EventManager;
@@ -53,10 +53,10 @@ class UserBehavior extends Behavior {
 			'lastLogin' => 'last_login',
 			'role' => 'role',
 			'emailToken' => 'email_token',
+			'emailVerified' => 'email_verified',
 			'emailTokenExpires' => 'email_token_expires',
 			'passwordToken' => 'password_token',
 			'passwordTokenExpires' => 'password_token_expires',
-			'emailVerified' => 'email_verified',
 			'active' => 'active',
 			'slug' => 'slug',
 		],
@@ -344,7 +344,6 @@ class UserBehavior extends Behavior {
 			'expirationField' => $this->_field('emailTokenExpires'),
 			'returnData' => false,
 		];
-
 		$options = Hash::merge($defaults, $options);
 
 		$result = $this->_table->find()
@@ -356,14 +355,34 @@ class UserBehavior extends Behavior {
 		}
 
 		$time = new \Cake\Utility\Time();
-		$isExpired = $result->{$this->_field('emailTokenExpires')} <= $time;
+		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} <= $time;
+
+		$this->afterTokenVerification($result, $options);
 
 		if ($options['returnData'] === true) {
-			$result->is_expired = $isExpired;
 			return $result;
 		}
 
-		return $isExpired;
+		return $result->token_is_expired;
+	}
+
+/**
+ *
+ */
+	public function afterTokenVerification(Entity $user, $options = []) {
+		if ($user->token_is_expired === true) {
+			return false;
+		}
+		if ($options['tokenField'] === $this->_field('emailToken')) {
+			$user->{$this->_field('emailVerified')} = 1;
+			$user->{$this->_field('emailToken')} = null;
+			$user->{$this->_field('emailTokenExpires')} = null;
+		}
+		if ($options['tokenField'] === $this->_field('passwordToken')) {
+			$user->{$this->_field('passwordToken')} = null;
+			$user->{$this->_field('passwordTokenExpires')} = null;
+		}
+		return $this->_table->save($user, ['validate' => false]);
 	}
 
 /**
