@@ -1,4 +1,12 @@
 <?php
+/**
+ * Migration
+ *
+ * @author Florian Krämer
+ * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2012 Cake Development Corporation
+ * @license MIT
+ */
 use Phinx\Migration\AbstractMigration;
 
 class Initial extends AbstractMigration {
@@ -24,6 +32,7 @@ class Initial extends AbstractMigration {
 			->addColumn('last_login', 'datetime')
 			->addColumn('created', 'datetime')
 			->addColumn('modified', 'datetime')
+			->addIndex(['username', 'email'], ['unique' => true])
 			->create();
 	}
 
@@ -33,6 +42,7 @@ class Initial extends AbstractMigration {
  * @return void
  */
 	public function down() {
-		$this->table('users')->drop();
+		$this->table('users')
+			->drop();
 	}
 }

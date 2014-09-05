@@ -63,27 +63,43 @@ class UserToolComponent extends Component {
 		],
 		'registration' => [
 			'enabled' => true,
-			'successMessage' => 'Thank you for signing up!',
 			'successFlashOptions' => [],
 			'successRedirectUrl' => '/',
-			'errorMessage' => 'Please check your inputs',
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
 		],
 		'login' => [
-			'redirect' => '/',
-			'successMessage' => 'You are logged in!',
 			'successFlashOptions' => [],
 			'successRedirectUrl' => '/',
-			'errorMessage' => 'Invalid login credentials.',
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
 		],
-		'verifyEmail' => [
-
+		'verifyEmailToken' => [
+			'queryParam' => 'token',
+			'type' => 'Email',
+			'successRedirectUrl' => [
+				'action' => 'login'
+			],
+			'errorRedirectUrl' => '/'
 		],
-		'requestPasswordChange' => [
-
+		'requestPassword' => [
+			'successFlashOptions' => [],
+			'successRedirectUrl' => '/',
+			'errorFlashOptions' => [],
+			'errorRedirectUrl' => '/',
+			'field' => 'email'
+		],
+		'resetPassword' => [
+			'queryParam' => 'token',
+		],
+		'verifyToken' => [
+			'queryParam' => 'token',
+			'type' => 'Email',
+			'successRedirectUrl' => [
+				'action' => 'login'
+			],
+			'errorMessage' => null,
+			'errorRedirectUrl' => '/'
 		],
 		'actionMap' => [
 			'index' => [
@@ -118,6 +134,9 @@ class UserToolComponent extends Component {
 				'method' => 'getUser',
 				'view' => 'UserTools.UserTools/view',
 			],
+		],
+		'getUser' => [
+			'viewVar' => 'user'
 		]
 	];
 
@@ -137,7 +156,6 @@ class UserToolComponent extends Component {
 		return [
 			'Controller.initialize' => 'initialize',
 			'Controller.startup' => 'startup',
-			'Controller.beforeRender' => 'beforeRender',
 		];
 	}
 
@@ -148,12 +166,45 @@ class UserToolComponent extends Component {
  * @param array $config Config options array
  */
 	public function __construct(ComponentRegistry $registry, $config = []) {
+		$this->_defaultConfig = Hash::merge(
+			$this->_defaultConfig,
+			$this->_translatedConfigMessages(),
+			(array)Configure::read('UserTools.Component')
+		);
 		parent::__construct($registry, $config);
 		$this->Collection = $registry;
 		$this->Controller = $registry->getController();
 		$this->request = $this->Controller->request;
 		$this->response = $this->Controller->response;
-		$this->_methods = $this->Controller->methods;
+	}
+
+/**
+ * Translates the messages in the configuration array
+ *
+ * @return array
+ */
+	protected function _translatedConfigMessages() {
+		return [
+			'requestPassword' => [
+				'successMessage' => __d('user_tools', 'An email was send to your address, please check your inbox.'),
+				'errorMessage' => __d('user_tools', 'Invalid user.'),
+			],
+			'registration' => [
+				'successMessage' => __d('user_tools', 'Thank you for signing up!'),
+				'errorMessage' => __d('user_tools', 'Please check your inputs'),
+			],
+			'login' => [
+				'successMessage' => __d('user_tools', 'You are logged in!'),
+				'errorMessage' => __d('user_tools', 'Invalid login credentials.'),
+			],
+			'verifyEmailToken' => [
+				'successMessage' => __d('user_tools', 'Email verified, you can now login!'),
+				'errorMessage' => __d('user_tools', 'Invalid email token!'),
+			],
+			'verifyToken' => [
+				'successMessage' => __d('user_tools', 'Token verified!'),
+			]
+		];
 	}
 
 /**
@@ -166,14 +217,16 @@ class UserToolComponent extends Component {
 		$this->Controller = $Event->subject();
 		$this->setUserTable($this->_config['userModel']);
 		$this->loadUserBehaviour();
-		//$this->loadHelpers();
+		$this->loadHelpers();
 	}
 
 /**
+ * Checks and loads helper if they're not found
  *
+ * @return void
  */
 	public function loadHelpers() {
-		$helpers = ['Flash', 'UserTools.Auth'];
+		$helpers = ['Flash'];
 		foreach ($helpers as $helper) {
 			if (
 				!in_array($helper, $this->Controller->helpers) &&
@@ -281,44 +334,40 @@ class UserToolComponent extends Component {
  * @return bool
  */
 	public function login($options = []) {
-		$Controller = $this->Controller;
 		$options = Hash::merge($this->_config['login'], $options);
 
-		if ($Controller->request->is('post')) {
+		if ($this->request->is('post')) {
 			$Auth = $this->_getAuthObject();
 			$user = $Auth->identify();
 
 			if ($user) {
 				$Auth->setUser($user);
-				return $this->redirect($Auth->redirectUrl());
+				if ($options['successRedirectUrl'] === null) {
+					$options['successRedirectUrl'] = $Auth->redirectUrl();
+				}
+				$this->handleFlashAndRedirect('success', $options);
 			} else {
-				$this->Flash->set(__('Username or password is incorrect'), [
-					'element' => 'error',
-					'key' => 'auth'
-				]);
+				$this->handleFlashAndRedirect('error', $options);
 			}
-
-			if ($options['redirect'] === false) {
-				return true;
-			}
-			$Controller->redirect($options['redirect']);
 		}
 	}
 
 /**
  * View
  *
+ * @param mixed $userId
  * @param array $options
  * @return void
  */
 	public function getUser($userId = null, $options = []) {
+		$options = Hash::merge($this->_config['getUser'], $options);
 		if (is_null($userId)) {
 			if (isset($this->request->params['pass'][0])) {
 				$userId = $this->request->params['pass'][0];
 			}
 		}
-		$this->Controller->set('user', $this->UserTable->getUser($userId));
-		$this->Controller->set('_serialize', ['user']);
+		$this->Controller->set($options['viewVar'], $this->UserTable->getUser($userId));
+		$this->Controller->set('_serialize', [$options['viewVar']]);
 	}
 
 /**
@@ -376,15 +425,7 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function verifyEmailToken($options = []) {
-		$defaults = [
-			'queryParam' => 'token',
-			'type' => 'Email',
-			'successMessage' => __d('user_tools', 'Email verified, you can now login!'),
-			'successRedirectUrl' => array('action' => 'login'),
-			'errorMessage' => __d('user_tools', 'Invalid email token!'),
-			'errorRedirectUrl' => '/'
-		];
-		return $this->verifyToken(Hash::merge($defaults, $options));
+		return $this->verifyToken(Hash::merge($this->_defaultConfig['verifyEmailToken'], $options, ['type' => 'Email']));
 	}
 
 /**
@@ -394,15 +435,16 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function requestPassword($options = []) {
-		$defaults = [
-			'field' => 'email'
-		];
-		$options = Hash::merge($defaults, $options);
+		$options = Hash::merge($this->_config['requestPassword'], $options);
 
 		if ($this->request->is('post')) {
-			debug($this->request->data);
-			//$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
-			// @todo flash & redirect
+			try {
+				$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
+				$this->handleFlashAndRedirect('success', $options);
+			} catch (RecordNotFoundException $e) {
+				$this->handleFlashAndRedirect('error', $options);
+			}
+			unset($this->request->data[$options['field']]);
 		}
 	}
 
@@ -413,11 +455,7 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function resetPassword($options = []) {
-		$defaults = [
-			'queryParam' => 'token',
-		];
-		$options = Hash::merge($defaults, $options);
-		$this->verifyToken(Hash::merge($defaults, $options));
+		$this->verifyToken(Hash::merge($this->_defaultConfig['resetPassword'], $options));
 		if ($this->request->is('post')) {
 			// @todo
 		}
@@ -431,16 +469,7 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function verifyToken($options = []) {
-		$options = Hash::merge(
-			array(
-				'queryParam' => 'token',
-				'type' => 'Email',
-				'successMessage' => __d('user_tools', 'Token verified!'),
-				'successRedirectUrl' => ['action' => 'login'],
-				'errorMessage' => null,
-				'errorRedirectUrl' => '/'
-			),
-			$options);
+		$options = Hash::merge($this->_defaultConfig['verifyToken'], $options);
 
 		if (!isset($this->request->query[$options['queryParam']])) {
 			throw new NotFoundException(__d('user_tools', 'No token present!'));
@@ -499,7 +528,4 @@ class UserToolComponent extends Component {
 		}
 	}
 
-	public function beforeRender(Event $Event) {
-		$this->Controller->set('userData', $this->_getAuthObject()->user());
-	}
 }

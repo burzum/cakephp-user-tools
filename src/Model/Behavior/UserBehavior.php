@@ -101,6 +101,7 @@ class UserBehavior extends Behavior {
  * @param array $config The settings for this behavior.
  */
 	public function __construct(Table $table, array $config = []) {
+		$this->_defaultConfig = Hash::merge($this->_defaultConfig, (array)Configure::read('UserTools.Behavior'));
 		parent::__construct($table, $config);
 		$this->_table = $table;
 
@@ -207,14 +208,13 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Hash password
+ * Hashes a password
  *
  * @param $password
  * @return string Hash
  */
 	public function hashPassword($password) {
-		$Hasher = $this->passwordHasher();
-		return $Hasher->hash($password);
+		return $this->passwordHasher()->hash($password);
 	}
 
 /**
@@ -271,8 +271,9 @@ class UserBehavior extends Behavior {
  * - saves the user data
  * - calls Model::afterRegister if implemented
  *
- * @param array post data
+ * @param mixed post data
  * @param array options
+ * @throws \InvalidArgumentException
  * @return boolean
  */
 	public function register($postData, $options = []) {
@@ -280,6 +281,8 @@ class UserBehavior extends Behavior {
 
 		if (is_array($postData)) {
 			$postData = new $this->_config['entityClass']($postData);
+		} elseif (!is_a('\Cake\ORM\Entity', $postData)) {
+			throw new \InvalidArgumentException(__d('user_tools', 'Invalid data passed!'));
 		}
 
 		if (!$this->_table->validate($postData, ['validate' => 'userRegistration'])) {
@@ -289,18 +292,26 @@ class UserBehavior extends Behavior {
 
 		if ($options['beforeRegister'] === true) {
 			$postData = $this->_beforeRegister($postData, $options);
-		}
-
-		if (method_exists($this->_table, 'beforeRegister')) {
-			if (!$this->_table->beforeRegister($postData, $options)) {
-				return false;
+			if (method_exists($this->_table, 'beforeRegister')) {
+				if (!$this->_table->beforeRegister($postData, $options)) {
+					return false;
+				}
 			}
 		}
 
-		if ($this->_config['useUuid'] === true) {
-			$postData->id = String::uuid();
+		$event = new Event('User.beforeRegister', $this, ['data' => $postData]);
+		$this->_table->eventManager()->dispatch($event);
+		if ($event->isStopped()) {
+			return (bool)$event->result;
 		}
+
 		$result = $this->_table->save($postData, array('validate' => false));
+
+		$event = new Event('User.afterRegister', $this, ['data' => $result]);
+		$this->_table->eventManager()->dispatch($event);
+		if ($event->isStopped()) {
+			return (bool)$event->result;
+		}
 
 		if ($result) {
 			if ($options['emailVerification'] === true) {
@@ -491,7 +502,7 @@ class UserBehavior extends Behavior {
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
 		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
 		$this->_table->save($result, ['validate' => false]);
-		return $this->sendNewPasswordEmail($result);
+		return $this->sendPasswordResetToken($result, ['to' => $result->{$this->_field('email')}]);
 	}
 
 /**
@@ -506,7 +517,9 @@ class UserBehavior extends Behavior {
  * @return \Cake\ORM\Entity
  */
 	protected function _findUserForPasswordReset($value, $options) {
+		$this->_table->connection()->logQueries(true);
 		$query = $this->_table->find();
+		/*
 		if (is_array($options['field'])) {
 			$orConditions = [];
 			foreach ($options['field'] as $field) {
@@ -515,8 +528,11 @@ class UserBehavior extends Behavior {
 			$query->orWhere($orConditions);
 		} else {
 			$query->where([$options['field'] => $value]);
-		}
+		}*/
+		//$query->where([$options['field'] => $value]);
+		$query->where(['Users.email' => $value]);
 		$result = $query->first();
+
 		if (empty($result)) {
 			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
 		}
@@ -547,7 +563,7 @@ class UserBehavior extends Behavior {
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
 		$this->_table->save($result, ['validate' => false]);
-		return $this->sendNewPasswordEmail($result);
+		return $this->sendNewPasswordEmail($result, ['to' => $result->{$this->_field('email')}]);
 	}
 
 /**
@@ -574,7 +590,7 @@ class UserBehavior extends Behavior {
 /**
  * Return password hasher object
  *
- * @return AbstractPasswordHasher Password hasher instance
+ * @return \Cake\Auth\AbstractPasswordHasher Password hasher instance
  * @throws \RuntimeException If password hasher class not found or
  *   it does not extend AbstractPasswordHasher
  */
@@ -626,7 +642,7 @@ class UserBehavior extends Behavior {
 				'user' => $user
 			]
 		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config, $options));
+		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendPasswordResetToken'], $options));
 	}
 
 /**
@@ -643,23 +659,23 @@ class UserBehavior extends Behavior {
 				'user' => $user
 			]
 		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config, $options));
+		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendNewPasswordEmail'], $options));
 	}
 
 /**
  * sendVerificationEmail
  *
- * @param array $data
+ * @param \Cake\ORM\Entity $data
  * @param array $options
  * @return boolean
  */
-	public function sendVerificationEmail($data, $options = []) {
+	public function sendVerificationEmail(Entity $data, $options = []) {
 		$defaults = [
 			'subject' => __d('user_tools', 'Please verify your Email'),
 			'viewVars' => [
 				'user' => $data
 			]
 		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config, $options));
+		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendVerificationEmail'], $options));
 	}
 }
