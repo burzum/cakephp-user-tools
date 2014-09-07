@@ -1,7 +1,9 @@
 User Tools Plugin for CakePHP
 =============================
 
-This plugin works very similar like the [CakeDC users plugin](https://github.com/cakedc/users) and but instead of providing a full stack that is more or less hard to change and extend, this plugin just provides you the building blocks for everything around users. However, it has the same kick start ability through the UserTool component but is overall much more configurable and extendible.
+The **UserTools** plugin provides you the building blocks for everything around users. However, it has the same kick start ability through the [UserToolComponent](src/Controller/Component/UserToolComponent.php) and [UserBehavior](src/Model/UserBehavior.php) but is overall much more configurable and extensible.
+
+This plugin works very similar like the [CakeDC users plugin](https://github.com/cakedc/users) and but instead of providing a full stack that is more or less hard to change and extend it allows you to use only what you really need *without* extending the controller or model.
 
 Requirements
 ------------
@@ -22,16 +24,18 @@ For support and feature request, please visit the [UserTools Support Site](https
 Branch strategy
 -------------
 
-The master branch holds the STABLE latest version of the plugin.
-
-Develop branch is UNSTABLE and used to test new features before releasing them. 
+* The **master** branch holds the 'STABLE' latest version of the plugin.
+* The **develop** branch is 'UNSTABLE' and used to test new features before releasing them.
+* Only **hot fixes** are accepted against the master branch.
 
 Contributing to this Plugin
 ---------------------------
 
 Please feel free to contribute to the plugin with new issues, requests, unit tests and code fixes or new features. If you want to contribute some code, create a feature branch from develop, and send us your pull request. Unit tests for new features and issues detected are mandatory to keep quality high.
 
-Pull requests *must* be made against the develop branch, except hot fixes!
+* Pull requests **must** be made against the develop branch, *except* hot fixes!
+* You **must** follow the CakePHP coding standards
+* Unit tests are **required** for new features and bug fixes
 
 License
 -------
