@@ -20,9 +20,14 @@ Example
 
 ```php
 class AppController extends Controller {
+
 	public $helpers = array(
 		'Auth'
 	);
+
+	public function beforeRender() {
+		$this->set('userData', $this->Auth->user());
+	}
 }
 ```
 

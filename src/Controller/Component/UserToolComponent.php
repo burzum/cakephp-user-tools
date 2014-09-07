@@ -314,7 +314,7 @@ class UserToolComponent extends Component {
 			$this->{$action}();
 			$this->Controller->response = $this->Controller->render($action);
 			$this->Controller->response->send();
-			$this->Controller->_stop();
+			exit;
 		}
 
 		if (isset($this->_config['actionMap'][$action]) && method_exists($this, $this->_config['actionMap'][$action]['method'])) {
@@ -451,13 +451,19 @@ class UserToolComponent extends Component {
 /**
  * Allows the user to enter a new password
  *
+ * @todo finish and test me
  * @param array $options
  * @return void
  */
 	public function resetPassword($options = []) {
 		$this->verifyToken(Hash::merge($this->_defaultConfig['resetPassword'], $options));
 		if ($this->request->is('post')) {
-			// @todo
+			try {
+				$this->UserTable->resetPassword($this->request->data);
+				$this->handleFlashAndRedirect('success', $options);
+			} catch (RecordNotFoundException $e) {
+				$this->handleFlashAndRedirect('error', $options);
+			}
 		}
 	}
 
@@ -520,11 +526,11 @@ class UserToolComponent extends Component {
 	protected function _getAuthObject() {
 		if (!$this->Collection->loaded('Auth')) {
 			$Auth = $this->Collection->load('Auth', $this->_config['auth']);
-			$Auth->request = $this->Controller->request;
-			$Auth->response = $this->Controller->response;
+			$Auth->request = $this->request;
+			$Auth->response = $this->response;
 			return $Auth;
 		} else {
-			return $this->Collection->load('Auth');
+			return $this->Collection->Auth;
 		}
 	}
 

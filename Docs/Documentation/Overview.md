@@ -1,10 +1,12 @@
 Overview
 ========
 
-Some features:
+Features
 
-* User registration (with optional token generation)
+* Made as much configurable as possible
+* User registration
 * Email verification via token
 * Password reset via token
-* Password generation
-* Basic CRUD for registration, login, password reset and user listing
+* Password generation (not recommended but some people want it)
+* Basic CRUD for users, including registration, token verification and password reset
+* A shell for maintenance tasks (cleanup expired registrations, password reset, ...)

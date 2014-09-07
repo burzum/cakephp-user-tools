@@ -20,6 +20,7 @@ use Cake\Event\EventManager;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Event\Event;
+use Cake\Utility\String;
 
 class UserBehavior extends Behavior {
 
@@ -229,6 +230,10 @@ class UserBehavior extends Behavior {
  */
 	protected function _beforeRegister($postData, $options) {
 		extract(Hash::merge($this->_config['register'], $options));
+
+		if ($this->_config['useUuid'] === true) {
+			$postdata[$this->_table->primaryKey()] = String::uuid();
+		}
 
 		if ($userActive === true) {
 			$postData->{$this->_field('active')} = 1;

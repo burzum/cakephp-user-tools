@@ -12,8 +12,47 @@ class UsersController extends AppController {
 }
 ```
 
-By default the users component will intercept the calls to some methods if not configured otherwise:
+By default the users component will intercept requests to certain actions if the action methods don't exist in the controller.
 
- * login
- * register
- * logout
+```php
+'index' => [
+	'method' => 'listing',
+	'view' => 'UserTools.UserTools/index',
+],
+'register' => [
+	'method' => 'register',
+	'view' => 'UserTools.UserTools/register'
+],
+'login' => [
+	'method' => 'login',
+	'view' => 'UserTools.UserTools/login',
+],
+'logout' => [
+	'method' => 'logout',
+	'view' => null
+],
+'reset_password' => [
+	'method' => 'resetPassword',
+	'view' => 'UserTools.UserTools/reset_password',
+],
+'request_password' => [
+	'method' => 'requestPassword',
+	'view' => 'UserTools.UserTools/request_password',
+],
+'verify_email' => [
+	'method' => 'verifyEmailToken',
+	'view' => 'UserTools.UserTools/verify_email',
+],
+'view' => [
+	'method' => 'getUser',
+	'view' => 'UserTools.UserTools/view',
+],
+```
+
+The method and the view of each can be changed through the configuration options of the component.
+
+All configuration of the component can be configured in bootstrap as well by putting the config into
+
+```php
+Configure::write('UserTools.Component', [/* Config goes here */]);
+```

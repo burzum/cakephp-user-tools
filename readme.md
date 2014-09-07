@@ -1,7 +1,7 @@
 User Tools Plugin for CakePHP
 =============================
 
-This plugin works very similar like the CakeDC users plugin and is a derivative work but instead of providing a full stack that is more or less hard to change and extend, this plugin just provides you the building blocks for everything around users.
+This plugin works very similar like the [CakeDC users plugin](https://github.com/cakedc/users) and but instead of providing a full stack that is more or less hard to change and extend, this plugin just provides you the building blocks for everything around users. However, it has the same kick start ability through the UserTool component but is overall much more configurable and extendible.
 
 Requirements
 ------------
