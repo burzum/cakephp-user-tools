@@ -18,6 +18,7 @@ use Cake\Controller\ComponentRegistry;
 use Cake\Utility\Hash;
 use Cake\Error\NotFoundException;
 use Cake\Core\Configure;
+use Cake\Network\Response;
 
 class UserToolComponent extends Component {
 
@@ -291,11 +292,16 @@ class UserToolComponent extends Component {
  * Start up
  *
  * @param Event $Event
+ * @link https://github.com/cakephp/cakephp/issues/4530
  * @return void
  */
 	public function startup(Event $Event) {
 		if ($this->_config['actionMapping'] === true) {
-			$this->mapAction();
+			$result = $this->mapAction();
+			if ($result instanceof Response) {
+				$Event->stopPropagation();
+				return $result;
+			}
 		}
 	}
 
@@ -312,16 +318,12 @@ class UserToolComponent extends Component {
 				return false;
 			}
 			$this->{$action}();
-			$this->Controller->response = $this->Controller->render($action);
-			$this->Controller->response->send();
-			exit;
+			return $this->Controller->render($action);
 		}
 
 		if (isset($this->_config['actionMap'][$action]) && method_exists($this, $this->_config['actionMap'][$action]['method'])) {
 			$this->{$this->_config['actionMap'][$action]['method']}();
-			$this->Controller->response = $this->Controller->render($this->_config['actionMap'][$action]['view']);
-			$this->Controller->response->send();
-			exit;
+			return $this->Controller->render($this->_config['actionMap'][$action]['view']);
 		}
 
 		return false;
