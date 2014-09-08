@@ -24,7 +24,7 @@ For support and feature request, please visit the [UserTools Support Site](https
 Branch strategy
 -------------
 
-* The **master** branch holds the 'STABLE' latest version of the plugin.
+* The **master** branch holds the `STABLE` latest version of the plugin.
 * The **develop** branch is `UNSTABLE` and used to test new features before releasing them.
 * Only **hot fixes** are accepted against the master branch.
 
@@ -34,8 +34,8 @@ Contributing to this Plugin
 Please feel free to contribute to the plugin with new issues, requests, unit tests and code fixes or new features. If you want to contribute some code, create a feature branch from develop, and send us your pull request. Unit tests for new features and issues detected are mandatory to keep quality high.
 
 * Pull requests **must** be made against the develop branch, *except* hot fixes!
-* You **must** follow the CakePHP coding standards
-* Unit tests are **required** for new features and bug fixes
+* You **must** follow the CakePHP coding standards.
+* Unit tests are **required** for new features and bug fixes.
 
 License
 -------
