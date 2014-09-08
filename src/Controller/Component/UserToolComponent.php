@@ -4,7 +4,6 @@
  *
  * @author Florian Krämer
  * @copyright 2013 - 2014 Florian Krämer
- * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
 namespace UserTools\Controller\Component;
@@ -149,16 +148,12 @@ class UserToolComponent extends Component {
 	public $UserTable = null;
 
 /**
- * Events supported by this component.
+ * Helper property to detect a redirect
  *
- * @return array
+ * @see UserToolComponent::handleFlashAndRedirect();
+ * @var \Cake\Network\Response
  */
-	public function implementedEvents() {
-		return [
-			'Controller.initialize' => 'initialize',
-			'Controller.startup' => 'startup',
-		];
-	}
+	protected $_redirectResponse = null;
 
 /**
  * Constructor. Parses the accepted content types accepted by the client using HTTP_ACCEPT
@@ -299,7 +294,6 @@ class UserToolComponent extends Component {
 		if ($this->_config['actionMapping'] === true) {
 			$result = $this->mapAction();
 			if ($result instanceof Response) {
-				$Event->stopPropagation();
 				return $result;
 			}
 		}
@@ -317,12 +311,18 @@ class UserToolComponent extends Component {
 			if (!method_exists($this, $action)) {
 				return false;
 			}
-			$this->{$action}();
+			$result = $this->{$action}();
+			if ($result instanceof Response) {
+				return $result;
+			}
 			return $this->Controller->render($action);
 		}
 
 		if (isset($this->_config['actionMap'][$action]) && method_exists($this, $this->_config['actionMap'][$action]['method'])) {
 			$this->{$this->_config['actionMap'][$action]['method']}();
+			if ($this->_redirectResponse instanceof Response) {
+				return $this->_redirectResponse;
+			}
 			return $this->Controller->render($this->_config['actionMap'][$action]['view']);
 		}
 
@@ -410,7 +410,7 @@ class UserToolComponent extends Component {
 
 		if ($this->request->is('post')) {
 			if ($this->UserTable->register($this->request->data)) {
-				$this->handleFlashAndRedirect('success', $options);
+				return $this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 				$this->Controller->set('usersEntity', $this->UserTable->entity);
@@ -472,8 +472,8 @@ class UserToolComponent extends Component {
 /**
  * Verify Token
  *
- * @throws NotFoundException
  * @param array
+ * @throws \Cake\Error\NotFoundException;
  * @return mixed
  */
 	public function verifyToken($options = []) {
@@ -503,7 +503,7 @@ class UserToolComponent extends Component {
  *
  * @param string $type "success" or "error"
  * @param array $options Options
- * @return void
+ * @return mixed
  */
 	public function handleFlashAndRedirect($type, $options) {
 		if ($options[$type . 'Message'] !== false) {
@@ -516,7 +516,8 @@ class UserToolComponent extends Component {
 			}
 		}
 		if ($options[$type . 'RedirectUrl'] !== false) {
-			$this->Controller->redirect($options[$type . 'RedirectUrl']);
+			$result = $this->Controller->redirect($options[$type . 'RedirectUrl']);
+			$this->_redirectResponse = $result;
 		}
 	}
 

@@ -232,7 +232,8 @@ class UserBehavior extends Behavior {
 		extract(Hash::merge($this->_config['register'], $options));
 
 		if ($this->_config['useUuid'] === true) {
-			$postdata[$this->_table->primaryKey()] = String::uuid();
+			$primaryKey = $this->_table->primaryKey();
+			$postData->{$primaryKey} = String::uuid();
 		}
 
 		if ($userActive === true) {

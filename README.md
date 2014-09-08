@@ -1,9 +1,9 @@
 User Tools Plugin for CakePHP
 =============================
 
-The **UserTools** plugin provides you the building blocks for everything around users. However, it has the same kick start ability through the [UserToolComponent](src/Controller/Component/UserToolComponent.php) and [UserBehavior](src/Model/UserBehavior.php) but is overall much more configurable and extensible.
+The **UserTools** plugin provides you the building blocks for everything around users. However, it has the same kick start ability through the [UserToolComponent](src/Controller/Component/UserToolComponent.php) and [UserBehavior](src/Model/Behavior/UserBehavior.php) but is overall much more configurable and extensible.
 
-This plugin works very similar like the [CakeDC users plugin](https://github.com/cakedc/users) and but instead of providing a full stack that is more or less hard to change and extend it allows you to use only what you really need *without* extending the controller or model.
+This plugin works very similar to the [CakeDC users plugin](https://github.com/cakedc/users) but instead of providing a full stack that is more or less hard to change and extend it allows you to use only what you really need *without* extending the controller or model.
 
 Requirements
 ------------
