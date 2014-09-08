@@ -164,7 +164,7 @@ class UserToolComponent extends Component {
 	public function __construct(ComponentRegistry $registry, $config = []) {
 		$this->_defaultConfig = Hash::merge(
 			$this->_defaultConfig,
-			$this->_translatedConfigMessages(),
+			$this->_translateConfigMessages(),
 			(array)Configure::read('UserTools.Component')
 		);
 		parent::__construct($registry, $config);
@@ -179,7 +179,7 @@ class UserToolComponent extends Component {
  *
  * @return array
  */
-	protected function _translatedConfigMessages() {
+	protected function _translateConfigMessages() {
 		return [
 			'requestPassword' => [
 				'successMessage' => __d('user_tools', 'An email was send to your address, please check your inbox.'),

@@ -5,14 +5,49 @@ If you want to go for a kick start and use the component as it is, you can simpl
 
 ```php
 class UsersController extends AppController {
-
 	public $components = array(
 		'UserTools.UserTool'
 	);
 }
 ```
 
-By default the users component will intercept requests to certain actions if the action methods don't exist in the controller.
+Configuration Options
+---------------------
+
+All configuration of the component can be configured in bootstrap as well by writing the config to:
+
+```php
+Configure::write('UserTools.Component', [/* Config goes here */]);
+```
+
+* **autoloadBehavior**: If not already loaded the component will load the UserBehavior for the current controllers `$modelClass`. Default is `true`.
+* **actionMapping**: Enables the CRUD functionality of the plugin, if method doesn't exist in the controller and is mapped by the component the component method is executed. Default is `true`.
+* **directMapping**: TBD
+* **userModel**: TBD
+* **passwordReset**: TBD
+* **auth**: TBD
+* **registration**: Explained below.
+* **login**: Explained below.
+* **verifyEmailToken**: Explained below.
+* **requestPassword**: Explained below.
+* **resetPassword**: Explained below.
+* **verifyToken**: Explained below.
+* **getUser**: Explained below.
+* **actionMap**: Explained below.
+
+actionMap Option
+----------------
+
+By default the users component will intercept requests to certain actions if the action methods don't exist in the controller and map them. The actionMap is an array of this structure:
+
+```php
+'actionName' => [
+	'method' => 'componentMethod',
+	'view' => 'someViewFileName',
+],
+```
+
+You can use it to configure different views than the defaults for the actions. It's defaults are:
 
 ```php
 'index' => [
@@ -47,12 +82,4 @@ By default the users component will intercept requests to certain actions if the
 	'method' => 'getUser',
 	'view' => 'UserTools.UserTools/view',
 ],
-```
-
-The method and the view of each can be changed through the configuration options of the component.
-
-All configuration of the component can be configured in bootstrap as well by putting the config into
-
-```php
-Configure::write('UserTools.Component', [/* Config goes here */]);
 ```
