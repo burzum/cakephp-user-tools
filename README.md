@@ -1,9 +1,9 @@
 User Tools Plugin for CakePHP
 =============================
 
-The **UserTools** plugin provides you the building blocks for everything around users. However, it has the same kick start ability through the [UserToolComponent](src/Controller/Component/UserToolComponent.php) and [UserBehavior](src/Model/Behavior/UserBehavior.php) but is overall much more configurable and extensible.
+The **UserTools** plugin provides you the building blocks for everything around users. It comes with a CRUD kick start through the [UserToolComponent](src/Controller/Component/UserToolComponent.php) and the [UserBehavior](src/Model/Behavior/UserBehavior.php). Just load the component and you have a working login and registration. Customize it as you like through configuration or use only what you really need.
 
-This plugin works very similar to the [CakeDC users plugin](https://github.com/cakedc/users) but instead of providing a full stack that is more or less hard to change and extend it allows you to use only what you really need *without* extending the controller or model.
+This plugin works very similar to the [CakeDC users plugin](https://github.com/cakedc/users) but instead of providing a full stack that is more or less hard to change and extend it allows you to use only what you really need *without* extending the controller or model. UserTools is overall much more configurable and extensible.
 
 Requirements
 ------------
@@ -14,7 +14,7 @@ Requirements
 Documentation
 -------------
 
-For documentation, as well as tutorials, see the [Docs](Docs/Home.md) directory of this repository.
+For documentation, as well as tutorials, see the [Docs](docs/Home.md) directory of this repository.
 
 Support
 -------
@@ -25,7 +25,7 @@ Branch strategy
 -------------
 
 * The **master** branch holds the 'STABLE' latest version of the plugin.
-* The **develop** branch is 'UNSTABLE' and used to test new features before releasing them.
+* The **develop** branch is `UNSTABLE` and used to test new features before releasing them.
 * Only **hot fixes** are accepted against the master branch.
 
 Contributing to this Plugin
