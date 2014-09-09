@@ -33,7 +33,6 @@ class UserBehavior extends Behavior {
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
 		'validatorClass' => '\UserTools\Validation\UserRegistrationValidator',
-		'entityClass' => '\Cake\ORM\Entity',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
 		'register' => [
@@ -43,7 +42,9 @@ class UserBehavior extends Behavior {
 			'generatePassword' => false,
 			'emailVerification' => true,
 			'verificationExpirationTime' => '+1 day',
-			'beforeRegister' => true
+			'beforeRegister' => true,
+			'afterRegister' => true,
+			'tokenLength' => 32,
 		],
 		'fieldMap' => [
 			'username' => 'username',
@@ -66,7 +67,7 @@ class UserBehavior extends Behavior {
 			'validate' => false
 		],
 		'initPasswordReset' => [
-			'tokenLength' => 10,
+			'tokenLength' => 32,
 			'expires' => '+1 day'
 		],
 		'sendVerificationEmail' => [
@@ -115,6 +116,8 @@ class UserBehavior extends Behavior {
 		if ($this->_config['defaultValidation'] === true) {
 			$this->setupRegistrationValidation($this->_table);
 		}
+
+		$this->_eventManager->attach($this->_table);
 	}
 
 /**
@@ -129,10 +132,10 @@ class UserBehavior extends Behavior {
  * @return array
  */
 	public function implementedEvents() {
-		return [
+		return Hash::merge(parent::implementedEvents(), [
 			'UserBehavior.beforeRegister' => 'beforeRegister',
 			'UserBehavior.afterRegister' => 'afterRegister',
-		];
+		]);
 	}
 
 /**
@@ -160,25 +163,6 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Custom validation method to ensure that the two entered passwords match
- *
- * @todo finish me
- * @param mixed $value The value of column to be checked for uniqueness
- * @param array $options The options array, optionally containing the 'scope' key
- * @param array $context The validation context as provided by the validation routine
- * @return bool true if the value is unique
- */
-	public function confirmPassword($value, array $options, array $context = []) {
-		$passwordCheck = $this->_field('passwordCheck');
-		$password = $this->_field('password');
-		if ((isset($this->_table->data[$this->_table->alias()][$passwordCheck]) && isset($this->_table->data[$this->_table->alias()][$password]))
-			&& ($this->_table->data[$this->_table->alias()][$passwordCheck] === $this->_table->data[$this->_table->alias()][$password])) {
-			return true;
-		}
-		return false;
-	}
-
-/**
  * Returns a datetime in the format Y-m-d H:i:s
  *
  * @param string strtotime compatible string, default is "+1 day"
@@ -200,7 +184,7 @@ class UserBehavior extends Behavior {
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
 		$options = Hash::merge($this->_config['updateLastActivity'], $options);
 		if ($this->_table->exists([$this->_table->alias() . '.' . $this->_table->primaryKey()])) {
-			return $this->_table->save(new $this->_config['entityClass']([
+			return $this->_table->save($this->_table->newEntity([
 				$this->_table->primaryKey() => $userId,
 				$field => date($options['dateFormat'])
 			]), ['validate' => $options['validate']]);
@@ -224,47 +208,47 @@ class UserBehavior extends Behavior {
  * This method deals with most of the settings for the registration that can be
  * applied before the actual user record is saved.
  *
- * @param array $postData
+ * @param \Cake\ORM\Entity $entity
  * @param array $options
  * @return void
  */
-	protected function _beforeRegister($postData, $options) {
+	protected function _beforeRegister(Entity $entity, $options = []) {
 		extract(Hash::merge($this->_config['register'], $options));
 
 		if ($this->_config['useUuid'] === true) {
 			$primaryKey = $this->_table->primaryKey();
-			$postData->{$primaryKey} = String::uuid();
+			$entity->{$primaryKey} = String::uuid();
 		}
 
 		if ($userActive === true) {
-			$postData->{$this->_field('active')} = 1;
+			$entity->{$this->_field('active')} = 1;
 		}
 
 		if ($emailVerification === true) {
-			$postData->{$this->_field('emailToken')} = $this->generateToken(16);
+			$entity->{$this->_field('emailToken')} = $this->generateToken($tokenLength);
 			if ($verificationExpirationTime !== false) {
-				$postData->{$this->_field('emailTokenExpires')} = $this->expirationTime($verificationExpirationTime);
+				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($verificationExpirationTime);
 			}
-			$postData->{$this->_field('emailVerified')} = 0;
+			$entity->{$this->_field('emailVerified')} = 0;
 		} else {
-			$postData->{$this->_field('emailVerified')} = 1;
+			$entity->{$this->_field('emailVerified')} = 1;
 		}
 
-		if (!isset($postData->{$this->_field('role')})) {
-			$postData->{$this->_field('role')} = $defaultRole;
+		if (!isset($entity->{$this->_field('role')})) {
+			$entity->{$this->_field('role')} = $defaultRole;
 		}
 
 		if ($generatePassword === true) {
 			$password = $this->generatePassword((int)$generatePassword);
-			$postData->{$this->_field('password')} = $password;
-			$postData->clear_password = $password;
+			$entity->{$this->_field('password')} = $password;
+			$entity->clear_password = $password;
 		}
 
 		if ($hashPassword === true) {
-			$postData->{$this->_field('password')} = $this->hashPassword($postData->{$this->_field('password')});
+			$entity->{$this->_field('password')} = $this->hashPassword($entity->{$this->_field('password')});
 		}
 
-		return $postData;
+		return $entity;
 	}
 
 /**
@@ -277,71 +261,71 @@ class UserBehavior extends Behavior {
  * - saves the user data
  * - calls Model::afterRegister if implemented
  *
- * @param mixed post data
- * @param array options
+ * @param \Cake\ORM\Entity $entity
+ * @param array $options
  * @throws \InvalidArgumentException
  * @return boolean
  */
-	public function register($postData, $options = []) {
+	public function register(Entity $entity, $options = []) {
 		$options = array_merge($this->_config['register'], $options);
 
-		if (is_array($postData)) {
-			$postData = new $this->_config['entityClass']($postData);
-		} elseif (!is_a('\Cake\ORM\Entity', $postData)) {
-			throw new \InvalidArgumentException(__d('user_tools', 'Invalid data passed!'));
-		}
-
-		if (!$this->_table->validate($postData, ['validate' => 'userRegistration'])) {
-			$this->_table->entity = $postData;
+		if (!$this->_table->validate($entity, ['validate' => 'userRegistration'])) {
+			$this->_table->entity = $entity;
 			return false;
 		}
 
 		if ($options['beforeRegister'] === true) {
-			$postData = $this->_beforeRegister($postData, $options);
-			if (method_exists($this->_table, 'beforeRegister')) {
-				if (!$this->_table->beforeRegister($postData, $options)) {
-					return false;
-				}
-			}
+			$entity = $this->_beforeRegister($entity, $options);
 		}
 
-		$event = new Event('User.beforeRegister', $this, ['data' => $postData]);
-		$this->_table->eventManager()->dispatch($event);
+		$event = new Event('User.beforeRegister', $this, [
+			'data' => $entity,
+			'table' => $this->_table
+		]);
+		$this->_eventManager->dispatch($event);
 		if ($event->isStopped()) {
 			return (bool)$event->result;
 		}
 
-		$result = $this->_table->save($postData, array('validate' => false));
+		$result = $this->_table->save($entity, array('validate' => false));
 
-		$event = new Event('User.afterRegister', $this, ['data' => $result]);
-		$this->_table->eventManager()->dispatch($event);
-		if ($event->isStopped()) {
-			return (bool)$event->result;
+		if ($options['afterRegister'] === true) {
+			$entity = $this->_afterRegister($entity, $options);
 		}
 
-		if ($result) {
+		$event = new Event('User.afterRegister', $this, [
+			'data' => $result,
+			'table' => $this->_table
+		]);
+		$this->_eventManager->dispatch($event);
+		if ($event->isStopped()) {
+			return $event->result;
+		}
+
+		$result = $this->_afterRegister($entity, $options);
+		if (!$result) {
+			return false;
+		}
+		return $result;
+	}
+
+	protected function _afterRegister($entity, $options) {
+		if ($entity) {
 			if ($options['emailVerification'] === true) {
-				$this->sendVerificationEmail($result, array(
-					'to' => $result->{$this->_field('email')}
+				$this->sendVerificationEmail($entity, array(
+					'to' => $entity->{$this->_field('email')}
 				));
 			}
-
-			if (method_exists($this->_table, 'afterRegister')) {
-				return $this->_table->afterRegister();
-			}
-
-			return true;
 		}
-
-		return false;
+		return $entity;
 	}
 
 /**
  * Verify the email token
  *
- * @throws \Cake\ORM\Exception\RecordNotFoundException if the token was not found at all
  * @param string $token
  * @param array $options
+ * @throws \Cake\ORM\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean|\Cake\ORM\Entity Returns false if the token has expired
  */
 	public function verifyToken($token, $options = []) {
@@ -361,19 +345,28 @@ class UserBehavior extends Behavior {
 		}
 
 		$time = new \Cake\Utility\Time();
-		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} <= $time;
+		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} >= $time;
 
 		$this->afterTokenVerification($result, $options);
+
+		$event = new Event('User.afterTokenVerification', $this, ['data' => $result, 'options' => $options]);
+		$this->_eventManager->dispatch($event);
+		if ($event->isStopped()) {
+			return (bool)$event->result;
+		}
 
 		if ($options['returnData'] === true) {
 			return $result;
 		}
-
 		return $result->token_is_expired;
 	}
 
 /**
+ * afterTokenVerification
  *
+ * @param \Cake\ORM\Entity $user
+ * @param array $options
+ * @return mixed
  */
 	public function afterTokenVerification(Entity $user, $options = []) {
 		if ($user->token_is_expired === true) {
@@ -383,10 +376,6 @@ class UserBehavior extends Behavior {
 			$user->{$this->_field('emailVerified')} = 1;
 			$user->{$this->_field('emailToken')} = null;
 			$user->{$this->_field('emailTokenExpires')} = null;
-		}
-		if ($options['tokenField'] === $this->_field('passwordToken')) {
-			$user->{$this->_field('passwordToken')} = null;
-			$user->{$this->_field('passwordTokenExpires')} = null;
 		}
 		return $this->_table->save($user, ['validate' => false]);
 	}
@@ -404,7 +393,7 @@ class UserBehavior extends Behavior {
 			'tokenField' => $this->_field('emailToken'),
 			'expirationField' => $this->_field('emailTokenExpires'),
 		];
-		$this->verifyToken($token, Hash::merge($defaults, $options));
+		return $this->verifyToken($token, Hash::merge($defaults, $options));
 	}
 
 /**
@@ -419,8 +408,25 @@ class UserBehavior extends Behavior {
 		$defaults = array(
 			'tokenField' => $this->_field('passwordToken'),
 			'expirationField' => $this->_field('passwordTokenExpires'),
+			'returnData' => true,
 		);
-		$this->verifyToken($token, Hash::merge($defaults, $options));
+		return $this->verifyToken($token, Hash::merge($defaults, $options));
+	}
+
+/**
+ * Password reset, compares the two passwords and saves the new password
+ *
+ * @param \Cake\ORM\Entity $user
+ * @return void
+ */
+	public function resetPassword(Entity $user) {
+		if ($this->_table->validate($user, ['validate' => 'userRegistration'])) {
+			$user->{$this->_field('password')} = $this->hashPassword($user->{$this->_field('password')});
+			$user->{$this->_field('passwordToken')} = null;
+			$user->{$this->_field('passwordTokenExpires')} = null;
+			return $this->_table->save($user);
+		}
+		return false;
 	}
 
 /**

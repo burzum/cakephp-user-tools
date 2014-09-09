@@ -90,7 +90,12 @@ class UserToolComponent extends Component {
 			'field' => 'email'
 		],
 		'resetPassword' => [
+			'successFlashOptions' => [],
+			'successRedirectUrl' => '/',
+			'errorFlashOptions' => [],
+			'errorRedirectUrl' => '/',
 			'queryParam' => 'token',
+			'tokenOptions' => [],
 		],
 		'verifyToken' => [
 			'queryParam' => 'token',
@@ -184,6 +189,10 @@ class UserToolComponent extends Component {
 			'requestPassword' => [
 				'successMessage' => __d('user_tools', 'An email was send to your address, please check your inbox.'),
 				'errorMessage' => __d('user_tools', 'Invalid user.'),
+			],
+			'resetPassword' => [
+				'successMessage' => __d('user_tools', 'Your password has been reset, you can now login.'),
+				'errorMessage' => __d('user_tools', 'Please check your inputs.'),
 			],
 			'registration' => [
 				'successMessage' => __d('user_tools', 'Thank you for signing up!'),
@@ -405,19 +414,16 @@ class UserToolComponent extends Component {
 		if ($this->_config['registration'] === false) {
 			throw new NotFoundException();
 		}
-
+		$entity = $this->_table->newEntity($this->request->data());
 		$options = Hash::merge($this->_config['registration'], $options);
-
 		if ($this->request->is('post')) {
-			if ($this->UserTable->register($this->request->data)) {
+			if ($this->UserTable->register($entity)) {
 				return $this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
-				$this->Controller->set('usersEntity', $this->UserTable->entity);
 			}
-		} else {
-			$this->Controller->set('usersEntity', null);
 		}
+		$this->Controller->set('usersEntity', $entity);
 	}
 
 /**
@@ -453,20 +459,41 @@ class UserToolComponent extends Component {
 /**
  * Allows the user to enter a new password
  *
- * @todo finish and test me
+ * @param string $token
  * @param array $options
  * @return void
  */
-	public function resetPassword($options = []) {
-		$this->verifyToken(Hash::merge($this->_defaultConfig['resetPassword'], $options));
+	public function resetPassword($token = null, $options = []) {
+		$options = (Hash::merge($this->_defaultConfig['resetPassword'], $options));
+		if (!empty($this->request->query[$options['queryParam']])) {
+			$token = $this->request->query[$options['queryParam']];
+		}
+
+		try {
+			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
+		} catch (RecordNotFoundException $e) {
+			$entity = $this->UserTable->newEntity();
+			debug($e->getMessage());
+		}
+
+		if ($entity->token_is_expired === true) {
+			$this->Flash->set(__d('user_tools', 'The token has expired!'));
+			//die(debug($entity));
+			//return $this->Controller->redirect('/');
+		}
+
 		if ($this->request->is('post')) {
 			try {
-				$this->UserTable->resetPassword($this->request->data);
-				$this->handleFlashAndRedirect('success', $options);
+				$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+				$this->UserTable->resetPassword($entity);
+				//$this->handleFlashAndRedirect('success', $options);
 			} catch (RecordNotFoundException $e) {
 				$this->handleFlashAndRedirect('error', $options);
 			}
+		} else {
+			$entity = $this->UserTable->newEntity();
 		}
+		$this->Controller->set('entity', $entity);
 	}
 
 /**
@@ -506,7 +533,7 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function handleFlashAndRedirect($type, $options) {
-		if ($options[$type . 'Message'] !== false) {
+		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {
 			if (is_string($options[$type . 'Message'])) {
 				$flashOptions = [];
 				if (isset($options[$type . 'FlashOptions'])) {
@@ -515,7 +542,7 @@ class UserToolComponent extends Component {
 				$this->Flash->set($options[$type . 'Message'], $flashOptions);
 			}
 		}
-		if ($options[$type . 'RedirectUrl'] !== false) {
+		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
 			$result = $this->Controller->redirect($options[$type . 'RedirectUrl']);
 			$this->_redirectResponse = $result;
 		}

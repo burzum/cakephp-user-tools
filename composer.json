@@ -20,6 +20,9 @@
 		"cakephp/cakephp": "3.0.*-dev",
 		"phpunit/phpunit": "4.1.*"
 	},
+	"suggested": {
+		"cakephp/migration": "*"
+	},
 	"autoload": {
 		"psr-4": {
 			"UserTools\\": "src",

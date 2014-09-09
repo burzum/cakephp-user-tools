@@ -16,8 +16,8 @@ class UserRegistrationValidator extends Validator {
  * Constructor
  */
 	public function __construct() {
-		$this->validatePresence('email', 'create');
-		$this->validatePresence('password', 'create');
+		//$this->validatePresence('email', 'create');
+		//$this->validatePresence('password', 'create');
 
 		$this->add('username', [
 			'notEmpty' => [
@@ -64,7 +64,14 @@ class UserRegistrationValidator extends Validator {
 				'rule' => ['minLength', 6],
 				'message' => __d('user_tools', 'The password must have at least 6 characters.')
 			],
+			'confirmPassword' => [
+				'rule' => ['compareFields', 'confirm_password'],
+				'message' => __d('user_tools', 'The passwords don\'t match!'),
+				'provider' => 'myself',
+			]
 		]);
+
+		$this->provider('myself', $this);
 
 		$this->add('confirm_password', [
 			'notEmpty' => [
@@ -75,6 +82,18 @@ class UserRegistrationValidator extends Validator {
 				'rule' => ['minLength', 6],
 				'message' => __d('user_tools', 'The password must have at least 6 characters.')
 			],
+			'confirmPassword' => [
+				'rule' => ['compareFields', 'password'],
+				'message' => __d('user_tools', 'The passwords don\'t match!'),
+				'provider' => 'myself',
+			]
 		]);
+	}
+
+	public function compareFields($value, $field, $context) {
+		if ($value === $context['data'][$field]) {
+			return true;
+		}
+		return false;
 	}
 }
