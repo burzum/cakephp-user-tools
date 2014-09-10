@@ -93,7 +93,11 @@ class UserToolComponent extends Component {
 			'successFlashOptions' => [],
 			'successRedirectUrl' => '/',
 			'errorFlashOptions' => [],
-			'errorRedirectUrl' => '/',
+			'errorRedirectUrl' => false,
+			'invalidErrorFlashOptions' => [],
+			'invalidErrorRedirectUrl' => '/',
+			'expiredErrorFlashOptions' => [],
+			'expiredErrorRedirectUrl' => '/',
 			'queryParam' => 'token',
 			'tokenOptions' => [],
 		],
@@ -193,6 +197,8 @@ class UserToolComponent extends Component {
 			'resetPassword' => [
 				'successMessage' => __d('user_tools', 'Your password has been reset, you can now login.'),
 				'errorMessage' => __d('user_tools', 'Please check your inputs.'),
+				'invalidErrorMessage' => __d('user_tools', 'Invalid token!'),
+				'expiredErrorMessage' => __d('user_tools', 'The token has expired!')
 			],
 			'registration' => [
 				'successMessage' => __d('user_tools', 'Thank you for signing up!'),
@@ -414,8 +420,8 @@ class UserToolComponent extends Component {
 		if ($this->_config['registration'] === false) {
 			throw new NotFoundException();
 		}
-		$entity = $this->_table->newEntity($this->request->data());
 		$options = Hash::merge($this->_config['registration'], $options);
+		$entity = $this->UserTable->newEntity($this->request->data());
 		if ($this->request->is('post')) {
 			if ($this->UserTable->register($entity)) {
 				return $this->handleFlashAndRedirect('success', $options);
@@ -472,22 +478,25 @@ class UserToolComponent extends Component {
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
 		} catch (RecordNotFoundException $e) {
+			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
+				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
+			}
+			$this->handleFlashAndRedirect('invalidError', $options);
 			$entity = $this->UserTable->newEntity();
-			debug($e->getMessage());
 		}
 
 		if ($entity->token_is_expired === true) {
-			$this->Flash->set(__d('user_tools', 'The token has expired!'));
-			//die(debug($entity));
-			//return $this->Controller->redirect('/');
+			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
+				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
+			}
+			$this->handleFlashAndRedirect('expiredError', $options);
 		}
 
 		if ($this->request->is('post')) {
-			try {
-				$entity = $this->UserTable->patchEntity($entity, $this->request->data);
-				$this->UserTable->resetPassword($entity);
-				//$this->handleFlashAndRedirect('success', $options);
-			} catch (RecordNotFoundException $e) {
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+			if ($this->UserTable->resetPassword($entity)) {
+				$this->handleFlashAndRedirect('success', $options);
+			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		} else {

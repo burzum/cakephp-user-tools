@@ -302,10 +302,6 @@ class UserBehavior extends Behavior {
 			return $event->result;
 		}
 
-		$result = $this->_afterRegister($entity, $options);
-		if (!$result) {
-			return false;
-		}
 		return $result;
 	}
 
@@ -345,7 +341,7 @@ class UserBehavior extends Behavior {
 		}
 
 		$time = new \Cake\Utility\Time();
-		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} >= $time;
+		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} <= $time;
 
 		$this->afterTokenVerification($result, $options);
 
