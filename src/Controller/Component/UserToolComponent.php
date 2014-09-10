@@ -68,6 +68,7 @@ class UserToolComponent extends Component {
 			'successRedirectUrl' => '/',
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
+			'setEntity' => true,
 		],
 		'login' => [
 			'successFlashOptions' => [],
@@ -228,25 +229,8 @@ class UserToolComponent extends Component {
 		$this->Controller = $Event->subject();
 		$this->setUserTable($this->_config['userModel']);
 		$this->loadUserBehaviour();
-		$this->loadHelpers();
 	}
 
-/**
- * Checks and loads helper if they're not found
- *
- * @return void
- */
-	public function loadHelpers() {
-		$helpers = ['Flash', 'Paginator'];
-		foreach ($helpers as $helper) {
-			if (
-				!in_array($helper, $this->Controller->helpers) &&
-				!array_key_exists($helper, $this->Controller->helpers)
-			) {
-				$this->Controller->helpers[] = $helper;
-			}
-		}
-	}
 
 /**
  * User listing with pagination
@@ -363,10 +347,12 @@ class UserToolComponent extends Component {
 					$options['successRedirectUrl'] = $Auth->redirectUrl();
 				}
 				$this->handleFlashAndRedirect('success', $options);
+				return true;
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
+		return false;
 	}
 
 /**
@@ -374,7 +360,7 @@ class UserToolComponent extends Component {
  *
  * @param mixed $userId
  * @param array $options
- * @return void
+ * @return mixed
  */
 	public function getUser($userId = null, $options = []) {
 		$options = Hash::merge($this->_config['getUser'], $options);
@@ -383,16 +369,46 @@ class UserToolComponent extends Component {
 				$userId = $this->request->params['pass'][0];
 			}
 		}
-		$this->Controller->set($options['viewVar'], $this->UserTable->getUser($userId));
-		$this->Controller->set('_serialize', [$options['viewVar']]);
+		$entity = $this->UserTable->getUser($userId);
+		if ($options['viewVar'] !== false) {
+			$this->Controller->set($options['viewVar'], $entity);
+			$this->Controller->set('_serialize', [$options['viewVar']]);
+		}
+		return $entity;
+	}
+
+/**
+ * Deletes an user record
+ *
+ * @param mixed $userId
+ * @param array $options
+ * @return boolean
+ */
+	public function deleteUser($userId = null, $options = []) {
+		if (is_string($userId) || is_integer($userId)) {
+			$entity = $this->UserTable->newEntity([
+				$this->UserTable->primaryKey() => $userId
+			]);
+		}
+		if (is_array($userId)) {
+			$entity = $this->UserTable->newEntity($userId);
+		}
+		if ($this->UserTable->delete($entity)) {
+			$this->handleFlashAndRedirect('success', $options);
+			return true;
+		} else {
+			$this->handleFlashAndRedirect('error', $options);
+			return false;
+		}
 	}
 
 /**
  * Logout
  *
+ * @param array $options Options array.
  * @return void
  */
-	public function logout() {
+	public function logout($options = []) {
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
 		if (empty($user)) {
@@ -405,6 +421,8 @@ class UserToolComponent extends Component {
 
 /**
  * User registration
+ *
+ * Options:
  *
  * - `enabled` Disables/enables the registration. If false a NotFoundException is thrown. Default true.
  * - `successMessage` The success flash message.
@@ -424,12 +442,16 @@ class UserToolComponent extends Component {
 		$entity = $this->UserTable->newEntity($this->request->data());
 		if ($this->request->is('post')) {
 			if ($this->UserTable->register($entity)) {
-				return $this->handleFlashAndRedirect('success', $options);
+				$this->handleFlashAndRedirect('success', $options);
+				return true;
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
+				return false;
 			}
 		}
-		$this->Controller->set('usersEntity', $entity);
+		if ($this->_config['registration']['setEntity'] === true) {
+			$this->Controller->set('usersEntity', $entity);
+		}
 	}
 
 /**
@@ -485,7 +507,7 @@ class UserToolComponent extends Component {
 			$entity = $this->UserTable->newEntity();
 		}
 
-		if ($entity->token_is_expired === true) {
+		if (isset($entity->token_is_expired) && $entity->token_is_expired === true) {
 			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
 				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
 			}
@@ -508,7 +530,7 @@ class UserToolComponent extends Component {
 /**
  * Verify Token
  *
- * @param array
+ * @param array $options
  * @throws \Cake\Error\NotFoundException;
  * @return mixed
  */
@@ -537,7 +559,7 @@ class UserToolComponent extends Component {
 /**
  * Handles flashes and redirects
  *
- * @param string $type "success" or "error"
+ * @param string $type Prefix for the array key, mostly "success" or "error"
  * @param array $options Options
  * @return mixed
  */
@@ -559,6 +581,12 @@ class UserToolComponent extends Component {
 
 /**
  * Gets the auth component object
+ *
+ * If there is an auth component loaded it will take that one from the
+ * controller. If not the configured default settings will be used to create
+ * a new instance of the auth component. This is mostly thought as a fallback,
+ * in a real world scenario the app should have set auth set up in it's
+ * AppController.
  *
  * @return AuthComponent
  */

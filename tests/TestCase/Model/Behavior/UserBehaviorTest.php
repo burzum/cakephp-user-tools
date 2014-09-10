@@ -62,15 +62,15 @@ class UserBehaviorTest extends TestCase {
  * @return void
  */
 	public function testRegister() {
-		$data = [
+		$data = new Entity([
 			'username' => 'foobar',
 			'email' => 'foobar@foobar.com',
 			'password' => 'password',
 			'confirm_password' => 'password'
-		];
+		]);
 
 		$result = $this->User->register($data);
-		$this->assertTrue($result);
+		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
 	}
 
 /**
@@ -110,19 +110,25 @@ class UserBehaviorTest extends TestCase {
  */
 	public function testVerifyToken() {
 		$this->User->save(new Entity([
-				'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
-				'id' => 2
+			'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
+			'id' => 2
 		]), array(
 			'validate' => false
 		));
 		$result = $this->User->verifyToken('secondusertesttoken');
 		$this->assertTrue($result);
 
-		$result = $this->User->verifyToken('secondusertesttoken', array(
+		$this->User->save(new Entity([
+			'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
+			'id' => 3
+		]), array(
+			'validate' => false
+		));
+		$result = $this->User->verifyToken('thirdusertesttoken', array(
 			'returnData' => true
 		));
 		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
-		$this->assertTrue($result->is_expired);
+		$this->assertTrue($result->token_is_expired);
 	}
 
 /**

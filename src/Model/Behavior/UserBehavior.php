@@ -82,8 +82,7 @@ class UserBehavior extends Behavior {
 	];
 
 /**
- * Keeping a reference to the table in order to,
- * be able to retrieve associations and fetch records for counting.
+ * Keeping a reference to the table in order to be able to retrieve associations and fetch records for counting.
  *
  * @var array
  */
@@ -99,7 +98,7 @@ class UserBehavior extends Behavior {
 /**
  * Constructor
  *
- * @param Table $table The table this behavior is attached to.
+ * @param \Cake\ORM\Table $table The table this behavior is attached to.
  * @param array $config The settings for this behavior.
  */
 	public function __construct(Table $table, array $config = []) {
@@ -118,24 +117,6 @@ class UserBehavior extends Behavior {
 		}
 
 		$this->_eventManager->attach($this->_table);
-	}
-
-/**
- * Get the Model callbacks this table is interested in.
- *
- * By implementing the conventional methods a table class is assumed
- * to be interested in the related event.
- *
- * Override this method if you need to add non-conventional event listeners.
- * Or if you want you table to listen to non-standard events.
- *
- * @return array
- */
-	public function implementedEvents() {
-		return Hash::merge(parent::implementedEvents(), [
-			'UserBehavior.beforeRegister' => 'beforeRegister',
-			'UserBehavior.afterRegister' => 'afterRegister',
-		]);
 	}
 
 /**
@@ -290,7 +271,7 @@ class UserBehavior extends Behavior {
 		$result = $this->_table->save($entity, array('validate' => false));
 
 		if ($options['afterRegister'] === true) {
-			$entity = $this->_afterRegister($entity, $options);
+			$entity = $this->_afterRegister($result, $options);
 		}
 
 		$event = new Event('User.afterRegister', $this, [
@@ -305,6 +286,9 @@ class UserBehavior extends Behavior {
 		return $result;
 	}
 
+/**
+ *
+ */
 	protected function _afterRegister($entity, $options) {
 		if ($entity) {
 			if ($options['emailVerification'] === true) {
@@ -319,8 +303,8 @@ class UserBehavior extends Behavior {
 /**
  * Verify the email token
  *
- * @param string $token
- * @param array $options
+ * @param string $token The token to check.
+ * @param array $options Options array.
  * @throws \Cake\ORM\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean|\Cake\ORM\Entity Returns false if the token has expired
  */
@@ -360,8 +344,8 @@ class UserBehavior extends Behavior {
 /**
  * afterTokenVerification
  *
- * @param \Cake\ORM\Entity $user
- * @param array $options
+ * @param \Cake\ORM\Entity $user Entity object.
+ * @param array $options Options array.
  * @return mixed
  */
 	public function afterTokenVerification(Entity $user, $options = []) {
@@ -379,9 +363,9 @@ class UserBehavior extends Behavior {
 /**
  * Verify the email token
  *
+ * @param string $token Token string to check.
+ * @param array $options Options array.
  * @throws NotFoundException if the token was not found at all
- * @param string $token
- * @param array $options
  * @return boolean Returns false if the token has expired
  */
 	public function verifyEmailToken($token, $options = []) {
@@ -395,9 +379,9 @@ class UserBehavior extends Behavior {
 /**
  * Verify the password reset token
  *
- * @throws NotFoundException if the token was not found at all
  * @param string $token
  * @param array $options
+ * @throws NotFoundException if the token was not found at all
  * @return boolean Returns false if the token has expired
  */
 	public function verifyPasswordResetToken($token, $options = []) {
@@ -412,7 +396,7 @@ class UserBehavior extends Behavior {
 /**
  * Password reset, compares the two passwords and saves the new password
  *
- * @param \Cake\ORM\Entity $user
+ * @param \Cake\ORM\Entity $user Entity object.
  * @return void
  */
 	public function resetPassword(Entity $user) {
@@ -428,8 +412,8 @@ class UserBehavior extends Behavior {
 /**
  * Generates a random password that is more or less user friendly
  *
- * @param int $length Password length
- * @param array $options
+ * @param int $length Password length, default is 8
+ * @param array $options Options array.
  * @return string
  */
 	public function generatePassword($length = 8, $options = []) {
