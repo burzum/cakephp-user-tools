@@ -14,7 +14,7 @@ Requirements
 Documentation
 -------------
 
-For documentation, as well as tutorials, see the [Docs](docs/Home.md) directory of this repository.
+For documentation, as well as tutorials, see the [docs](docs/Home.md) directory of this repository.
 
 Support
 -------
