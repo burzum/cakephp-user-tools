@@ -1,4 +1,4 @@
 <h1>
-	<?php echo __d('user_tools', 'Users'); ?>
+	<?= __d('user_tools', 'Users') ?>
 </h1>
-<?php echo $this->element('UserTools.table');
+<?= $this->element('UserTools.table');
