@@ -60,7 +60,7 @@ class MultiColumnAuthenticate extends FormAuthenticate {
 		$table = TableRegistry::get($userModel)->find('all');
 		$result = $table
 			->where($conditions)
-			//->contain($this->_config['contain'])
+			->contain($this->_config['contain'])
 			->hydrate(false)
 			->first();
 
@@ -72,7 +72,6 @@ class MultiColumnAuthenticate extends FormAuthenticate {
 			$hasher = $this->passwordHasher();
 			$hashedPassword = $result[$fields['password']];
 			if (!$hasher->check($password, $hashedPassword)) {
-				die('TEST PW');
 				return false;
 			}
 
