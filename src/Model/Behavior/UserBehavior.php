@@ -289,9 +289,9 @@ class UserBehavior extends Behavior {
 /**
  * _afterRegister
  *
- * @param Entity $entity
+ * @param \Cake\ORM\Entity $entity
  * @param array $options
- * @return Entity
+ * @return \Cake\ORM\Entity
  */
 	protected function _afterRegister($entity, $options) {
 		if ($entity) {
@@ -320,13 +320,10 @@ class UserBehavior extends Behavior {
 		];
 		$options = Hash::merge($defaults, $options);
 
-		$result = $this->_table->find()
-			->where([$options['tokenField'] => $token])
-			->first();
-
-		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'Invalid token'));
-		}
+		$result = $this->_getUser($token, [
+			'field' => $options['tokenField'],
+			'notFoundErrorMessage' => __d('user_tools', 'Invalid token')
+		]);
 
 		$time = new \Cake\Utility\Time();
 		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} <= $time;
@@ -545,6 +542,7 @@ class UserBehavior extends Behavior {
  */
 	protected function _getUser($value, $options = []) {
 		$defaults = [
+			'notFoundErrorMessage' => __d('user_tools', 'User not found'),
 			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
 		];
 		$options = Hash::merge($defaults, $options);
@@ -564,7 +562,7 @@ class UserBehavior extends Behavior {
 		$result = $query->first();
 
 		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'User not found'));
+			throw new RecordNotFoundException($options['notFoundErrorMessage']);
 		}
 		return $result;
 	}
