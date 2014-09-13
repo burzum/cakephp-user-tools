@@ -287,7 +287,11 @@ class UserBehavior extends Behavior {
 	}
 
 /**
+ * _afterRegister
  *
+ * @param Entity $entity
+ * @param array $options
+ * @return Entity
  */
 	protected function _afterRegister($entity, $options) {
 		if ($entity) {
@@ -509,11 +513,23 @@ class UserBehavior extends Behavior {
 			]
 		];
 		$options = Hash::merge($defaults, $this->_config['initPasswordReset'], $options);
-		$result = $this->_findUserForPasswordReset($value, $options);
+		$result = $this->_getUser($value, $options);
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
 		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
 		$this->_table->save($result, ['validate' => false]);
 		return $this->sendPasswordResetToken($result, ['to' => $result->{$this->_field('email')}]);
+	}
+
+/**
+ * Finds a single user, convenience method
+ *
+ * @param mixed $value
+ * @param array $options
+ * @throws \Cake\ORM\Exception\RecordNotFoundException
+ * @return \Cake\ORM\Entity
+ */
+	public function getUser($value, $options = []) {
+		return $this->_getUser($value, $options);
 	}
 
 /**
@@ -527,10 +543,14 @@ class UserBehavior extends Behavior {
  * @throws \Cake\ORM\Exception\RecordNotFoundException
  * @return \Cake\ORM\Entity
  */
-	protected function _findUserForPasswordReset($value, $options) {
-		$this->_table->connection()->logQueries(true);
+	protected function _getUser($value, $options = []) {
+		$defaults = [
+			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
+		];
+		$options = Hash::merge($defaults, $options);
+
 		$query = $this->_table->find();
-		/*
+
 		if (is_array($options['field'])) {
 			$orConditions = [];
 			foreach ($options['field'] as $field) {
@@ -539,13 +559,12 @@ class UserBehavior extends Behavior {
 			$query->orWhere($orConditions);
 		} else {
 			$query->where([$options['field'] => $value]);
-		}*/
-		//$query->where([$options['field'] => $value]);
-		$query->where(['Users.email' => $value]);
+		}
+
 		$result = $query->first();
 
 		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+			throw new RecordNotFoundException(__d('user_tools', 'User not found'));
 		}
 		return $result;
 	}
@@ -575,27 +594,6 @@ class UserBehavior extends Behavior {
 		$result->password = $this->hashPassword($result->password);
 		$this->_table->save($result, ['validate' => false]);
 		return $this->sendNewPasswordEmail($result, ['to' => $result->{$this->_field('email')}]);
-	}
-
-/**
- * Gets an users record by id or slug
- *
- * @throws \Cake\ORM\Exception\RecordNotFoundException
- * @param mixed $userId
- * @param array $options
- * @return array
- */
-	public function getUser($userId, $options = []) {
-		$result = $this->_table
-			->find()
-			->where([$this->_table->alias() . '.' . $this->_table->primaryKey() => $userId])
-			->first();
-
-		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'User not found!'));
-		}
-
-		return $result;
 	}
 
 /**
