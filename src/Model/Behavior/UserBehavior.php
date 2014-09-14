@@ -14,7 +14,7 @@ use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
 use Cake\Core\Configure;
-use Cake\Error\NotFoundException;
+use Cake\Network\Exception\NotFoundException;
 use Cake\Network\Email\Email;
 use Cake\Event\EventManager;
 use Cake\Auth\PasswordHasherFactory;
