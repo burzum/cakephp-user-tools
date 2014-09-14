@@ -15,7 +15,7 @@ use Cake\Utility;
 use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
 use Cake\Utility\Hash;
-use Cake\Error\NotFoundException;
+use Cake\Network\Exception\NotFoundException;
 use Cake\Core\Configure;
 use Cake\Network\Response;
 
