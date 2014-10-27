@@ -1,5 +1,5 @@
 <?php
-namespace UserTools\Test\TestCase\Controller\Component;
+namespace Burzum\UserTools\Test\TestCase\Controller\Component;
 
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;

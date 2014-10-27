@@ -6,7 +6,7 @@
  * @copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
-namespace UserTools\View\Helper;
+namespace Burzum\UserTools\View\Helper;
 
 use Cake\Utility\Hash;
 use Cake\View\Helper;

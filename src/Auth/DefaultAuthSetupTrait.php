@@ -6,7 +6,7 @@
  * @copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
-namespace UserTools\Auth;
+namespace Burzum\UserTools\Auth;
 
 trait DefaultAuthSetupTrait {
 

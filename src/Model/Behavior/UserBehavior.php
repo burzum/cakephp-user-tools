@@ -7,7 +7,7 @@
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
-namespace UserTools\Model\Behavior;
+namespace Burzum\UserTools\Model\Behavior;
 
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;

@@ -6,7 +6,7 @@
  * @copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
-namespace UserTools\Controller\Component;
+namespace Burzum\UserTools\Controller\Component;
 
 use Cake\Controller\Component;
 use Cake\ORM\TableRegistry;

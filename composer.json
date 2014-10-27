@@ -25,17 +25,17 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"UserTools\\": "src",
-			"UserTools\\Test\\Fixture\\": "tests\\Fixture"
+			"Burzum\\UserTools\\": "src",
+			"Burzum\\UserTools\\Test\\Fixture\\": "tests\\Fixture"
 		}
 	},
 	"autoload-dev": {
 		"psr-4": {
 			"Cake\\Test\\": "vendor/cakephp/cakephp/tests",
-			"UserTools\\Test\\": "tests"
+			"Burzum\\UserTools\\Test\\": "tests"
 		}
 	},
 	"extra": {
-		"installer-name": "UserTools"
+		"installer-name": "Burzum/UserTools"
  	}
 }

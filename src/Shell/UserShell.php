@@ -6,7 +6,7 @@
  * @copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
-namespace UserTools\Shell;
+namespace Burzum\UserTools\Shell;
 
 use Cake\Cache\Cache;
 use Cake\Console\Shell;

@@ -1,10 +1,10 @@
 <?php
-namespace UserTools\Test\TestCase\View\Helper;
+namespace Burzum\UserTools\Test\TestCase\View\Helper;
 
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
 use Cake\ORM\Entity;
-use UserTools\View\Helper\AuthHelper;
+use Burzum\UserTools\View\Helper\AuthHelper;
 
 /**
  * AuthHelperTestCase

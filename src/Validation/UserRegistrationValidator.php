@@ -6,7 +6,7 @@
  * @copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
-namespace UserTools\Validation;
+namespace Burzum\UserTools\Validation;
 
 use Cake\Validation\Validator;
 

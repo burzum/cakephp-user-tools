@@ -23,7 +23,7 @@
  * @license MIT
  * @link https://github.com/ceeram/Authenticate
  */
-namespace UserTools\Auth;
+namespace Burzum\UserTools\Auth;
 
 use Cake\Auth;
 

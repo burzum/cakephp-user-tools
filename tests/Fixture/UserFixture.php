@@ -1,5 +1,5 @@
 <?php
-namespace UserTools\Test\Fixture;
+namespace Burzum\UserTools\Test\Fixture;
 
 use Cake\TestSuite\Fixture\TestFixture;
 

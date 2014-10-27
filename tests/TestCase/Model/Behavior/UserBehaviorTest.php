@@ -1,5 +1,5 @@
 <?php
-namespace UserTools\Test\TestCase\Model\Behavior;
+namespace Burzum\UserTools\Test\TestCase\Model\Behavior;
 
 use Cake\ORM\TableRegistry;
 use Cake\ORM\Table;
