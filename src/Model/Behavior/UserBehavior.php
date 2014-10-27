@@ -32,7 +32,7 @@ class UserBehavior extends Behavior {
 	protected $_defaultConfig = [
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
-		'validatorClass' => '\UserTools\Validation\UserRegistrationValidator',
+		'validatorClass' => '\Burzum\UserTools\Validation\UserRegistrationValidator',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
 		'register' => [
@@ -71,13 +71,13 @@ class UserBehavior extends Behavior {
 			'expires' => '+1 day'
 		],
 		'sendVerificationEmail' => [
-			'template' => 'UserTools.Users/verification_email',
+			'template' => 'Burzum\UserTools.Users/verification_email',
 		],
 		'sendNewPasswordEmail' => [
-			'template' => 'UserTools.Users/new_password',
+			'template' => 'Burzum\UserTools.Users/new_password',
 		],
 		'sendPasswordResetToken' => [
-			'template' => 'UserTools.Users/password_reset',
+			'template' => 'Burzum\UserTools.Users/password_reset',
 		]
 	];
 

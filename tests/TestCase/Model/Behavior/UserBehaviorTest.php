@@ -33,7 +33,7 @@ class UserBehaviorTest extends TestCase {
  * @var array
  */
 	public $fixtures = array(
-		'plugin.user_tools.user'
+		'plugin.Burzum\UserTools.User'
 	);
 
 /**
@@ -44,7 +44,7 @@ class UserBehaviorTest extends TestCase {
 	public function setUp() {
 		parent::setUp();
 		$this->User = TableRegistry::get('Users');
-		$this->User->addBehavior('UserTools.User');
+		$this->User->addBehavior('Burzum/UserTools.User');
 	}
 
 /**
@@ -68,7 +68,6 @@ class UserBehaviorTest extends TestCase {
 			'password' => 'password',
 			'confirm_password' => 'password'
 		]);
-
 		$result = $this->User->register($data);
 		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
 	}

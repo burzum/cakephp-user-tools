@@ -19,7 +19,7 @@ class UserToolComponent extends TestCase {
  * @var array
  */
 	public $fixtures = [
-		'plugin.user_tools.user'
+		'plugin.Burzum\UserTools.User'
 	];
 
 /**
