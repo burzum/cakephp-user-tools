@@ -117,15 +117,15 @@ class UserToolComponent extends Component {
 		'actionMap' => [
 			'index' => [
 				'method' => 'listing',
-				'view' => 'UserTools.UserTools/index',
+				'view' => 'Burzum/UserTools.UserTools/index',
 			],
 			'register' => [
 				'method' => 'register',
-				'view' => 'UserTools.UserTools/register'
+				'view' => 'Burzum/UserTools.UserTools/register'
 			],
 			'login' => [
 				'method' => 'login',
-				'view' => 'UserTools.UserTools/login',
+				'view' => 'Burzum/UserTools.UserTools/login',
 			],
 			'logout' => [
 				'method' => 'logout',
@@ -133,19 +133,19 @@ class UserToolComponent extends Component {
 			],
 			'reset_password' => [
 				'method' => 'resetPassword',
-				'view' => 'UserTools.UserTools/reset_password',
+				'view' => 'Burzum/UserTools.UserTools/reset_password',
 			],
 			'request_password' => [
 				'method' => 'requestPassword',
-				'view' => 'UserTools.UserTools/request_password',
+				'view' => 'Burzum/UserTools.UserTools/request_password',
 			],
 			'verify_email' => [
 				'method' => 'verifyEmailToken',
-				'view' => 'UserTools.UserTools/verify_email',
+				'view' => 'Burzum/UserTools.UserTools/verify_email',
 			],
 			'view' => [
 				'method' => 'getUser',
-				'view' => 'UserTools.UserTools/view',
+				'view' => 'Burzum/UserTools.UserTools/view',
 			],
 		],
 	];
@@ -226,7 +226,6 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function initialize(array $config) {
-
 		$this->setUserTable($this->_config['userModel']);
 		$this->loadUserBehaviour();
 	}
