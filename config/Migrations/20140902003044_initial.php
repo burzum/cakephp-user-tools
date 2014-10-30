@@ -32,7 +32,7 @@ class Initial extends AbstractMigration {
 			->addColumn('last_login', 'datetime')
 			->addColumn('created', 'datetime')
 			->addColumn('modified', 'datetime')
-			->addIndex(['username', 'email'], ['unique' => true])
+			->addIndex(['username', 'email'])
 			->create();
 	}
 
