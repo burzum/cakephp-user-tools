@@ -177,11 +177,11 @@ class UserToolComponent extends Component {
 			$this->_translateConfigMessages(),
 			(array)Configure::read('UserTools.Component')
 		);
-		parent::__construct($registry, $config);
 		$this->Collection = $registry;
 		$this->Controller = $registry->getController();
 		$this->request = $this->Controller->request;
 		$this->response = $this->Controller->response;
+		parent::__construct($registry, $config);
 	}
 
 /**
@@ -225,8 +225,8 @@ class UserToolComponent extends Component {
  * @param Event $Event
  * @return void
  */
-	public function initialize(Event $Event) {
-		$this->Controller = $Event->subject();
+	public function initialize(array $config) {
+
 		$this->setUserTable($this->_config['userModel']);
 		$this->loadUserBehaviour();
 	}
@@ -251,9 +251,9 @@ class UserToolComponent extends Component {
 	public function loadUserBehaviour() {
 		if ($this->_config['autoloadBehavior'] && !$this->UserTable->hasBehavior('UserTools.User')) {
 			if (is_array($this->_config['autoloadBehavior'])) {
-				$this->UserTable->addBehavior('UserTools.User', $this->_config['autoloadBehavior']);
+				$this->UserTable->addBehavior('Burzum/UserTools.User', $this->_config['autoloadBehavior']);
 			} else {
-				$this->UserTable->addBehavior('UserTools.User');
+				$this->UserTable->addBehavior('Burzum/UserTools.User');
 			}
 		}
 	}
