@@ -6,10 +6,10 @@ If you database follows the schema the plugin expects to work with you can simpl
 ```php
 UsersController extends AppController {
 	public $components = array(
-		'UserTools.UserTool'
+		'Burzum/UserTools.UserTool'
 	);
 	public $helpers = array(
-		'UserTools.Auth'
+		'Burzum/UserTools.Auth'
 	);
 }
 ```

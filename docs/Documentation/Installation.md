@@ -31,7 +31,7 @@ For a quick start simply attach the UserTool component to a controller and go to
 
 ```php
 public $components = array(
-	'UserTools.UserTool'
+	'Burzum/UserTools.UserTool'
 );
 ```
 

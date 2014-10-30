@@ -6,7 +6,7 @@ This behavior contains almost everything that is commonly needed for dealing wit
 ```php
 class User extends Table {
 	public $actsAs = array(
-		'UserTools.User'
+		'Burzum/UserTools.User'
 	);
 }
 ```

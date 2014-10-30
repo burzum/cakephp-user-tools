@@ -6,7 +6,7 @@ If you want to go for a kick start and use the component as it is, you can simpl
 ```php
 class UsersController extends AppController {
 	public $components = array(
-		'UserTools.UserTool'
+		'Burzum/UserTools.UserTool'
 	);
 }
 ```
