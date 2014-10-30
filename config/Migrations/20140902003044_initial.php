@@ -17,7 +17,7 @@ class Initial extends AbstractMigration {
  * @return void
  */
 	public function up() {
-		$this->table('users')
+		$this->table('users', ['id' => false, 'primary_key' => 'id'])
 			->addColumn('id', 'char', ['limit' => 36])
 			->addColumn('username', 'string', ['unique' => true, 'limit' => 64])
 			->addColumn('email', 'string', ['limit' => 255])
