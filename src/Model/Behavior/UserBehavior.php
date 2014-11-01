@@ -71,13 +71,13 @@ class UserBehavior extends Behavior {
 			'expires' => '+1 day'
 		],
 		'sendVerificationEmail' => [
-			'template' => 'Burzum\UserTools.Users/verification_email',
+			'template' => 'Burzum/UserTools.Users/verification_email',
 		],
 		'sendNewPasswordEmail' => [
-			'template' => 'Burzum\UserTools.Users/new_password',
+			'template' => 'Burzum/UserTools.Users/new_password',
 		],
 		'sendPasswordResetToken' => [
-			'template' => 'Burzum\UserTools.Users/password_reset',
+			'template' => 'Burzum/UserTools.Users/password_reset',
 		]
 	];
 
