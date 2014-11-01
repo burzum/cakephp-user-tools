@@ -428,27 +428,34 @@ class UserToolComponent extends Component {
  * - `successRedirectUrl` Success redirect url. Default /.
  * - `errorMessage` The error flash message.
  * - `errorRedirectUrl` The error redirect url.
+ * - `setEntity` Set the entity to the view or ort, default is true.
  *
  * @throws \Cake\Error\NotFoundException
  * @param array $options
  * @return void
  */
 	public function register($options = []) {
-		if ($this->_config['registration'] === false) {
+		$options = Hash::merge($this->_config['registration'], $options);
+		if ($options['enabled'] === false) {
 			throw new NotFoundException();
 		}
-		$options = Hash::merge($this->_config['registration'], $options);
 		$entity = $this->UserTable->newEntity($this->request->data());
 		if ($this->request->is('post')) {
 			if ($this->UserTable->register($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
+				if ($options['setEntity'] === true) {
+					$this->Controller->set('usersEntity', $entity);
+				}
 				return true;
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
+				if ($options['setEntity'] === true) {
+					$this->Controller->set('usersEntity', $entity);
+				}
 				return false;
 			}
 		}
-		if ($this->_config['registration']['setEntity'] === true) {
+		if ($options['setEntity'] === true) {
 			$this->Controller->set('usersEntity', $entity);
 		}
 	}
