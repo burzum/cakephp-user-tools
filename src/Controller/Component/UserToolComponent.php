@@ -46,15 +46,11 @@ class UserToolComponent extends Component {
 		'passwordReset' => 'token',
 		'auth' => [
 			'authenticate' => [
-				'UserTools.MultiColumn' => [
+				'Form' => [
 					'userModel' => 'Users',
 					'fields' => [
 						'username' => 'email',
 						'password' => 'password'
-					],
-					'columns' => [
-						'username',
-						'email'
 					],
 					'scope' => [
 						'Users.email_verified' => 1
@@ -75,6 +71,10 @@ class UserToolComponent extends Component {
 			'successRedirectUrl' => '/',
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
+		],
+		'logout' => [
+			'successFlashOptions' => [],
+			'successRedirectUrl' => '/',
 		],
 		'verifyEmailToken' => [
 			'queryParam' => 'token',
@@ -146,8 +146,8 @@ class UserToolComponent extends Component {
 			'view' => [
 				'method' => 'getUser',
 				'view' => 'Burzum/UserTools.UserTools/view',
-			],
-		],
+			]
+		]
 	];
 
 /**
@@ -208,6 +208,9 @@ class UserToolComponent extends Component {
 			'login' => [
 				'successMessage' => __d('user_tools', 'You are logged in!'),
 				'errorMessage' => __d('user_tools', 'Invalid login credentials.'),
+			],
+			'logout' => [
+				'successMessage' => __d('user_tools', 'You are logged out!'),
 			],
 			'verifyEmailToken' => [
 				'successMessage' => __d('user_tools', 'Email verified, you can now login!'),
@@ -321,7 +324,11 @@ class UserToolComponent extends Component {
 			if ($this->_redirectResponse instanceof Response) {
 				return $this->_redirectResponse;
 			}
-			return $this->Controller->render($this->_config['actionMap'][$action]['view']);
+			if (is_string($this->_config['actionMap'][$action]['view'])) {
+				return $this->Controller->render($this->_config['actionMap'][$action]['view']);
+			} else {
+				return $this->response;
+			}
 		}
 
 		return false;
@@ -408,14 +415,16 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function logout($options = []) {
+		$options = Hash::merge($this->_config['logout'], $options);
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
 		if (empty($user)) {
 			$this->Controller->redirect($this->Controller->referer());
 			return;
 		}
-		$this->Flash->set(__d('user_tools', '%s you have successfully logged out'), $user->username);
+		$this->handleFlashAndRedirect('success', $options);
 		$this->Controller->redirect($Auth->logout());
+		return;
 	}
 
 /**

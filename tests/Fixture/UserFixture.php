@@ -20,7 +20,7 @@ class UserFixture extends TestFixture {
 	public $fields = [
 		'id' => ['type' => 'string', 'null' => false, 'length' => 36],
 		'username' => ['type' => 'string', 'null' => false, 'default' => null],
-		'slug' => ['type' => 'string', 'null' => false, 'default' => null],
+		'slug' => ['type' => 'string', 'null' => true, 'default' => null],
 		'password' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
 		'password_token' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
 		'email' => ['type' => 'string', 'null' => true, 'default' => null],
