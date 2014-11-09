@@ -5,6 +5,10 @@ The **UserTools** plugin provides you the building blocks for everything around 
 
 This plugin works very similar to the [CakeDC users plugin](https://github.com/cakedc/users) from which it is derived from but was completely rewritten under the hood.
 
+---
+
+Be aware that the plugin might break as CakePHP 3.0, which is still in development and not yet a final release, changes! Create an issue ticket and let me know if that happens to you. Thanks!
+
 Requirements
 ------------
 
