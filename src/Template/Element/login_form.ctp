@@ -9,5 +9,14 @@ echo $this->Form->input('password', array(
 	'label' => __d('user_tools', 'Password'),
 	'required' => false,
 ));
+?>
+<p>
+	<?php
+		echo $this->Html->link(__d('user_tools', 'Register'), ['action' => 'register']);
+		echo ' | ';
+		echo $this->Html->link(__d('user_tools', 'Reset Password'), ['action' => 'request_password']);
+	?>
+</p>
+<?php
 echo $this->Form->submit(__d('user_tools', 'Login'));
 echo $this->Form->end();
