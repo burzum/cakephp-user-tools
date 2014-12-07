@@ -437,7 +437,7 @@ class UserToolComponent extends Component {
  * - `successRedirectUrl` Success redirect url. Default /.
  * - `errorMessage` The error flash message.
  * - `errorRedirectUrl` The error redirect url.
- * - `setEntity` Set the entity to the view or ort, default is true.
+ * - `setEntity` Set the entity to the view or not, default is true.
  *
  * @throws \Cake\Error\NotFoundException
  * @param array $options
@@ -448,7 +448,9 @@ class UserToolComponent extends Component {
 		if ($options['enabled'] === false) {
 			throw new NotFoundException();
 		}
-		$entity = $this->UserTable->newEntity($this->request->data());
+		$entity = $this->UserTable->newEntity();
+		$entity->accessible('confirm_password', true);
+		$entity = $this->UserTable->patchEntity($entity, $this->request->data());
 		if ($this->request->is('post')) {
 			if ($this->UserTable->register($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
