@@ -608,7 +608,7 @@ class UserToolComponent extends Component {
  * @return AuthComponent
  */
 	protected function _getAuthObject() {
-		if (!$this->Collection->loaded('Auth')) {
+		if (!$this->Collection->has('Auth')) {
 			$Auth = $this->Collection->load('Auth', $this->_config['auth']);
 			$Auth->request = $this->request;
 			$Auth->response = $this->response;
