@@ -56,9 +56,9 @@ class AuthHelper extends Helper {
 		if (is_string($this->_config['session'])) {
 			$this->_userData = CakeSession::read($this->_config['session']);
 		} else {
-			if (!isset($this->_View->viewVars[$this->_config['viewVar']])) {
+			if (!isset($this->_View->viewVars[$this->_config['viewVar']]) && $this->_View->viewVars[$this->_config['viewVar']] !== null) {
 				if ($this->_config['viewVarException'] === true) {
-					throw new \RuntimeException(__d('user_tools', 'View var %s not present!'));
+					throw new \RuntimeException(__d('user_tools', 'View var `{0}` not present!', $this->_config['viewVar']));
 				}
 			} else {
 				$this->_userData = $this->_View->viewVars[$this->_config['viewVar']];
