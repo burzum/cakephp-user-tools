@@ -501,10 +501,10 @@ class UserBehavior extends Behavior {
 /**
  * Changes the password for an user.
  *
- * @param \Cake\ORM\Entity $user
+ * @param \Cake\ORM\Entity $entity User entity
  * @return boolean
  */
-	public function changePassword(Entity $user) {
+	public function changePassword(Entity $entity) {
 		$validator = $this->_table->validator('default');
 		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notEmpty', [
@@ -517,7 +517,11 @@ class UserBehavior extends Behavior {
 			'message' => __d('user_tools', 'Wrong password, please try again.')
 		]);
 		$this->_table->validator('default', $validator);
-		if ($this->_table->save($user)) {
+		if (!$this->_table->validate($entity)) {
+			return false;
+		}
+		$entity->password = $this->hashPassword($entity->password);
+		if ($this->_table->save($entity, ['validate' => false])) {
 			return true;
 		}
 		return false;

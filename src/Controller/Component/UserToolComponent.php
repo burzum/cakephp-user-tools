@@ -568,6 +568,10 @@ class UserToolComponent extends Component {
 			$entity->id = $this->Controller->Auth->user('id');
 			$entity->isNew(false);
 			if ($this->UserTable->changePassword($entity)) {
+				$this->request->data = [];
+				$entity = $this->UserTable->newEntity();
+				$entity->id = $this->Controller->Auth->user('id');
+				$entity->isNew(false);
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
