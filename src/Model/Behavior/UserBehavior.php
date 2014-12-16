@@ -9,6 +9,7 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
+use Burzum\UserTools\Validation\UsersValidator;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
@@ -32,7 +33,7 @@ class UserBehavior extends Behavior {
 	protected $_defaultConfig = [
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
-		'validatorClass' => '\Burzum\UserTools\Validation\UserRegistrationValidator',
+		'validatorClass' => '\Burzum\UserTools\Validation\UsersValidator',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
 		'register' => [
@@ -82,14 +83,15 @@ class UserBehavior extends Behavior {
 	];
 
 /**
- * Keeping a reference to the table in order to be able to retrieve associations and fetch records for counting.
+ * Keeping a reference to the table in order to be able to retrieve associations
+ * and fetch records for counting.
  *
  * @var array
  */
 	protected $_table;
 
 /**
- * Password hasher instance.
+ * AbstractPasswordHasher instance.
  *
  * @var AbstractPasswordHasher
  */
@@ -113,7 +115,7 @@ class UserBehavior extends Behavior {
 		$this->_eventManager = $eventManager ?: new EventManager();
 
 		if ($this->_config['defaultValidation'] === true) {
-			$this->setupRegistrationValidation($this->_table);
+			$this->setupDefaultValidation($this->_table);
 		}
 
 		$this->_eventManager->attach($this->_table);
@@ -134,13 +136,14 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Sets validation rules up
+ * Sets validation rules for users up.
  *
  * @return void
  */
-	public function setupRegistrationValidation() {
-		$Validator = new $this->_config['validatorClass']($this->_table);
-		$this->_table->validator('userRegistration', $Validator);
+	public function setupDefaultValidation() {
+		$class = $this->_config['validatorClass'];
+		$Validator = new $class($this->_table);
+		$this->_table->validator('default', $Validator);
 	}
 
 /**
@@ -250,7 +253,7 @@ class UserBehavior extends Behavior {
 	public function register(Entity $entity, $options = []) {
 		$options = array_merge($this->_config['register'], $options);
 
-		if (!$this->_table->validate($entity, ['validate' => 'userRegistration'])) {
+		if (!$this->_table->validate($entity)) {
 			$this->_table->entity = $entity;
 			return false;
 		}
@@ -496,7 +499,54 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Initializes a password reset process
+ * Changes the password for an user.
+ *
+ * @param \Cake\ORM\Entity $entity User entity
+ * @return boolean
+ */
+	public function changePassword(Entity $entity) {
+		$validator = $this->_table->validator('default');
+		$validator->provider('userTable', $this->_table);
+		$validator->add('old_password', 'notEmpty', [
+			'rule' => 'notEmpty',
+			'message' => __d('userTools', 'Enter your old password.')
+		]);
+		$validator->add('old_password', 'oldPassword', [
+			'rule' => ['validateOldPassword', 'password'],
+			'provider' => 'userTable',
+			'message' => __d('user_tools', 'Wrong password, please try again.')
+		]);
+		$this->_table->validator('default', $validator);
+		if (!$this->_table->validate($entity)) {
+			return false;
+		}
+		$entity->password = $this->hashPassword($entity->password);
+		if ($this->_table->save($entity, ['validate' => false])) {
+			return true;
+		}
+		return false;
+	}
+
+/**
+ *
+ */
+	public function validateOldPassword($value, $field, $context) {
+		$result = $this->_table->find('all', [
+			'fields' => [
+				'password'
+			],
+			'conditions' => [
+				$this->_table->primaryKey() => $context['data'][$this->_table->primaryKey()],
+			]
+		])->first();
+		if (!$result) {
+			return false;
+		}
+		return $this->passwordHasher()->check($value, $result->password);
+	}
+
+/**
+ * Initializes a password reset process.
  *
  * @param mixed $value
  * @param array $options

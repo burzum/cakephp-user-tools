@@ -10,15 +10,27 @@ namespace Burzum\UserTools\Validation;
 
 use Cake\Validation\Validator;
 
-class UserRegistrationValidator extends Validator {
+class UsersValidator extends Validator {
 
 /**
  * Constructor
  */
 	public function __construct() {
-		//$this->validatePresence('email', 'create');
-		//$this->validatePresence('password', 'create');
+		$this->provider('myself', $this);
+		$this->validateUserName();
+		$this->validateEmail();
+		$this->validatePassword();
+		$this->validateConfirmPassword();
+	}
 
+/**
+ * Validates the username field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validateUserName() {
 		$this->add('username', [
 			'notEmpty' => [
 				'rule' => 'notEmpty',
@@ -38,7 +50,16 @@ class UserRegistrationValidator extends Validator {
 				'message' => __d('user_tools', 'The username must be alpha numeric.')
 			]
 		]);
+	}
 
+/**
+ * Validates the email field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validateEmail() {
 		$this->add('email', [
 			'notEmpty' => [
 				'rule' => 'notEmpty',
@@ -54,7 +75,16 @@ class UserRegistrationValidator extends Validator {
 				'message' => __d('user_tools', 'Must be a valid email address.')
 			]
 		]);
+	}
 
+/**
+ * Validates the password field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validatePassword() {
 		$this->add('password', [
 			'notEmpty' => [
 				'rule' => 'notEmpty',
@@ -70,9 +100,16 @@ class UserRegistrationValidator extends Validator {
 				'provider' => 'myself',
 			]
 		]);
+	}
 
-		$this->provider('myself', $this);
-
+/**
+ * Validates the confirm_password field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validateConfirmPassword() {
 		$this->add('confirm_password', [
 			'notEmpty' => [
 				'rule' => 'notEmpty',
@@ -90,7 +127,18 @@ class UserRegistrationValidator extends Validator {
 		]);
 	}
 
+/**
+ * Compares the value of two fields.
+ *
+ * @param mixed $value
+ * @param string $field
+ * @param Entity $context
+ * @return boolean
+ */
 	public function compareFields($value, $field, $context) {
+		if (!isset($context['data'][$field])) {
+			return true;
+		}
 		if ($value === $context['data'][$field]) {
 			return true;
 		}
