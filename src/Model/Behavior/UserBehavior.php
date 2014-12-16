@@ -9,7 +9,7 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
-use Burzum\UserTools\Validation\UserRegistrationValidator;
+use Burzum\UserTools\Validation\UsersValidator;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
@@ -22,7 +22,6 @@ use Cake\Auth\PasswordHasherFactory;
 use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Utility\String;
-use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
@@ -34,10 +33,10 @@ class UserBehavior extends Behavior {
 	protected $_defaultConfig = [
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
+		'validatorClass' => '\Burzum\UserTools\Validation\UsersValidator',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
 		'register' => [
-			'validatorClass' => '\Burzum\UserTools\Validation\UserRegistrationValidator',
 			'defaultRole' => null,
 			'hashPassword' => true,
 			'userActive' => true,
@@ -84,14 +83,15 @@ class UserBehavior extends Behavior {
 	];
 
 /**
- * Keeping a reference to the table in order to be able to retrieve associations and fetch records for counting.
+ * Keeping a reference to the table in order to be able to retrieve associations
+ * and fetch records for counting.
  *
  * @var array
  */
 	protected $_table;
 
 /**
- * Password hasher instance.
+ * AbstractPasswordHasher instance.
  *
  * @var AbstractPasswordHasher
  */
@@ -115,7 +115,7 @@ class UserBehavior extends Behavior {
 		$this->_eventManager = $eventManager ?: new EventManager();
 
 		if ($this->_config['defaultValidation'] === true) {
-			$this->setupRegistrationValidation($this->_table);
+			$this->setupDefaultValidation($this->_table);
 		}
 
 		$this->_eventManager->attach($this->_table);
@@ -136,14 +136,14 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Sets validation rules for registration up.
+ * Sets validation rules for users up.
  *
  * @return void
  */
-	public function setupRegistrationValidation() {
-		$class = $this->_config['register']['validatorClass'];
+	public function setupDefaultValidation() {
+		$class = $this->_config['validatorClass'];
 		$Validator = new $class($this->_table);
-		$this->_table->validator('userRegistration', $Validator);
+		$this->_table->validator('default', $Validator);
 	}
 
 /**
@@ -253,7 +253,7 @@ class UserBehavior extends Behavior {
 	public function register(Entity $entity, $options = []) {
 		$options = array_merge($this->_config['register'], $options);
 
-		if (!$this->_table->validate($entity, ['validate' => 'userRegistration'])) {
+		if (!$this->_table->validate($entity)) {
 			$this->_table->entity = $entity;
 			return false;
 		}
@@ -505,32 +505,40 @@ class UserBehavior extends Behavior {
  * @return boolean
  */
 	public function changePassword(Entity $user) {
-		$validator = new UserRegistrationValidator();
+		$validator = $this->_table->validator('default');
 		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notEmpty', [
-			'rule' => ['validateOldPassword', ['idField' => 'id', 'passwordField' => 'password']],
-			'provider' => 'userTable',
-			'message' => 'Wrong password, please try again.'
+			'rule' => 'notEmpty',
+			'message' => __d('userTools', 'Enter your old password.')
 		]);
-		$this->_table->validator('changePassword', $validator);
-		if ($this->_table->save($user, ['validate' => 'changePassword'])) {
+		$validator->add('old_password', 'oldPassword', [
+			'rule' => ['validateOldPassword', 'password'],
+			'provider' => 'userTable',
+			'message' => __d('user_tools', 'Wrong password, please try again.')
+		]);
+		$this->_table->validator('default', $validator);
+		if ($this->_table->save($user)) {
 			return true;
 		}
 		return false;
 	}
 
+/**
+ *
+ */
 	public function validateOldPassword($value, $field, $context) {
-		$password = $this->passwordHasher()->hash($value);
-		$count = $this->_table->find('all', [
+		$result = $this->_table->find('all', [
+			'fields' => [
+				'password'
+			],
 			'conditions' => [
-				'id' => $context['data']['id'],
-				'password' => $password
+				$this->_table->primaryKey() => $context['data'][$this->_table->primaryKey()],
 			]
-		])->count();
-		//debug($context['data']['id']);
-		//debug($password);
-		//die(debug($count));
-		return ($count > 0);
+		])->first();
+		if (!$result) {
+			return false;
+		}
+		return $this->passwordHasher()->check($value, $result->password);
 	}
 
 /**

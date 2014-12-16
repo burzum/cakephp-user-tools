@@ -102,6 +102,7 @@ class UserToolComponent extends Component {
 			'queryParam' => 'token',
 			'tokenOptions' => [],
 		],
+		'changePassword' => [],
 		'verifyToken' => [
 			'queryParam' => 'token',
 			'type' => 'Email',
@@ -204,6 +205,10 @@ class UserToolComponent extends Component {
 				'errorMessage' => __d('user_tools', 'Please check your inputs.'),
 				'invalidErrorMessage' => __d('user_tools', 'Invalid token!'),
 				'expiredErrorMessage' => __d('user_tools', 'The token has expired!')
+			],
+			'changePassword' => [
+				'successMessage' => __d('user_tools', 'Your password has been updated.'),
+				'errorMessage' => __d('user_tools', 'Could not update your password, please check for errors and try again.'),
 			],
 			'registration' => [
 				'successMessage' => __d('user_tools', 'Thank you for signing up!'),
@@ -555,9 +560,10 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function changePassword($options = []) {
+		$options = (Hash::merge($this->_defaultConfig['changePassword'], $options));
 		$entity = $this->UserTable->newEntity();
 		$entity->accessible(['id', 'old_password', 'new_password', 'confirm_password'], true);
-		if ($this->request->is('post')) {
+		if ($this->request->is(['post', 'put'])) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
 			$entity->id = $this->Controller->Auth->user('id');
 			$entity->isNew(false);

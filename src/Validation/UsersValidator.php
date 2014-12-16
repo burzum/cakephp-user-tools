@@ -10,7 +10,7 @@ namespace Burzum\UserTools\Validation;
 
 use Cake\Validation\Validator;
 
-class UserRegistrationValidator extends Validator {
+class UsersValidator extends Validator {
 
 /**
  * Constructor
@@ -136,6 +136,9 @@ class UserRegistrationValidator extends Validator {
  * @return boolean
  */
 	public function compareFields($value, $field, $context) {
+		if (!isset($context['data'][$field])) {
+			return true;
+		}
 		if ($value === $context['data'][$field]) {
 			return true;
 		}
