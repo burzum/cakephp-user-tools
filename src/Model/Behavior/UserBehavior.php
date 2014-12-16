@@ -9,6 +9,7 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
+use Burzum\UserTools\Validation\UserRegistrationValidator;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
@@ -21,6 +22,7 @@ use Cake\Auth\PasswordHasherFactory;
 use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Utility\String;
+use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
@@ -32,10 +34,10 @@ class UserBehavior extends Behavior {
 	protected $_defaultConfig = [
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
-		'validatorClass' => '\Burzum\UserTools\Validation\UserRegistrationValidator',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
 		'register' => [
+			'validatorClass' => '\Burzum\UserTools\Validation\UserRegistrationValidator',
 			'defaultRole' => null,
 			'hashPassword' => true,
 			'userActive' => true,
@@ -134,12 +136,13 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Sets validation rules up
+ * Sets validation rules for registration up.
  *
  * @return void
  */
 	public function setupRegistrationValidation() {
-		$Validator = new $this->_config['validatorClass']($this->_table);
+		$class = $this->_config['register']['validatorClass'];
+		$Validator = new $class($this->_table);
 		$this->_table->validator('userRegistration', $Validator);
 	}
 
@@ -496,7 +499,42 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Initializes a password reset process
+ * Changes the password for an user.
+ *
+ * @param \Cake\ORM\Entity $user
+ * @return boolean
+ */
+	public function changePassword(Entity $user) {
+		$validator = new UserRegistrationValidator();
+		$validator->provider('userTable', $this->_table);
+		$validator->add('old_password', 'notEmpty', [
+			'rule' => ['validateOldPassword', ['idField' => 'id', 'passwordField' => 'password']],
+			'provider' => 'userTable',
+			'message' => 'Wrong password, please try again.'
+		]);
+		$this->_table->validator('changePassword', $validator);
+		if ($this->_table->save($user, ['validate' => 'changePassword'])) {
+			return true;
+		}
+		return false;
+	}
+
+	public function validateOldPassword($value, $field, $context) {
+		$password = $this->passwordHasher()->hash($value);
+		$count = $this->_table->find('all', [
+			'conditions' => [
+				'id' => $context['data']['id'],
+				'password' => $password
+			]
+		])->count();
+		//debug($context['data']['id']);
+		//debug($password);
+		//die(debug($count));
+		return ($count > 0);
+	}
+
+/**
+ * Initializes a password reset process.
  *
  * @param mixed $value
  * @param array $options

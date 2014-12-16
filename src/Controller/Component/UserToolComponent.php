@@ -139,6 +139,10 @@ class UserToolComponent extends Component {
 				'method' => 'requestPassword',
 				'view' => 'Burzum/UserTools.UserTools/request_password',
 			],
+			'change_password' => [
+				'method' => 'changePassword',
+				'view' => 'Burzum/UserTools.UserTools/change_password',
+			],
 			'verify_email' => [
 				'method' => 'verifyEmailToken',
 				'view' => 'Burzum/UserTools.UserTools/verify_email',
@@ -540,6 +544,28 @@ class UserToolComponent extends Component {
 			}
 		} else {
 			$entity = $this->UserTable->newEntity();
+		}
+		$this->Controller->set('entity', $entity);
+	}
+
+/**
+ * Let the logged in user change his password.
+ *
+ * @param array $options
+ * @return void
+ */
+	public function changePassword($options = []) {
+		$entity = $this->UserTable->newEntity();
+		$entity->accessible(['id', 'old_password', 'new_password', 'confirm_password'], true);
+		if ($this->request->is('post')) {
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+			$entity->id = $this->Controller->Auth->user('id');
+			$entity->isNew(false);
+			if ($this->UserTable->changePassword($entity)) {
+				$this->handleFlashAndRedirect('success', $options);
+			} else {
+				$this->handleFlashAndRedirect('error', $options);
+			}
 		}
 		$this->Controller->set('entity', $entity);
 	}
