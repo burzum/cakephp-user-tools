@@ -252,8 +252,7 @@ class UserBehavior extends Behavior {
  */
 	public function register(Entity $entity, $options = []) {
 		$options = array_merge($this->_config['register'], $options);
-
-		if (!$this->_table->validate($entity)) {
+		if ($entity->errors()) {
 			$this->_table->entity = $entity;
 			return false;
 		}
@@ -404,7 +403,7 @@ class UserBehavior extends Behavior {
  * @return void
  */
 	public function resetPassword(Entity $user) {
-		if ($this->_table->validate($user, ['validate' => 'userRegistration'])) {
+		if (!$user->errors()) {
 			$user->{$this->_field('password')} = $this->hashPassword($user->{$this->_field('password')});
 			$user->{$this->_field('passwordToken')} = null;
 			$user->{$this->_field('passwordTokenExpires')} = null;
@@ -517,7 +516,7 @@ class UserBehavior extends Behavior {
 			'message' => __d('user_tools', 'Wrong password, please try again.')
 		]);
 		$this->_table->validator('default', $validator);
-		if (!$this->_table->validate($entity)) {
+		if ($entity->errors()) {
 			return false;
 		}
 		$entity->password = $this->hashPassword($entity->password);
