@@ -18,7 +18,7 @@
 		"cakephp/cakephp": "3.0.*-dev"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "*",
+		"phpunit/phpunit": "*"
 	},
 	"suggested": {
 		"cakephp/migration": "*",
