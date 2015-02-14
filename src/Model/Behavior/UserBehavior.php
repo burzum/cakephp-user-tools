@@ -22,6 +22,7 @@ use Cake\Auth\PasswordHasherFactory;
 use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Utility\String;
+use Cake\I18n\Time;
 
 class UserBehavior extends Behavior {
 
@@ -327,7 +328,7 @@ class UserBehavior extends Behavior {
 			'notFoundErrorMessage' => __d('user_tools', 'Invalid token')
 		]);
 
-		$time = new \Cake\Utility\Time();
+		$time = new Time();
 		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} <= $time;
 
 		$this->afterTokenVerification($result, $options);
