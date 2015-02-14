@@ -68,7 +68,7 @@ class UserToolComponent extends Component {
 		],
 		'login' => [
 			'successFlashOptions' => [],
-			'successRedirectUrl' => '/',
+			'successRedirectUrl' => null,
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
 		],
