@@ -14,11 +14,11 @@
 	],
 	"require": {
 		"php": ">=5.4.16",
-		"cakephp/plugin-installer": "*"
+		"cakephp/plugin-installer": "*",
+		"cakephp/cakephp": "3.0.*-dev"
 	},
 	"require-dev": {
-		"cakephp/cakephp": "3.0.*-dev",
-		"phpunit/phpunit": "*"
+		"phpunit/phpunit": "*",
 	},
 	"suggested": {
 		"cakephp/migration": "*",
@@ -36,7 +36,7 @@
 			"Burzum\\UserTools\\Test\\": "tests"
 		}
 	},
-	"extra": {
-		"installer-name": "Burzum/UserTools"
- 	}
+	"scripts": {
+		"post-autoload-dump": "Cake\\Composer\\Installer\\PluginInstaller::postAutoloadDump"
+	}
 }
