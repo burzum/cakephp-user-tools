@@ -15,7 +15,7 @@
 	"require": {
 		"php": ">=5.4.16",
 		"cakephp/plugin-installer": "*",
-		"cakephp/cakephp": "3.0.*-dev"
+		"cakephp/cakephp": "~3.0.0"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "*"
@@ -35,8 +35,5 @@
 			"Cake\\Test\\": "vendor/cakephp/cakephp/tests",
 			"Burzum\\UserTools\\Test\\": "tests"
 		}
-	},
-	"scripts": {
-		"post-autoload-dump": "Cake\\Composer\\Installer\\PluginInstaller::postAutoloadDump"
 	}
 }
