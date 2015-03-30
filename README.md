@@ -5,10 +5,6 @@ The **UserTools** plugin provides you the building blocks for everything around 
 
 This plugin works very similar to the [CakeDC users plugin](https://github.com/cakedc/users) from which it is derived from but was completely rewritten under the hood.
 
----
-
-Be aware that the plugin might break as CakePHP 3.0, which is still in development and not yet a final release, changes! Create an issue ticket and let me know if that happens to you. Thanks!
-
 Requirements
 ------------
 
@@ -37,13 +33,13 @@ Contributing to this Plugin
 
 Please feel free to contribute to the plugin with new issues, requests, unit tests and code fixes or new features. If you want to contribute some code, create a feature branch from develop, and send us your pull request. Unit tests for new features and issues detected are mandatory to keep quality high.
 
-* Pull requests **must** be made against the develop branch, *except* hot fixes!
-* You **must** follow the CakePHP coding standards.
-* Unit tests are **required** for new features and bug fixes.
+* Pull requests must be send to the ```develop``` branch.
+* Contributions must follow the [PSR2-**R** coding standard recommendation](https://github.com/php-fig-rectified/fig-rectified-standards).
+* [Unit tests](http://book.cakephp.org/3.0/en/development/testing.html) are required.
 
 License
 -------
 
-Copyright 2013 - 2014 Florian Krämer
+Copyright 2013 - 2015 Florian Krämer
 
 Licensed under the [MIT](http://www.opensource.org/licenses/mit-license.php) License. Redistributions of the source code included in this repository must retain the copyright notice found in each file.
