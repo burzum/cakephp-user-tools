@@ -19,7 +19,6 @@ use Cake\Network\Exception\NotFoundException;
 use Cake\Network\Email\Email;
 use Cake\Event\EventManager;
 use Cake\Auth\PasswordHasherFactory;
-use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Utility\String;
 use Cake\I18n\Time;
@@ -312,7 +311,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $token The token to check.
  * @param array $options Options array.
- * @throws \Cake\ORM\Exception\RecordNotFoundException if the token was not found at all
+ * @throws \Cake\Network\Exception\NotFoundException if the token was not found at all
  * @return boolean|\Cake\ORM\Entity Returns false if the token has expired
  */
 	public function verifyToken($token, $options = []) {
@@ -572,7 +571,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @throws \Cake\ORM\Exception\RecordNotFoundException
+ * @throws \Cake\ORM\Exception\NotFoundException
  * @return \Cake\ORM\Entity
  */
 	public function getUser($value, $options = []) {
@@ -587,7 +586,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @throws \Cake\ORM\Exception\RecordNotFoundException
+ * @throws \Cake\ORM\Exception\NotFoundException
  * @return \Cake\ORM\Entity
  */
 	protected function _getUser($value, $options = []) {
@@ -612,7 +611,7 @@ class UserBehavior extends Behavior {
 		$result = $query->first();
 
 		if (empty($result)) {
-			throw new RecordNotFoundException($options['notFoundErrorMessage']);
+			throw new NotFoundException($options['notFoundErrorMessage']);
 		}
 		return $result;
 	}
@@ -626,7 +625,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $email
  * @param array $options
- * @throws \Cake\ORM\Exception\RecordNotFoundException
+ * @throws \Cake\ORM\Exception\NotFoundException
  * @return boolean
  */
 	public function sendNewPassword($email, $options = []) {
@@ -636,7 +635,7 @@ class UserBehavior extends Behavior {
 			])
 			->first();
 		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+			throw new NotFoundException(__d('user_tools', 'Invalid user'));
 		}
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
