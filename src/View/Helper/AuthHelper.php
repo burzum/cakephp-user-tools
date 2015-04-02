@@ -94,7 +94,7 @@ class AuthHelper extends Helper {
  * @return mixed
  */
 	public function user($key) {
-		return $this->_userData->{$key};
+		return $this->_userData[$key];
 	}
 
 /**
