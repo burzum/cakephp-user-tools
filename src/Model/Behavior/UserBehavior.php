@@ -506,8 +506,8 @@ class UserBehavior extends Behavior {
 	public function changePassword(Entity $entity) {
 		$validator = $this->_table->validator('default');
 		$validator->provider('userTable', $this->_table);
-		$validator->add('old_password', 'notEmpty', [
-			'rule' => 'notEmpty',
+		$validator->add('old_password', 'notBlank', [
+			'rule' => 'notBlank',
 			'message' => __d('userTools', 'Enter your old password.')
 		]);
 		$validator->add('old_password', 'oldPassword', [
