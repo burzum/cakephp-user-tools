@@ -32,8 +32,8 @@ class UsersValidator extends Validator {
  */
 	public function validateUserName() {
 		$this->add('username', [
-			'notEmpty' => [
-				'rule' => 'notEmpty',
+			'notBlank' => [
+				'rule' => 'notBlank',
 				'message' => __d('user_tools', 'An username is required.')
 			],
 			'length' => [
