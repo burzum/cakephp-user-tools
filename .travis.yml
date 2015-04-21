@@ -9,7 +9,7 @@ before_script:
   - cp phpunit.xml.dist phpunit.xml
 
 script:
-  - phpunit Test/TestCase/AllUserToolsTest.php
+  - phpunit
 
 notifications:
   email: false
