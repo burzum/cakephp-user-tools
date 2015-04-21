@@ -10,18 +10,18 @@
 namespace Burzum\UserTools\Model\Behavior;
 
 use Burzum\UserTools\Validation\UsersValidator;
+use Cake\Auth\PasswordHasherFactory;
+use Cake\Core\Configure;
+use Cake\Event\Event;
+use Cake\Event\EventManager;
+use Cake\I18n\Time;
+use Cake\Network\Exception\NotFoundException;
+use Cake\Network\Email\Email;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
-use Cake\Core\Configure;
-use Cake\Network\Exception\NotFoundException;
-use Cake\Network\Email\Email;
-use Cake\Event\EventManager;
-use Cake\Auth\PasswordHasherFactory;
-use Cake\Event\Event;
-use Cake\Utility\String;
-use Cake\I18n\Time;
+use Cake\Utility\Text;
 
 class UserBehavior extends Behavior {
 
@@ -201,7 +201,7 @@ class UserBehavior extends Behavior {
 
 		if ($this->_config['useUuid'] === true) {
 			$primaryKey = $this->_table->primaryKey();
-			$entity->{$primaryKey} = String::uuid();
+			$entity->{$primaryKey} = Text::uuid();
 		}
 
 		if ($userActive === true) {
