@@ -3,7 +3,7 @@
  * AuthHelper
  *
  * @author Florian Krämer
- * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\View\Helper;
