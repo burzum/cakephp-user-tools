@@ -3,12 +3,13 @@
  * UserToolComponent
  *
  * @author Florian Krämer
- * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Controller\Component;
 
 use Cake\Controller\Component;
+use Cake\Event\EventManagerTrait;
 use Cake\ORM\TableRegistry;
 use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Utility;
@@ -20,6 +21,8 @@ use Cake\Core\Configure;
 use Cake\Network\Response;
 
 class UserToolComponent extends Component {
+
+	use EventManagerTrait;
 
 /**
  * Components
@@ -353,10 +356,21 @@ class UserToolComponent extends Component {
 		$options = Hash::merge($this->_config['login'], $options);
 
 		if ($this->request->is('post')) {
+			$event = new Event('User.beforeLogin', $this, ['options' => $options]);
+			$this->eventManager()->dispatch($event);
+			if ($event->isStopped()) {
+				return $event->result;
+			}
+
 			$Auth = $this->_getAuthObject();
 			$user = $Auth->identify();
 
 			if ($user) {
+				$event = new Event('User.afterLogin', $this, ['options' => $options]);
+				$this->eventManager()->dispatch($event);
+				if ($event->isStopped()) {
+					return $event->result;
+				}
 				$Auth->setUser($user);
 				if ($options['successRedirectUrl'] === null) {
 					$options['successRedirectUrl'] = $Auth->redirectUrl();

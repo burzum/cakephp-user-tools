@@ -22,7 +22,8 @@
 	},
 	"suggested": {
 		"cakephp/migration": "*",
-		"friendsofcake/authenticate": "dev-cake3"
+		"friendsofcake/authenticate": "dev-cake3",
+		"admad/cakephp-jwt-auth": "dev-master"
 	},
 	"autoload": {
 		"psr-4": {

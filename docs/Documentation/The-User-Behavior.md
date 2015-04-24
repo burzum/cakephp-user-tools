@@ -5,8 +5,9 @@ This behavior contains almost everything that is commonly needed for dealing wit
 
 ```php
 class User extends Table {
-	public $actsAs = array(
-		'Burzum/UserTools.User'
+	public function initialize() {
+		parent::initialize();
+		$this->loadBehavior('Burzum/UserTools.User');
 	);
 }
 ```
