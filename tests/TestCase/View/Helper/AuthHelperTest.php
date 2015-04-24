@@ -69,6 +69,9 @@ class AuthHelperTestCase extends TestCase {
 		$Auth = new AuthHelper($this->View);
 		$result = $Auth->user('something');
 		$this->assertEquals($result, 'some value');
+
+		$result = $Auth->user();
+		$this->assertEquals($result, $this->View->viewVars['userData']);
 	}
 
 /**
@@ -87,6 +90,14 @@ class AuthHelperTestCase extends TestCase {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->hasRole('manager'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
+
+		try {
+			$object = new \stdClass();
+			$Auth->hasRole($object);
+			$this->fail('No \InvalidArgumentException thrown!');
+		} catch (\InvalidArgumentException $e) {
+			// Pass
+		}
 	}
 
 /**
@@ -114,4 +125,18 @@ class AuthHelperTestCase extends TestCase {
 		$this->assertFalse($Auth->isLoggedin());
 	}
 
+	/**
+	 * testSetupUserData
+	 *
+	 * @return void
+	 */
+	public function testSetupUserData() {
+		try {
+			$this->View->viewVars = [];
+			$Auth = new AuthHelper($this->View);
+			$this->fail('No \RuntimeException thrown!');
+		} catch (\RuntimeException $e) {
+			// Pass
+		}
+	}
 }

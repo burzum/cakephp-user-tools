@@ -11,7 +11,7 @@ use Cake\TestSuite\TestCase;
  * ]@copyright 2013 - 2014 Florian Krämer
  * @license MIT
  */
-class UserToolComponent extends TestCase {
+class UserToolComponentTest extends TestCase {
 
 /**
  * Fixtures
