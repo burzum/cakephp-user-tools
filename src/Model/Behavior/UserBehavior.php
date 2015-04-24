@@ -79,6 +79,10 @@ class UserBehavior extends Behavior {
 		],
 		'sendPasswordResetToken' => [
 			'template' => 'Burzum/UserTools.Users/password_reset',
+		],
+		'implementedFinders' => [
+			'active' => 'findActive',
+			'emailVerified' => 'findEmailVerified'
 		]
 	];
 
