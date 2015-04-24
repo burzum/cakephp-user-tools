@@ -3,7 +3,7 @@
  * UserBehavior
  *
  * @author Florian Krämer
- * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2015 Florian Krämer
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
@@ -14,6 +14,7 @@ use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\Event\EventManager;
+use Cake\Event\EventManagerTrait;
 use Cake\I18n\Time;
 use Cake\Network\Exception\NotFoundException;
 use Cake\Network\Email\Email;
@@ -24,6 +25,8 @@ use Cake\Utility\Hash;
 use Cake\Utility\Text;
 
 class UserBehavior extends Behavior {
+
+	use EventManagerTrait;
 
 /**
  * Default config
@@ -46,6 +49,10 @@ class UserBehavior extends Behavior {
 			'beforeRegister' => true,
 			'afterRegister' => true,
 			'tokenLength' => 32,
+		],
+		'loginFields' => [
+			'username' => 'email',
+			'password' => 'password'
 		],
 		'fieldMap' => [
 			'username' => 'username',
@@ -79,6 +86,10 @@ class UserBehavior extends Behavior {
 		],
 		'sendPasswordResetToken' => [
 			'template' => 'Burzum/UserTools.Users/password_reset',
+		],
+		'implementedFinders' => [
+			'active' => 'findActive',
+			'emailVerified' => 'findEmailVerified'
 		]
 	];
 
@@ -108,17 +119,11 @@ class UserBehavior extends Behavior {
 		parent::__construct($table, $config);
 		$this->_table = $table;
 
-		$eventManager = null;
-		if (!empty($config['eventManager'])) {
-			$eventManager = $config['eventManager'];
-		}
-		$this->_eventManager = $eventManager ?: new EventManager();
-
 		if ($this->_config['defaultValidation'] === true) {
 			$this->setupDefaultValidation($this->_table);
 		}
 
-		$this->_eventManager->attach($this->_table);
+		$this->eventManager()->attach($this->_table);
 	}
 
 /**
@@ -235,6 +240,34 @@ class UserBehavior extends Behavior {
 		return $entity;
 	}
 
+	/**
+	 * Find users with verified emails.
+	 *
+	 * @param Query $query
+	 * @param array $options
+	 * @return Query
+	 */
+	public function findEmailVerified(Query $query, array $options) {
+		$query->where([
+			$this->alias() . '.email_verified' => true,
+		]);
+		return $query;
+	}
+
+	/**
+	 * Find Active Users.
+	 *
+	 * @param Query $query
+	 * @param array $options
+	 * @return Query
+	 */
+	public function findActive(Query $query, array $options) {
+		$query->where([
+			$this->alias() . '.active' => true,
+		]);
+		return $query;
+	}
+
 /**
  * Registers a new user
  *
@@ -265,7 +298,7 @@ class UserBehavior extends Behavior {
 			'data' => $entity,
 			'table' => $this->_table
 		]);
-		$this->_eventManager->dispatch($event);
+		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return (bool)$event->result;
 		}
@@ -280,7 +313,7 @@ class UserBehavior extends Behavior {
 			'data' => $result,
 			'table' => $this->_table
 		]);
-		$this->_eventManager->dispatch($event);
+		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
 		}
@@ -324,7 +357,7 @@ class UserBehavior extends Behavior {
 
 		$result = $this->_getUser($token, [
 			'field' => $options['tokenField'],
-			'notFoundErrorMessage' => __d('user_tools', 'Invalid token')
+			'notFoundErrorMessage' => __d('user_tools', 'Invalid token.')
 		]);
 
 		$time = new Time();
@@ -332,8 +365,11 @@ class UserBehavior extends Behavior {
 
 		$this->afterTokenVerification($result, $options);
 
-		$event = new Event('User.afterTokenVerification', $this, ['data' => $result, 'options' => $options]);
-		$this->_eventManager->dispatch($event);
+		$event = new Event('User.afterTokenVerification', $this, [
+			'data' => $result,
+			'options' => $options
+		]);
+		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return (bool)$event->result;
 		}

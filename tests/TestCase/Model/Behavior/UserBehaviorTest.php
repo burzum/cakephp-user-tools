@@ -187,6 +187,16 @@ class UserBehaviorTest extends TestCase {
 	}
 
 /**
+ * testhashPassword
+ *
+ * @return void
+ */
+	public function testhashPassword() {
+		$result = $this->User->hashPassword('password!');
+		$this->assertTrue(is_string($result));
+	}
+
+/**
  * testGetUserRecordNotFoundException
  *
  * @expectedException \Cake\Network\Exception\NotFoundException
@@ -194,6 +204,15 @@ class UserBehaviorTest extends TestCase {
  */
 	public function testGetUserRecordNotFoundException() {
 		$this->User->getUser('DOES-NOT-EXIST');
+	}
+
+/**
+ * testResetPassword
+ *
+ * @return void
+ */
+	public function testResetPassword() {
+
 	}
 
 /**

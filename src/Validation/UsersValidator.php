@@ -3,7 +3,7 @@
  * UserRegistrationValidator
  *
  * @author Florian Krämer
- * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Validation;
@@ -61,8 +61,8 @@ class UsersValidator extends Validator {
  */
 	public function validateEmail() {
 		$this->add('email', [
-			'notEmpty' => [
-				'rule' => 'notEmpty',
+			'notBlank' => [
+				'rule' => 'notBlank',
 				'message' => __d('user_tools', 'An email is required.')
 			],
 			'unique' => [
@@ -86,8 +86,8 @@ class UsersValidator extends Validator {
  */
 	public function validatePassword() {
 		$this->add('password', [
-			'notEmpty' => [
-				'rule' => 'notEmpty',
+			'notBlank' => [
+				'rule' => 'notBlank',
 				'message' => __d('user_tools', 'A password is required.')
 			],
 			'minLength' => [
@@ -111,8 +111,8 @@ class UsersValidator extends Validator {
  */
 	public function validateConfirmPassword() {
 		$this->add('confirm_password', [
-			'notEmpty' => [
-				'rule' => 'notEmpty',
+			'notBlank' => [
+				'rule' => 'notBlank',
 				'message' => __d('user_tools', 'A password is required.')
 			],
 			'minLength' => [

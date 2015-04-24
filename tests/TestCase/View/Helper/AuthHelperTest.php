@@ -28,7 +28,10 @@ class AuthHelperTestCase extends TestCase {
 				'id' => 'user-1',
 				'username' => 'florian',
 				'role' => 'admin',
-				'something' => 'some value'
+				'something' => 'some value',
+				'data' => [
+					'field1' => 'field one'
+				]
 			])
 		);
 	}
@@ -41,6 +44,34 @@ class AuthHelperTestCase extends TestCase {
 	public function tearDown() {
 		unset($this->View);
 		parent::tearDown();
+	}
+
+	/**
+	 * testUser
+	 *
+	 * @return void
+	 */
+	public function testUser() {
+		// Testing accessing the data with an entity.
+		$Auth = new AuthHelper($this->View);
+		$result = $Auth->user('something');
+		$this->assertEquals($result, 'some value');
+		$result = $Auth->user('data.field1');
+		$this->assertEquals($result, 'field one');
+
+		// Testing accessing it with an array.
+		$this->View->viewVars['userData'] = [
+			'id' => 'user-1',
+			'username' => 'florian',
+			'role' => 'admin',
+			'something' => 'some value'
+		];
+		$Auth = new AuthHelper($this->View);
+		$result = $Auth->user('something');
+		$this->assertEquals($result, 'some value');
+
+		$result = $Auth->user();
+		$this->assertEquals($result, $this->View->viewVars['userData']);
 	}
 
 /**
@@ -59,6 +90,14 @@ class AuthHelperTestCase extends TestCase {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->hasRole('manager'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
+
+		try {
+			$object = new \stdClass();
+			$Auth->hasRole($object);
+			$this->fail('No \InvalidArgumentException thrown!');
+		} catch (\InvalidArgumentException $e) {
+			// Pass
+		}
 	}
 
 /**
@@ -86,4 +125,18 @@ class AuthHelperTestCase extends TestCase {
 		$this->assertFalse($Auth->isLoggedin());
 	}
 
+	/**
+	 * testSetupUserData
+	 *
+	 * @return void
+	 */
+	public function testSetupUserData() {
+		try {
+			$this->View->viewVars = [];
+			$Auth = new AuthHelper($this->View);
+			$this->fail('No \RuntimeException thrown!');
+		} catch (\RuntimeException $e) {
+			// Pass
+		}
+	}
 }

@@ -35,13 +35,9 @@ Plugin::load('Burzum/UserTools');
 
 For a quick start simply attach the UserTool component to a controller and go to to `/<your-controller>/register` and register a new user.
 
-```php
-public $components = array(
-	'Burzum/UserTools.UserTool'
-);
-```
+If you're unsure how to do that see the [Quick Start](../Tutorials/Quick-Start.md).
 
-Other default URLs that become available are:
+Some default URLs that become available when the routes are loaded:
 
 * /<your-controller>/index
 * /<your-controller>/login

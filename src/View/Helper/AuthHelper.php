@@ -3,11 +3,12 @@
  * AuthHelper
  *
  * @author Florian Krämer
- * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\View\Helper;
 
+use Cake\Event\Event;
 use Cake\Utility\Hash;
 use Cake\View\Helper;
 use Cake\View\View;
@@ -54,11 +55,13 @@ class AuthHelper extends Helper {
  */
 	protected function _setupUserData() {
 		if (is_string($this->_config['session'])) {
-			$this->_userData = CakeSession::read($this->_config['session']);
+			$this->_userData = $this->_View->request->session()->read($this->_config['session']);
 		} else {
 			if (!isset($this->_View->viewVars[$this->_config['viewVar']]) && $this->_View->viewVars[$this->_config['viewVar']] !== null) {
 				if ($this->_config['viewVarException'] === true) {
-					throw new \RuntimeException(__d('user_tools', 'View var `{0}` not present!', $this->_config['viewVar']));
+					throw new \RuntimeException(sprintf('View var `%s` not present!', $this->_config['viewVar']));
+				} else {
+					$this->_userData = [];
 				}
 			} else {
 				$this->_userData = $this->_View->viewVars[$this->_config['viewVar']];
@@ -67,11 +70,28 @@ class AuthHelper extends Helper {
 	}
 
 /**
+ * Convinience method to the the user data in any case as array.
+ *
+ * This is mostly done because accessing the Entity object via Hash() caused an error when passing an object.
+ *
+ * @param bool $asArray Return as array, default true.
+ * @return array
+ */
+	protected function _userData($asArray = true) {
+		if ($asArray === true) {
+			if (is_a($this->_userData, '\Cake\ORM\Entity')) {
+				$this->_userData = $this->_userData->toArray();
+			}
+		}
+		return $this->_userData;
+	}
+
+/**
  * Checks if a user is logged in
  *
  * @return boolean
  */
-	public function isLoggedin() {
+	public function isLoggedIn() {
 		return (!empty($this->_userData));
 	}
 
@@ -93,25 +113,30 @@ class AuthHelper extends Helper {
  * @param string $key
  * @return mixed
  */
-	public function user($key) {
-		return $this->_userData[$key];
+	public function user($key = null) {
+		if ($key === null) {
+			return $this->_userData;
+		}
+		return Hash::get($this->_userData(true), $key);
 	}
 
 /**
- * Role check
+ * Role check.
  *
- * @param string
- * @return boolean
+ * @param string String of the role identifier.
+ * @return boolean True if the role is in the set of roles for the active user data.
  */
 	public function hasRole($role) {
-		$roles = $this->user($this->_config['roleField']);
+		if (!is_string($role)) {
+			throw new \InvalidArgumentException('Role must be a string!');
+		}
+		$roles = $this->user($this->config('roleField'));
 		if (is_string($roles)) {
 			return ($role === $roles);
 		}
 		if (is_array($roles)) {
 			return (in_array($role, $roles));
 		}
-		return false;
 	}
 
 }
