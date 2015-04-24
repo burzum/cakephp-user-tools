@@ -1,6 +1,10 @@
 <?php
 namespace Burzum\UserTools\Test\TestCase\Controller\Component;
 
+use Cake\Controller\ComponentRegistry;
+use Cake\Controller\Controller;
+use Cake\Network\Response;
+use Cake\Network\Request;
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 
@@ -29,6 +33,11 @@ class UserToolComponentTest extends TestCase {
  */
 	public function setUp() {
 		parent::setUp();
+		$this->request = new Request();
+		$this->response = new Response();
+		$this->Users = TableRegistry::get('Users');
+//		$this->Controller = new Controller($this->request, $this->response);
+//		$this->Registry = new ComponentRegistry($this->Controller);
 	}
 
 /**
@@ -44,7 +53,7 @@ class UserToolComponentTest extends TestCase {
  *
  */
 	public function testMapAction() {
-
+		//$this->Registry->load('Burzum/UserTools.UserTool');
 	}
 
 }
