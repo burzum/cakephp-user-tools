@@ -47,6 +47,10 @@ class UserBehavior extends Behavior {
 			'afterRegister' => true,
 			'tokenLength' => 32,
 		],
+		'loginFields' => [
+			'username' => 'email',
+			'password' => 'password'
+		],
 		'fieldMap' => [
 			'username' => 'username',
 			'password' => 'password',

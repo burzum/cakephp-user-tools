@@ -3,14 +3,25 @@ Quick Start
 
 If you database follows the schema the plugin expects to work with you can simply kick start your users in the application by just adding the component and helper.
 
+In \App\Controller\UsersController:
+
 ```php
 UsersController extends AppController {
-	public $components = array(
-		'Burzum/UserTools.UserTool'
+	public function initialize() {
+		parent::initialize();
+		$this->loadComponent('Burzum/UserTools.UserTool');
 	);
-	public $helpers = array(
-		'Burzum/UserTools.Auth'
-	);
+}
+```
+
+In your \App\View\AppView:
+
+```php
+class AppView extends View {
+	public function initialize() {
+		parent::initialize();
+		$this->loadHelper('Burzum/UserTools.Auth');
+	}
 }
 ```
 

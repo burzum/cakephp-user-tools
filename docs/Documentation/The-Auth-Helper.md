@@ -18,15 +18,24 @@ Configuration Options
 Example
 -------
 
+In \App\Controller\AppController:
+
 ```php
+use Cake\Event\Event;
 class AppController extends Controller {
-
-	public $helpers = array(
-		'Auth'
-	);
-
-	public function beforeRender() {
+	public function beforeRender(Event $event) {
 		$this->set('userData', $this->Auth->user());
+	}
+}
+```
+
+In your \App\View\AppView:
+
+```php
+class AppView extends View {
+	public function initialize() {
+		parent::initialize();
+		$this->loadHelper('Burzum/UserTools.Auth');
 	}
 }
 ```
