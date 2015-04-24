@@ -3,7 +3,7 @@
  * UserBehavior
  *
  * @author Florian Krämer
- * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2015 Florian Krämer
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
@@ -233,6 +233,34 @@ class UserBehavior extends Behavior {
 		}
 
 		return $entity;
+	}
+
+	/**
+	 * Find users with verified emails.
+	 *
+	 * @param Query $query
+	 * @param array $options
+	 * @return Query
+	 */
+	public function findEmailVerified(Query $query, array $options) {
+		$query->where([
+			$this->alias() . '.email_verified' => true,
+		]);
+		return $query;
+	}
+
+	/**
+	 * Find Active Users.
+	 *
+	 * @param Query $query
+	 * @param array $options
+	 * @return Query
+	 */
+	public function findActive(Query $query, array $options) {
+		$query->where([
+			$this->alias() . '.active' => true,
+		]);
+		return $query;
 	}
 
 /**
