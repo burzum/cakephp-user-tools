@@ -67,11 +67,28 @@ class AuthHelper extends Helper {
 	}
 
 /**
+ * Convinience method to the the user data in any case as array.
+ *
+ * This is mostly done because accessing the Entity object via Hash() caused an error when passing an object.
+ *
+ * @param bool $asArray Return as array, default true.
+ * @return array
+ */
+	protected function _userData($asArray = true) {
+		if ($asArray === true) {
+			if (is_a($this->_userData, '\Cake\ORM\Entity')) {
+				$this->_userData = $this->_userData->toArray();
+			}
+		}
+		return $this->_userData;
+	}
+
+/**
  * Checks if a user is logged in
  *
  * @return boolean
  */
-	public function isLoggedin() {
+	public function isLoggedIn() {
 		return (!empty($this->_userData));
 	}
 
@@ -93,8 +110,11 @@ class AuthHelper extends Helper {
  * @param string $key
  * @return mixed
  */
-	public function user($key) {
-		return $this->_userData[$key];
+	public function user($key = null) {
+		if ($key === null) {
+			return $this->_userData;
+		}
+		return Hash::get($this->_userData(true), $key);
 	}
 
 /**
