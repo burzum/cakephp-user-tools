@@ -11,7 +11,7 @@ use Burzum\UserTools\View\Helper\AuthHelper;
  * UsersValidatorTestCase
  *
  * @author Florian Krämer
- * @copyright 2013 - 2014 Florian Krämer
+ * @copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 class UsersValidatorTestCase extends TestCase {

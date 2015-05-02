@@ -666,7 +666,7 @@ class UserBehavior extends Behavior {
  */
 	public function sendNewPassword($email, $options = []) {
 		$result = $this->_table->find()
-			->conditions([
+			->where([
 				$this->_table->alias() . '.' . $this->_field('email') => $email
 			])
 			->first();

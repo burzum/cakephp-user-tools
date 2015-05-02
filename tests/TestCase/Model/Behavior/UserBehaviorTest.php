@@ -11,7 +11,7 @@ use Cake\TestSuite\TestCase;
  * UserBehaviorTest
  *
  * @author Florian Krämer
- * ]@copyright 2013 - 2014 Florian Krämer
+ * ]@copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 class UserToolUser extends Table {
@@ -225,4 +225,17 @@ class UserBehaviorTest extends TestCase {
 		$this->User->addBehavior('UserTools.User', $options);
 	}
 
+/**
+ * testPasswordHasher
+ *
+ * @return void
+ */
+	public function testPasswordHasher() {
+		$result = $this->User->passwordHasher();
+		$this->assertTrue(is_a($result, '\Cake\Auth\DefaultPasswordHasher'));
+	}
+
+	public function testSendNewpassword() {
+		//$result = $this->User->sendNewPassword('newuser@testuser.com');
+	}
 }
