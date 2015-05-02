@@ -285,9 +285,9 @@ class UserToolComponent extends Component {
 		} else {
 			if (is_object($table)) {
 				if (!is_a($table, '\Cake\ORM\Table')) {
-					throw new \RuntimeException(__d('user_tools', 'Passed object is not of type \Cake\ORM\Table!'));
+					throw new \RuntimeException('Passed object is not of type \Cake\ORM\Table!');
 				}
-				$this->UserTable = $table;
+				$this->UserTable = $table->alias();
 			}
 			if (is_string($table)) {
 				$this->UserTable = TableRegistry::get($table);
