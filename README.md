@@ -3,7 +3,7 @@ User Tools Plugin for CakePHP 3.0
 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.txt) 
 [![Build Status](https://img.shields.io/travis/burzum/cakephp-user-tools/master.svg?style=flat-square)](https://travis-ci.org/burzum/cakephp-user-tools) 
-[![https://img.shields.io/coveralls/burzum/cakephp-user-tools/master.svg?style=flat-square](https://coveralls.io/r/burzum/cakephp-user-tools)
+[![Build Status](https://img.shields.io/coveralls/burzum/cakephp-user-tools/master.svg?style=flat-square)](https://coveralls.io/r/burzum/cakephp-user-tools)
 
 The **UserTools** plugin provides you the building blocks for everything around users. It comes with a CRUD kick start through the [UserToolComponent](src/Controller/Component/UserToolComponent.php) and the [UserBehavior](src/Model/Behavior/UserBehavior.php). Just load the component and you have a working login and registration. Customize it as you like through configuration or use only what you really need.
 
