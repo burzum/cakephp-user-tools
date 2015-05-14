@@ -10,7 +10,7 @@ use Burzum\UserTools\View\Helper\AuthHelper;
  * AuthHelperTestCase
  *
  * @author Florian Krämer
- * ]@copyright 2013 - 2014 Florian Krämer
+ * ]@copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 class AuthHelperTestCase extends TestCase {
@@ -23,6 +23,7 @@ class AuthHelperTestCase extends TestCase {
 	public function setUp() {
 		parent::setUp();
 		$this->View = new View(null);
+		$this->View->request = $this->getMock('\Cake\Network\Request', ['session']);
 		$this->View->viewVars = array(
 			'userData' => new Entity([
 				'id' => 'user-1',
@@ -46,11 +47,11 @@ class AuthHelperTestCase extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * testUser
-	 *
-	 * @return void
-	 */
+/**
+ * testUser
+ *
+ * @return void
+ */
 	public function testUser() {
 		// Testing accessing the data with an entity.
 		$Auth = new AuthHelper($this->View);
@@ -131,9 +132,38 @@ class AuthHelperTestCase extends TestCase {
 	 * @return void
 	 */
 	public function testSetupUserData() {
+		$session = $this->getMock('\Cake\Network\Session');
+		$session->expects($this->at(0))
+			->method('read')
+			->with('SomeUserData')
+			->will($this->returnValue([
+				'username' => 'SomeUser'
+			]));
+
+		$this->View->request->expects($this->at(0))
+			->method('session')
+			->will($this->returnValue($session));
+
+		$Auth = new AuthHelper($this->View, [
+			'session' => 'SomeUserData'
+		]);
+
+		$result = $Auth->user('username');
+		$this->assertEquals($result, 'SomeUser');
+
 		try {
 			$this->View->viewVars = [];
 			$Auth = new AuthHelper($this->View);
+			$this->fail('No \RuntimeException thrown!');
+		} catch (\RuntimeException $e) {
+			// Pass
+		}
+
+		try {
+			$this->View->viewVars = [];
+			$Auth = new AuthHelper($this->View, [
+				'viewVar' => 'doesNotExist'
+			]);
 			$this->fail('No \RuntimeException thrown!');
 		} catch (\RuntimeException $e) {
 			// Pass

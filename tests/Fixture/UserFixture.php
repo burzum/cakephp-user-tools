@@ -7,7 +7,7 @@ use Cake\TestSuite\Fixture\TestFixture;
  * UserFixture
  *
  * @author Florian Krämer
- * ]@copyright 2013 - 2014 Florian Krämer
+ * ]@copyright 2013 - 2015 Florian Krämer
  * @license MIT
  */
 class UserFixture extends TestFixture {
@@ -54,7 +54,7 @@ class UserFixture extends TestFixture {
 			'slug' => 'adminuser',
 			'password' => 'test', // test
 			'password_token' => 'testtoken',
-			'email' => 'adminuser@cakedc.com',
+			'email' => 'adminuser@testuser.com',
 			'email_verified' => 1,
 			'email_token' => 'testtoken',
 			'email_token_expires' => '2008-03-25 02:45:46',
@@ -73,7 +73,7 @@ class UserFixture extends TestFixture {
 			'slug' => 'newuser',
 			'password' => 'test', // test
 			'password_token' => 'newusertoken',
-			'email' => 'newuser@cakedc.com',
+			'email' => 'newuser@testuser.com',
 			'email_verified' => 1,
 			'email_token' => 'secondusertesttoken',
 			'email_token_expires' => '2008-03-25 02:45:46',
@@ -92,7 +92,7 @@ class UserFixture extends TestFixture {
 			'slug' => 'notverified',
 			'password' => 'test', // test
 			'password_token' => 'notverified',
-			'email' => 'notverified@cakedc.com',
+			'email' => 'notverified@testuser.com',
 			'email_verified' => 0,
 			'email_token' => 'thirdusertesttoken',
 			'email_token_expires' => '2008-03-25 02:45:46',
@@ -106,5 +106,4 @@ class UserFixture extends TestFixture {
 			'modified' => '2008-03-25 02:45:46'
 		],
 	];
-
 }

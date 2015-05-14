@@ -361,7 +361,7 @@ class UserBehavior extends Behavior {
 		]);
 
 		$time = new Time();
-		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} <= $time;
+		$result->token_is_expired = $result->{$options['expirationField']} <= $time;
 
 		$this->afterTokenVerification($result, $options);
 
@@ -443,7 +443,7 @@ class UserBehavior extends Behavior {
 			$user->{$this->_field('password')} = $this->hashPassword($user->{$this->_field('password')});
 			$user->{$this->_field('passwordToken')} = null;
 			$user->{$this->_field('passwordTokenExpires')} = null;
-			return $this->_table->save($user);
+			return $this->_table->save($user, ['checkRules' => false]);
 		}
 		return false;
 	}
@@ -635,11 +635,9 @@ class UserBehavior extends Behavior {
 		$query = $this->_table->find();
 
 		if (is_array($options['field'])) {
-			$orConditions = [];
 			foreach ($options['field'] as $field) {
-				$orConditions[$field] = $value;
+				$query->orWhere( [$field => $value]);
 			}
-			$query->orWhere($orConditions);
 		} else {
 			$query->where([$options['field'] => $value]);
 		}
@@ -666,7 +664,7 @@ class UserBehavior extends Behavior {
  */
 	public function sendNewPassword($email, $options = []) {
 		$result = $this->_table->find()
-			->conditions([
+			->where([
 				$this->_table->alias() . '.' . $this->_field('email') => $email
 			])
 			->first();
@@ -717,7 +715,6 @@ class UserBehavior extends Behavior {
 		foreach ($options as $option => $value) {
 			$Email->{$option}($value);
 		}
-		return $Email->send();
 	}
 
 /**
