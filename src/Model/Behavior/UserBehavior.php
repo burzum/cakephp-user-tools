@@ -635,11 +635,9 @@ class UserBehavior extends Behavior {
 		$query = $this->_table->find();
 
 		if (is_array($options['field'])) {
-			$orConditions = [];
 			foreach ($options['field'] as $field) {
-				$orConditions[$field] = $value;
+				$query->orWhere( [$field => $value]);
 			}
-			$query->orWhere($orConditions);
 		} else {
 			$query->where([$options['field'] => $value]);
 		}
@@ -717,7 +715,6 @@ class UserBehavior extends Behavior {
 		foreach ($options as $option => $value) {
 			$Email->{$option}($value);
 		}
-		return $Email->send();
 	}
 
 /**

@@ -11,7 +11,6 @@ namespace Burzum\UserTools\Controller\Component;
 use Cake\Controller\Component;
 use Cake\Event\EventManagerTrait;
 use Cake\ORM\TableRegistry;
-use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Utility;
 use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
@@ -517,7 +516,7 @@ class UserToolComponent extends Component {
 			try {
 				$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 				$this->handleFlashAndRedirect('success', $options);
-			} catch (RecordNotFoundException $e) {
+			} catch (NotFoundException $e) {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 			unset($this->request->data[$options['field']]);
@@ -525,7 +524,7 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * Allows the user to enter a new password
+ * Allows the user to enter a new password.
  *
  * @param string $token
  * @param array $options
@@ -536,10 +535,9 @@ class UserToolComponent extends Component {
 		if (!empty($this->request->query[$options['queryParam']])) {
 			$token = $this->request->query[$options['queryParam']];
 		}
-
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
-		} catch (RecordNotFoundException $e) {
+		} catch (NotFoundException $e) {
 			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
 				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
 			}
@@ -612,7 +610,7 @@ class UserToolComponent extends Component {
 		try {
 			$result = $this->UserTable->$methodName($this->request->query[$options['queryParam']]);
 			$this->handleFlashAndRedirect('success', $options);
-		} catch (RecordNotFoundException $e) {
+		} catch (NotFoundException $e) {
 			if (is_null($options['errorMessage'])) {
 				$options['errorMessage'] = $e->getMessage();
 			}
