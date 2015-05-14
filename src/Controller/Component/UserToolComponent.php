@@ -553,7 +553,7 @@ class UserToolComponent extends Component {
 		}
 
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'userRegistration']);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
 			if ($this->UserTable->resetPassword($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {

@@ -443,7 +443,7 @@ class UserBehavior extends Behavior {
 			$user->{$this->_field('password')} = $this->hashPassword($user->{$this->_field('password')});
 			$user->{$this->_field('passwordToken')} = null;
 			$user->{$this->_field('passwordTokenExpires')} = null;
-			return $this->_table->save($user);
+			return $this->_table->save($user, ['checkRules' => false]);
 		}
 		return false;
 	}
