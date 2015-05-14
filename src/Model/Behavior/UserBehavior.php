@@ -361,7 +361,7 @@ class UserBehavior extends Behavior {
 		]);
 
 		$time = new Time();
-		$result->token_is_expired = $result->{$this->_field('emailTokenExpires')} <= $time;
+		$result->token_is_expired = $result->{$options['expirationField']} <= $time;
 
 		$this->afterTokenVerification($result, $options);
 
