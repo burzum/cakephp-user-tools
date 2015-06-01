@@ -11,7 +11,6 @@ namespace Burzum\UserTools\Controller\Component;
 use Cake\Controller\Component;
 use Cake\Event\EventManagerTrait;
 use Cake\ORM\TableRegistry;
-use Cake\ORM\Exception\RecordNotFoundException;
 use Cake\Utility;
 use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
@@ -285,9 +284,9 @@ class UserToolComponent extends Component {
 		} else {
 			if (is_object($table)) {
 				if (!is_a($table, '\Cake\ORM\Table')) {
-					throw new \RuntimeException(__d('user_tools', 'Passed object is not of type \Cake\ORM\Table!'));
+					throw new \RuntimeException('Passed object is not of type \Cake\ORM\Table!');
 				}
-				$this->UserTable = $table;
+				$this->UserTable = $table->alias();
 			}
 			if (is_string($table)) {
 				$this->UserTable = TableRegistry::get($table);
@@ -517,7 +516,7 @@ class UserToolComponent extends Component {
 			try {
 				$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 				$this->handleFlashAndRedirect('success', $options);
-			} catch (RecordNotFoundException $e) {
+			} catch (NotFoundException $e) {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 			unset($this->request->data[$options['field']]);
@@ -525,7 +524,7 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * Allows the user to enter a new password
+ * Allows the user to enter a new password.
  *
  * @param string $token
  * @param array $options
@@ -536,10 +535,9 @@ class UserToolComponent extends Component {
 		if (!empty($this->request->query[$options['queryParam']])) {
 			$token = $this->request->query[$options['queryParam']];
 		}
-
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
-		} catch (RecordNotFoundException $e) {
+		} catch (NotFoundException $e) {
 			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
 				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
 			}
@@ -555,7 +553,7 @@ class UserToolComponent extends Component {
 		}
 
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'userRegistration']);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
 			if ($this->UserTable->resetPassword($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
@@ -612,7 +610,7 @@ class UserToolComponent extends Component {
 		try {
 			$result = $this->UserTable->$methodName($this->request->query[$options['queryParam']]);
 			$this->handleFlashAndRedirect('success', $options);
-		} catch (RecordNotFoundException $e) {
+		} catch (NotFoundException $e) {
 			if (is_null($options['errorMessage'])) {
 				$options['errorMessage'] = $e->getMessage();
 			}

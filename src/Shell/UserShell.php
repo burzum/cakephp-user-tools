@@ -60,7 +60,9 @@ class UserShell extends Shell {
 	}
 
 /**
- * Sets a new password for an user
+ * Sets a new password for an user.
+ *
+ * cake user setPassword <searchTerm> <newPassword> <field | optional>
  *
  * @return void
  */
@@ -70,7 +72,7 @@ class UserShell extends Shell {
 		}
 		$field = 'username';
 		if (count($this->args) >= 3) {
-			$field = $this->args[3];
+			$field = $this->args[2];
 		}
 		$user = $this->UserTable->find()->where([$field => $this->args[0]])->first();
 		$user->password = $this->UserTable->hashPassword($this->args[1]);
