@@ -7,12 +7,20 @@ In src\App\Controller\UsersController.php:
 
 ```php
 namespace App\Controller;
+
 use App\Controller\AppController;
+use Cake\Event\Event;
+
 UsersController extends AppController {
 	public function initialize() {
 		parent::initialize();
 		$this->loadComponent('Burzum/UserTools.UserTool');
 	);
+
+	// To use the helper you'll have to set the user data to the view!
+	public function beforeRender(Event $event) {
+		$this->set('userData', $this->Auth->user());
+	}
 }
 ```
 
@@ -20,7 +28,9 @@ In src\App\View\AppView.php:
 
 ```php
 namespace App\View;
+
 use App\View\View;
+
 class AppView extends View {
 	public function initialize() {
 		parent::initialize();
