@@ -3,9 +3,11 @@ Quick Start
 
 If you database follows the schema the plugin expects to work with you can simply kick start your users in the application by just adding the component and helper.
 
-In \App\Controller\UsersController:
+In src\App\Controller\UsersController.php:
 
 ```php
+namespace App\Controller;
+use App\Controller\AppController;
 UsersController extends AppController {
 	public function initialize() {
 		parent::initialize();
@@ -14,9 +16,11 @@ UsersController extends AppController {
 }
 ```
 
-In your \App\View\AppView:
+In src\App\View\AppView.php:
 
 ```php
+namespace App\View;
+use App\View\View;
 class AppView extends View {
 	public function initialize() {
 		parent::initialize();
