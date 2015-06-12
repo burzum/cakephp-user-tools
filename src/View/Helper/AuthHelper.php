@@ -23,7 +23,7 @@ class AuthHelper extends Helper {
 	protected $_defaultConfig = [
 		'session' => false,
 		'viewVar' => 'userData',
-		'viewVarException' => true,
+		'viewVarException' => false,
 		'roleField' => 'role'
 	];
 

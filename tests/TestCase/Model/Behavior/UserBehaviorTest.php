@@ -212,7 +212,16 @@ class UserBehaviorTest extends TestCase {
  * @return void
  */
 	public function testResetPassword() {
-
+		$user = $this->User->find()->where(['id' => '1'])->first();
+		$user = $this->User->patchEntity($user, [
+			'password' => 'password1234',
+			'confirm_password' => 'password1234'
+		]);
+		$result = $this->User->resetPassword($user);
+		$this->assertInstanceOf('\Cake\ORM\Entity', $result);
+		$user = $this->User->find()->where(['id' => '1'])->first();
+		$this->assertEquals($user->password_token, null);
+		$this->assertEquals($user->password_token_expires, null);
 	}
 
 /**
