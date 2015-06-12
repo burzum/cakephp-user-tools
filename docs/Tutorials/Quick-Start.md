@@ -15,7 +15,7 @@ UsersController extends AppController {
 	public function initialize() {
 		parent::initialize();
 		$this->loadComponent('Burzum/UserTools.UserTool');
-	);
+	}
 
 	// To use the helper you'll have to set the user data to the view!
 	public function beforeRender(Event $event) {
