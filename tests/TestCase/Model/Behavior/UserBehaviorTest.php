@@ -50,6 +50,20 @@ class UserBehaviorTest extends TestCase {
 			'transport' => 'default',
 			'from' => 'you@localhost',
 		]);
+
+		Configure::write('EmailTransport', [
+			'default' => [
+				'className' => 'Mail',
+				// The following keys are used in SMTP transports
+				'host' => 'localhost',
+				'port' => 25,
+				'timeout' => 30,
+				'username' => 'user',
+				'password' => 'secret',
+				'client' => null,
+				'tls' => null,
+			],
+		]);
 	}
 
 /**
@@ -77,6 +91,29 @@ class UserBehaviorTest extends TestCase {
 		]);
 		$result = $this->User->register($data);
 		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
+	}
+
+/**
+ * testExpirationTime
+ *
+ * @return void
+ */
+	public function testExpirationTime() {
+		$result = $this->User->expirationTime();
+		$this->assertStringStartsWith(date('Y-m-d', strtotime('+1 day')), $result);
+	}
+
+/**
+ * testUpdateLastActivity
+ *
+ * @return void
+ */
+	public function testUpdateLastActivity() {
+		$before = $this->User->get(1);
+		$result = $this->User->updateLastActivity(1);
+		$after = $this->User->get(1);
+		$this->assertEquals($result, 1);
+		$this->assertNotEquals($before->last_action, $after->last_action);
 	}
 
 /**
@@ -242,9 +279,5 @@ class UserBehaviorTest extends TestCase {
 	public function testPasswordHasher() {
 		$result = $this->User->passwordHasher();
 		$this->assertTrue(is_a($result, '\Cake\Auth\DefaultPasswordHasher'));
-	}
-
-	public function testSendNewpassword() {
-		//$result = $this->User->sendNewPassword('newuser@testuser.com');
 	}
 }
