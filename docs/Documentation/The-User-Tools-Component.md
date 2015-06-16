@@ -24,19 +24,35 @@ Configure::write('UserTools.Component', [/* Config goes here */]);
 * **autoloadBehavior**: If not already loaded the component will load the UserBehavior for the current controllers `$modelClass`. Default is `true`.
 * **actionMapping**: Enables the CRUD functionality of the plugin, if method doesn't exist in the controller and is mapped by the component the component method is executed. Default is `true`.
 * **directMapping**: TBD
-* **userModel**: TBD
+* **userModel**: The model / table object to use with the component. By default it get's the model from the controller it is attached to.
 * **passwordReset**: TBD
-* **auth**: TBD
-* **registration**: Explained below.
-* **login**: Explained below.
-* **verifyEmailToken**: Explained below.
-* **requestPassword**: Explained below.
-* **resetPassword**: Explained below.
-* **verifyToken**: Explained below.
+* **auth**: Explained below.
+* **registration**: TBD
+* **login**: TBD
+* **verifyEmailToken**: TBD
+* **requestPassword**: TBD
+* **resetPassword**: TBD
+* **verifyToken**: TBD
 * **getUser**: Explained below.
 * **actionMap**: Explained below.
 
-actionMap Option
+auth config
+----
+
+The `auth` config key in the configuration array contains the configuration that is pased to the [AuthComponent](http://book.cakephp.org/3.0/en/controllers/components/authentication.html) in the case no pre-configured AuthComponent instance is found. To make the UserToolComponent work out of the box, even without an existing Auth setup, it uses this configuration to instantiate it. [Please read about the AuthComponent](http://book.cakephp.org/3.0/en/controllers/components/authentication.html) if you don't know what to add here.
+
+getUser config
+--------------
+
+```php
+'getUser' => [
+	'viewVar' => 'user'
+],
+```
+
+The `viewVar` sets the entity to the view. It's set by default to `user`. To disable setting the view var just set it to false. Or if you like a nother view variable name just change it to antoher string.
+
+actionMap config
 ----------------
 
 By default the users component will intercept requests to certain actions if the action methods don't exist in the controller and map them. The actionMap is an array of this structure:
