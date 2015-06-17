@@ -272,7 +272,7 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * Sets or instantiates the user model class
+ * Sets or instantiates the user model class.
  *
  * @param mixed $table
  * @throws \RuntimeException
@@ -384,10 +384,13 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * View
+ * Gets an user based on it's user id.
  *
- * @param mixed $userId
- * @param array $options
+ * - `viewVar` it sets the entity to the view. It's set by default to `user`. To
+ *    disable setting the view var just set it to false.
+ *
+ * @param int|string $userId UUID or integer type user id.
+ * @param array $options Configuration options.
  * @return mixed
  */
 	public function getUser($userId = null, $options = []) {
