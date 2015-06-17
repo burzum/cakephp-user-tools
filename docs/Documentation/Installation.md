@@ -4,9 +4,9 @@ Installation
 The plugin should be installed using Composer.
 
 Use the inline `require` for composer:
-```
-composer require burzum/cakephp-user-tools:dev-develop
 
+```
+composer require burzum/cakephp-user-tools:~1.0
 ```
 
 or add this to your composer.json configuration:
@@ -14,7 +14,7 @@ or add this to your composer.json configuration:
 ```
 {
 	"require" : {
-		"burzum/cakephp-user-tools": "dev-develop"
+		"burzum/cakephp-user-tools": "~1.0"
 	}
 }
 ```
