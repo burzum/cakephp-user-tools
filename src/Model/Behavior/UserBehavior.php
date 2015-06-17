@@ -715,6 +715,7 @@ class UserBehavior extends Behavior {
 		foreach ($options as $option => $value) {
 			$Email->{$option}($value);
 		}
+		return $Email->send();
 	}
 
 /**
