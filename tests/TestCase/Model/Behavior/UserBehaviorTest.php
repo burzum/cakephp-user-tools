@@ -51,19 +51,14 @@ class UserBehaviorTest extends TestCase {
 			'from' => 'you@localhost',
 		]);
 
-		Configure::write('EmailTransport', [
-			'default' => [
-				'className' => 'Mail',
-				// The following keys are used in SMTP transports
-				'host' => 'localhost',
-				'port' => 25,
-				'timeout' => 30,
-				'username' => 'user',
-				'password' => 'secret',
-				'client' => null,
-				'tls' => null,
-			],
-		]);
+		$this->UserBehavior = $this->getMockBuilder('\Burzum\UserTools\Model\Behavior\UserBehavior')
+			->setConstructorArgs([$this->User])
+			->setMethods(['getMailInstance'])
+			->getMock();
+
+		$this->MockEmail = $this->getMockBuilder('\Cake\Network\Email')
+			->setMethods(['send'])
+			->getMock();
 	}
 
 /**
@@ -279,5 +274,22 @@ class UserBehaviorTest extends TestCase {
 	public function testPasswordHasher() {
 		$result = $this->User->passwordHasher();
 		$this->assertTrue(is_a($result, '\Cake\Auth\DefaultPasswordHasher'));
+	}
+
+/**
+ * testSendEmail
+ *
+ * @return void
+ */
+	public function testSendEmail() {
+		$this->UserBehavior->expects($this->any())
+			->method('getMailInstance')
+			->will($this->returnValue($this->MockEmail));
+
+		$this->MockEmail->expects($this->at(0))
+			->method('send')
+			->will($this->returnValue(true));
+
+		$this->UserBehavior->sendEmail();
 	}
 }
