@@ -505,6 +505,8 @@ class UserToolComponent extends Component {
 			}
 		}
 		if ($options['setEntity'] === true) {
+			$this->Controller->set('userEntity', $entity);
+			// BC
 			$this->Controller->set('usersEntity', $entity);
 		}
 	}
