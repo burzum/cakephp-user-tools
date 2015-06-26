@@ -474,9 +474,10 @@ class UserToolComponent extends Component {
 			throw new NotFoundException();
 		}
 		$entity = $this->UserTable->newEntity();
+		// Make the field accessible in the case the default entity class is used.
 		$entity->accessible('confirm_password', true);
-		$entity = $this->UserTable->patchEntity($entity, $this->request->data());
 		if ($this->request->is('post')) {
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data());
 			if ($this->UserTable->register($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
 				if ($options['setEntity'] === true) {
