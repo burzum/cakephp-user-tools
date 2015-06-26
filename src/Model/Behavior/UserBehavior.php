@@ -72,7 +72,6 @@ class UserBehavior extends Behavior {
 		],
 		'updateLastActivity' => [
 			'dateFormat' => 'Y-m-d H:i:s',
-			'validate' => false
 		],
 		'initPasswordReset' => [
 			'tokenLength' => 32,
@@ -210,7 +209,7 @@ class UserBehavior extends Behavior {
 		}
 
 		if ($userActive === true) {
-			$entity->{$this->_field('active')} = 1;
+			$entity->{$this->_field('active')} = true;
 		}
 
 		if ($emailVerification === true) {
@@ -218,9 +217,9 @@ class UserBehavior extends Behavior {
 			if ($verificationExpirationTime !== false) {
 				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($verificationExpirationTime);
 			}
-			$entity->{$this->_field('emailVerified')} = 0;
+			$entity->{$this->_field('emailVerified')} = false;
 		} else {
-			$entity->{$this->_field('emailVerified')} = 1;
+			$entity->{$this->_field('emailVerified')} = true;
 		}
 
 		if (!isset($entity->{$this->_field('role')})) {

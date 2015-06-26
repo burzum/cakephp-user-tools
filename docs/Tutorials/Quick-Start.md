@@ -1,5 +1,5 @@
 Quick Start
-==========
+===========
 
 If your database follows the schema the plugin expects to work with you can simply kick start your users in the application by just adding the component and helper. This tutorial is the minimalistic implementation and will use the component and helper with their default settings. For customization of the default behavior check the documentation or read the code of the settings arrays.
 
