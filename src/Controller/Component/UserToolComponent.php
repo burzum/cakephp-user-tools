@@ -91,7 +91,8 @@ class UserToolComponent extends Component {
 			'successRedirectUrl' => '/',
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => '/',
-			'field' => 'email'
+			'field' => 'email',
+			'setEntity' => true,
 		],
 		'resetPassword' => [
 			'successFlashOptions' => [],
@@ -527,14 +528,22 @@ class UserToolComponent extends Component {
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->_config['requestPassword'], $options);
 
+		$entity = $this->UserTable->newEntity();
 		if ($this->request->is('post')) {
-			try {
-				$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
-				$this->handleFlashAndRedirect('success', $options);
-			} catch (NotFoundException $e) {
-				$this->handleFlashAndRedirect('error', $options);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+			if (!$entity->errors()) {
+				try {
+					$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
+					$this->handleFlashAndRedirect('success', $options);
+					return true;
+				} catch (NotFoundException $e) {
+					$this->handleFlashAndRedirect('error', $options);
+				}
 			}
 			unset($this->request->data[$options['field']]);
+		}
+		if ($options['setEntity']) {
+			$this->Controller->set('userEntity', $entity);
 		}
 	}
 
