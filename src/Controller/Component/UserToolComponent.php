@@ -372,10 +372,6 @@ class UserToolComponent extends Component {
 			$Auth = $this->_getAuthObject();
 			$user = $Auth->identify();
 
-			if ($options['setEntity']) {
-				$this->Controller->set('userEntity', $entity);
-			}
-
 			if ($user) {
 				$event = new Event('User.afterLogin', $this, ['options' => $options]);
 				$this->eventManager()->dispatch($event);
@@ -391,6 +387,9 @@ class UserToolComponent extends Component {
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
+		}
+		if ($options['setEntity']) {
+			$this->Controller->set('userEntity', $entity);
 		}
 		return false;
 	}
