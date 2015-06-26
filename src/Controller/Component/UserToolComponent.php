@@ -73,6 +73,7 @@ class UserToolComponent extends Component {
 			'successRedirectUrl' => null,
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
+			'setEntity' => true,
 		],
 		'logout' => [
 			'successFlashOptions' => [],
@@ -354,8 +355,15 @@ class UserToolComponent extends Component {
 	public function login($options = []) {
 		$options = Hash::merge($this->_config['login'], $options);
 
+		$entity = $this->UserTable->newEntity();
 		if ($this->request->is('post')) {
-			$event = new Event('User.beforeLogin', $this, ['options' => $options]);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+
+			$event = new Event('User.beforeLogin', $this, [
+				'options' => $options,
+				'entity' => $entity
+			]);
+
 			$this->eventManager()->dispatch($event);
 			if ($event->isStopped()) {
 				return $event->result;
@@ -363,6 +371,10 @@ class UserToolComponent extends Component {
 
 			$Auth = $this->_getAuthObject();
 			$user = $Auth->identify();
+
+			if ($options['setEntity']) {
+				$this->Controller->set('userEntity', $entity);
+			}
 
 			if ($user) {
 				$event = new Event('User.afterLogin', $this, ['options' => $options]);
@@ -633,6 +645,33 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function handleFlashAndRedirect($type, $options) {
+		$this->_handleFlash($type, $options);
+		$this->_handleRedirect($type, $options);
+	}
+
+/**
+ * Handles the redirect options.
+ *
+ * @param string $type Prefix for the array key, mostly "success" or "error"
+ * @param array $options Options
+ * @return mixed
+ */
+	protected function _handleRedirect($type, $options) {
+		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
+			$result = $this->Controller->redirect($options[$type . 'RedirectUrl']);
+			return $this->_redirectResponse = $result;
+		}
+		return false;
+	}
+
+/**
+ * Handles the flash options.
+ *
+ * @param string $type Prefix for the array key, mostly "success" or "error"
+ * @param array $options Options
+ * @return mixed
+ */
+	protected function _handleFlash($type, $options) {
 		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {
 			if (is_string($options[$type . 'Message'])) {
 				$flashOptions = [];
@@ -640,12 +679,10 @@ class UserToolComponent extends Component {
 					$flashOptions = $options[$type . 'FlashOptions'];
 				}
 				$this->Flash->set($options[$type . 'Message'], $flashOptions);
+				return true;
 			}
 		}
-		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
-			$result = $this->Controller->redirect($options[$type . 'RedirectUrl']);
-			$this->_redirectResponse = $result;
-		}
+		return false;
 	}
 
 /**
