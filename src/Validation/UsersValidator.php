@@ -66,7 +66,7 @@ class UsersValidator extends Validator {
 				'message' => __d('user_tools', 'An email is required.')
 			],
 			'unique' => [
-				'rule' => ['validateUnique', ['scope' => 'username']],
+				'rule' => ['validateUnique', ['scope' => 'email']],
 				'provider' => 'table',
 				'message' => __d('user_tools', 'The email is already in use.')
 			],
