@@ -548,8 +548,11 @@ class UserToolComponent extends Component {
 					$this->handleFlashAndRedirect('error', $options);
 				}
 			}
+
 			if ($options['setEntity']) {
-				$entity->email = '';
+				if ($entity->dirty('email') && !$entity->errors('email')) {
+					$entity->email = '';
+				}
 				$this->Controller->set('userEntity', $entity);
 			}
 			unset($this->request->data[$options['field']]);
