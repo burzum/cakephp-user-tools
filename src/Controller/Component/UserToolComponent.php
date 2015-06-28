@@ -16,6 +16,7 @@ use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
 use Cake\Utility\Hash;
 use Cake\Network\Exception\NotFoundException;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Core\Configure;
 use Cake\Network\Response;
 
@@ -522,9 +523,10 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * The user can request a new password reset token, an email is send to him
+ * The user can request a new password reset token, an email is send to him.
  *
  * @param array $options
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException
  * @return void
  */
 	public function requestPassword($options = []) {
@@ -533,16 +535,25 @@ class UserToolComponent extends Component {
 		$entity = $this->UserTable->newEntity();
 		if ($this->request->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
-			if (!$entity->errors()) {
+
+			if (!$entity->errors($options['field'])) {
 				try {
 					$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 					$this->handleFlashAndRedirect('success', $options);
+					if ($options['setEntity']) {
+						$this->Controller->set('userEntity', $entity);
+					}
 					return true;
-				} catch (NotFoundException $e) {
+				} catch (RecordNotFoundException $e) {
 					$this->handleFlashAndRedirect('error', $options);
 				}
 			}
+			if ($options['setEntity']) {
+				$entity->email = '';
+				$this->Controller->set('userEntity', $entity);
+			}
 			unset($this->request->data[$options['field']]);
+			return false;
 		}
 		if ($options['setEntity']) {
 			$this->Controller->set('userEntity', $entity);
@@ -563,7 +574,7 @@ class UserToolComponent extends Component {
 		}
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
-		} catch (NotFoundException $e) {
+		} catch (RecordNotFoundException $e) {
 			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
 				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
 			}
@@ -636,7 +647,7 @@ class UserToolComponent extends Component {
 		try {
 			$result = $this->UserTable->$methodName($this->request->query[$options['queryParam']]);
 			$this->handleFlashAndRedirect('success', $options);
-		} catch (NotFoundException $e) {
+		} catch (RecordNotFoundException $e) {
 			if (is_null($options['errorMessage'])) {
 				$options['errorMessage'] = $e->getMessage();
 			}
