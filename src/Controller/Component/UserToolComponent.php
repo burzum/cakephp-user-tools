@@ -357,9 +357,9 @@ class UserToolComponent extends Component {
 	public function login($options = []) {
 		$options = Hash::merge($this->_config['login'], $options);
 
-		$entity = $this->UserTable->newEntity();
+		$entity = $this->UserTable->newEntity([], ['validate' => false]);
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => false]);
 
 			$event = new Event('User.beforeLogin', $this, [
 				'options' => $options,
