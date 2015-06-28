@@ -172,7 +172,7 @@ class UserBehaviorTest extends TestCase {
 /**
  * testVerifyTokenNotFoundException
  *
- * @expectedException \Cake\Network\Exception\NotFoundException
+ * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
  * @return void
  */
 	public function testVerifyTokenNotFoundException() {
@@ -231,7 +231,7 @@ class UserBehaviorTest extends TestCase {
 /**
  * testGetUserRecordNotFoundException
  *
- * @expectedException \Cake\Network\Exception\NotFoundException
+ * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
  * @return void
  */
 	public function testGetUserRecordNotFoundException() {

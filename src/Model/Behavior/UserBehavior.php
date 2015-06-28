@@ -9,14 +9,12 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
-use Burzum\UserTools\Validation\UsersValidator;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
-use Cake\Event\EventManager;
 use Cake\Event\EventManagerTrait;
 use Cake\I18n\Time;
-use Cake\Network\Exception\NotFoundException;
 use Cake\Network\Email\Email;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
@@ -343,7 +341,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $token The token to check.
  * @param array $options Options array.
- * @throws \Cake\Network\Exception\NotFoundException if the token was not found at all
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean|\Cake\ORM\Entity Returns false if the token has expired
  */
 	public function verifyToken($token, $options = []) {
@@ -403,7 +401,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $token Token string to check.
  * @param array $options Options array.
- * @throws NotFoundException if the token was not found at all
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean Returns false if the token has expired
  */
 	public function verifyEmailToken($token, $options = []) {
@@ -419,7 +417,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $token
  * @param array $options
- * @throws NotFoundException if the token was not found at all
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean Returns false if the token has expired
  */
 	public function verifyPasswordResetToken($token, $options = []) {
@@ -595,6 +593,9 @@ class UserBehavior extends Behavior {
 		];
 		$options = Hash::merge($defaults, $this->_config['initPasswordReset'], $options);
 		$result = $this->_getUser($value, $options);
+		if (empty($result)) {
+			throw new RecordNotFoundException(__d('user_tools', 'User not found.'));
+		}
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
 		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
 		$this->_table->save($result, ['validate' => false]);
@@ -606,7 +607,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @throws \Cake\ORM\Exception\NotFoundException
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException;
  * @return \Cake\ORM\Entity
  */
 	public function getUser($value, $options = []) {
@@ -621,7 +622,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @throws \Cake\ORM\Exception\NotFoundException
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException
  * @return \Cake\ORM\Entity
  */
 	protected function _getUser($value, $options = []) {
@@ -644,7 +645,7 @@ class UserBehavior extends Behavior {
 		$result = $query->first();
 
 		if (empty($result)) {
-			throw new NotFoundException($options['notFoundErrorMessage']);
+			throw new RecordNotFoundException($options['notFoundErrorMessage']);
 		}
 		return $result;
 	}
@@ -658,7 +659,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $email
  * @param array $options
- * @throws \Cake\ORM\Exception\NotFoundException
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException
  * @return boolean
  */
 	public function sendNewPassword($email, $options = []) {
@@ -668,7 +669,7 @@ class UserBehavior extends Behavior {
 			])
 			->first();
 		if (empty($result)) {
-			throw new NotFoundException(__d('user_tools', 'Invalid user'));
+			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
 		}
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
