@@ -16,6 +16,7 @@ use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
 use Cake\Utility\Hash;
 use Cake\Network\Exception\NotFoundException;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Core\Configure;
 use Cake\Network\Response;
 
@@ -73,6 +74,7 @@ class UserToolComponent extends Component {
 			'successRedirectUrl' => null,
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
+			'setEntity' => true,
 		],
 		'logout' => [
 			'successFlashOptions' => [],
@@ -90,7 +92,8 @@ class UserToolComponent extends Component {
 			'successRedirectUrl' => '/',
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => '/',
-			'field' => 'email'
+			'field' => 'email',
+			'setEntity' => true,
 		],
 		'resetPassword' => [
 			'successFlashOptions' => [],
@@ -354,8 +357,15 @@ class UserToolComponent extends Component {
 	public function login($options = []) {
 		$options = Hash::merge($this->_config['login'], $options);
 
+		$entity = $this->UserTable->newEntity([], ['validate' => false]);
 		if ($this->request->is('post')) {
-			$event = new Event('User.beforeLogin', $this, ['options' => $options]);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => false]);
+
+			$event = new Event('User.beforeLogin', $this, [
+				'options' => $options,
+				'entity' => $entity
+			]);
+
 			$this->eventManager()->dispatch($event);
 			if ($event->isStopped()) {
 				return $event->result;
@@ -379,6 +389,9 @@ class UserToolComponent extends Component {
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
+		}
+		if ($options['setEntity']) {
+			$this->Controller->set('userEntity', $entity);
 		}
 		return false;
 	}
@@ -493,6 +506,8 @@ class UserToolComponent extends Component {
 			}
 		}
 		if ($options['setEntity'] === true) {
+			$this->Controller->set('userEntity', $entity);
+			// BC
 			$this->Controller->set('usersEntity', $entity);
 		}
 	}
@@ -508,22 +523,43 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * The user can request a new password reset token, an email is send to him
+ * The user can request a new password reset token, an email is send to him.
  *
  * @param array $options
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException
  * @return void
  */
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->_config['requestPassword'], $options);
 
+		$entity = $this->UserTable->newEntity();
 		if ($this->request->is('post')) {
-			try {
-				$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
-				$this->handleFlashAndRedirect('success', $options);
-			} catch (NotFoundException $e) {
-				$this->handleFlashAndRedirect('error', $options);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+
+			if (!$entity->errors($options['field'])) {
+				try {
+					$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
+					$this->handleFlashAndRedirect('success', $options);
+					if ($options['setEntity']) {
+						$this->Controller->set('userEntity', $entity);
+					}
+					return true;
+				} catch (RecordNotFoundException $e) {
+					$this->handleFlashAndRedirect('error', $options);
+				}
+			}
+
+			if ($options['setEntity']) {
+				if ($entity->dirty('email') && !$entity->errors('email')) {
+					$entity->email = '';
+				}
+				$this->Controller->set('userEntity', $entity);
 			}
 			unset($this->request->data[$options['field']]);
+			return false;
+		}
+		if ($options['setEntity']) {
+			$this->Controller->set('userEntity', $entity);
 		}
 	}
 
@@ -541,7 +577,7 @@ class UserToolComponent extends Component {
 		}
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
-		} catch (NotFoundException $e) {
+		} catch (RecordNotFoundException $e) {
 			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
 				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
 			}
@@ -614,7 +650,7 @@ class UserToolComponent extends Component {
 		try {
 			$result = $this->UserTable->$methodName($this->request->query[$options['queryParam']]);
 			$this->handleFlashAndRedirect('success', $options);
-		} catch (NotFoundException $e) {
+		} catch (RecordNotFoundException $e) {
 			if (is_null($options['errorMessage'])) {
 				$options['errorMessage'] = $e->getMessage();
 			}
@@ -633,6 +669,33 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function handleFlashAndRedirect($type, $options) {
+		$this->_handleFlash($type, $options);
+		$this->_handleRedirect($type, $options);
+	}
+
+/**
+ * Handles the redirect options.
+ *
+ * @param string $type Prefix for the array key, mostly "success" or "error"
+ * @param array $options Options
+ * @return mixed
+ */
+	protected function _handleRedirect($type, $options) {
+		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
+			$result = $this->Controller->redirect($options[$type . 'RedirectUrl']);
+			return $this->_redirectResponse = $result;
+		}
+		return false;
+	}
+
+/**
+ * Handles the flash options.
+ *
+ * @param string $type Prefix for the array key, mostly "success" or "error"
+ * @param array $options Options
+ * @return mixed
+ */
+	protected function _handleFlash($type, $options) {
 		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {
 			if (is_string($options[$type . 'Message'])) {
 				$flashOptions = [];
@@ -640,12 +703,10 @@ class UserToolComponent extends Component {
 					$flashOptions = $options[$type . 'FlashOptions'];
 				}
 				$this->Flash->set($options[$type . 'Message'], $flashOptions);
+				return true;
 			}
 		}
-		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
-			$result = $this->Controller->redirect($options[$type . 'RedirectUrl']);
-			$this->_redirectResponse = $result;
-		}
+		return false;
 	}
 
 /**
