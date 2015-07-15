@@ -10,11 +10,25 @@ namespace Burzum\UserTools\Auth;
 
 trait DefaultAuthSetupTrait {
 
+/**
+ * Gets the component registry.
+ *
+ * @return \Cake\Controller\ComponentRegistry
+ */
+	abstract public function components();
+
+/**
+ * Sets the default authentication settings up.
+ *
+ * Call this in your beforeFilter().
+ *
+ * @return void
+ */
 	public function setupAuthentication() {
-		if (!$this->_components->loaded('Auth')) {
-			$this->_components->load('Auth');
+		if (!in_array('Auth', $this->components()->loaded())) {
+			$this->components()->load('Auth');
 		}
-		$this->_components->Auth->config('authenticate', [
+		$this->components()->Auth->config('authenticate', [
 			'Form' => [
 				'userModel' => 'Users',
 				'fields' => [

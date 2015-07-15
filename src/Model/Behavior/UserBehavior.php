@@ -113,7 +113,7 @@ class UserBehavior extends Behavior {
  * @param array $config The settings for this behavior.
  */
 	public function __construct(Table $table, array $config = []) {
-		$this->_defaultConfig = Hash::merge($this->_defaultConfig, (array)Configure::read('UserTools.Behavior'));
+		$this->_defaultConfig = Hash::merge($this->_defaultConfig, (array) Configure::read('UserTools.Behavior'));
 		parent::__construct($table, $config);
 		$this->_table = $table;
 
@@ -197,7 +197,7 @@ class UserBehavior extends Behavior {
  *
  * @param \Cake\ORM\Entity $entity
  * @param array $options
- * @return void
+ * @return Entity
  */
 	protected function _beforeRegister(Entity $entity, $options = []) {
 		extract(Hash::merge($this->_config['register'], $options));
@@ -226,7 +226,7 @@ class UserBehavior extends Behavior {
 		}
 
 		if ($generatePassword === true) {
-			$password = $this->generatePassword((int)$generatePassword);
+			$password = $this->generatePassword((int) $generatePassword);
 			$entity->{$this->_field('password')} = $password;
 			$entity->clear_password = $password;
 		}
@@ -298,7 +298,7 @@ class UserBehavior extends Behavior {
 		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
-			return (bool)$event->result;
+			return (bool) $event->result;
 		}
 
 		$result = $this->_table->save($entity, array('validate' => false));
@@ -369,7 +369,7 @@ class UserBehavior extends Behavior {
 		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
-			return (bool)$event->result;
+			return (bool) $event->result;
 		}
 
 		if ($options['returnData'] === true) {
@@ -454,7 +454,7 @@ class UserBehavior extends Behavior {
  * @return string
  */
 	public function generatePassword($length = 8, $options = []) {
-		srand((double)microtime() * 1000000);
+		srand((double) microtime() * 1000000);
 
 		$defaults = [
 			'vowels' => [
@@ -596,7 +596,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @return boolean
+ * @return array
  */
 	public function initPasswordReset($value, $options = []) {
 		$defaults = [
@@ -652,7 +652,7 @@ class UserBehavior extends Behavior {
 
 		if (is_array($options['field'])) {
 			foreach ($options['field'] as $field) {
-				$query->orWhere( [$field => $value]);
+				$query->orWhere([$field => $value]);
 			}
 		} else {
 			$query->where([$options['field'] => $value]);
@@ -724,7 +724,7 @@ class UserBehavior extends Behavior {
  * sendEmail
  *
  * @param array $options
- * @return boolean
+ * @return array
  */
 	public function sendEmail($options = []) {
 		$Email = $this->getMailInstance();
@@ -739,7 +739,7 @@ class UserBehavior extends Behavior {
  *
  * @param \Cake\ORM\Entity $user
  * @param array $options
- * @return void
+ * @return array
  */
 	public function sendPasswordResetToken(Entity $user, $options = []) {
 		$defaults = [
