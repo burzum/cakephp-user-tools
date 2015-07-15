@@ -10,9 +10,6 @@ namespace Burzum\UserTools\Shell;
 
 use Cake\Cache\Cache;
 use Cake\Console\Shell;
-use Cake\Core\Configure;
-use Cake\Model\Model;
-use Cake\Core\ConventionsTrait;
 use Cake\ORM\TableRegistry;
 
 class UserShell extends Shell {
