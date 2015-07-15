@@ -11,7 +11,6 @@ namespace Burzum\UserTools\Controller\Component;
 use Cake\Controller\Component;
 use Cake\Event\EventManagerTrait;
 use Cake\ORM\TableRegistry;
-use Cake\Utility;
 use Cake\Event\Event;
 use Cake\Controller\ComponentRegistry;
 use Cake\Utility\Hash;
@@ -199,7 +198,7 @@ class UserToolComponent extends Component {
 		$this->_defaultConfig = Hash::merge(
 			$this->_defaultConfig,
 			$this->_translateConfigMessages(),
-			(array)Configure::read('UserTools.Component')
+			(array) Configure::read('UserTools.Component')
 		);
 		$this->_controller = $registry->getController();
 		$this->response = $this->_controller->response;
@@ -251,7 +250,6 @@ class UserToolComponent extends Component {
 /**
  * Initializes the component
  *
- * @param array $config
  * @return void
  */
 	public function initialize(array $config) {
@@ -315,7 +313,7 @@ class UserToolComponent extends Component {
  *
  * @param Event $Event
  * @link https://github.com/cakephp/cakephp/issues/4530
- * @return void
+ * @return Response|null
  */
 	public function startup(Event $Event) {
 		if ($this->_config['actionMapping'] === true) {
@@ -491,7 +489,7 @@ class UserToolComponent extends Component {
  *
  * @throws \Cake\Error\NotFoundException
  * @param array $options
- * @return void
+ * @return boolean|null
  */
 	public function register($options = []) {
 		$options = Hash::merge($this->_config['registration'], $options);
@@ -539,7 +537,7 @@ class UserToolComponent extends Component {
  *
  * @param array $options
  * @throws \Cake\Datasource\Exception\RecordNotFoundException
- * @return void
+ * @return boolean|null
  */
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->_config['requestPassword'], $options);
@@ -709,7 +707,7 @@ class UserToolComponent extends Component {
  *
  * @param string $type Prefix for the array key, mostly "success" or "error"
  * @param array $options Options
- * @return mixed
+ * @return boolean
  */
 	protected function _handleFlash($type, $options) {
 		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {

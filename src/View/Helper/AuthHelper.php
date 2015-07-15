@@ -8,7 +8,6 @@
  */
 namespace Burzum\UserTools\View\Helper;
 
-use Cake\Event\Event;
 use Cake\Utility\Hash;
 use Cake\View\Helper;
 use Cake\View\View;
@@ -124,7 +123,7 @@ class AuthHelper extends Helper {
  * Role check.
  *
  * @param string String of the role identifier.
- * @return boolean True if the role is in the set of roles for the active user data.
+ * @return boolean|null True if the role is in the set of roles for the active user data.
  */
 	public function hasRole($role) {
 		if (!is_string($role)) {
