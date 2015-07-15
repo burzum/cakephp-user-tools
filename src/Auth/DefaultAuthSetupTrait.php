@@ -11,10 +11,10 @@ namespace Burzum\UserTools\Auth;
 trait DefaultAuthSetupTrait {
 
 	public function setupAuthentication() {
-		if (!$this->_components->loaded('Auth')) {
-			$this->_components->load('Auth');
+		if (!$this->components()->loaded('Auth')) {
+			$this->components()->load('Auth');
 		}
-		$this->_components->Auth->config('authenticate', [
+		$this->components()->Auth->config('authenticate', [
 			'Form' => [
 				'userModel' => 'Users',
 				'fields' => [
