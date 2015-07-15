@@ -25,7 +25,7 @@ trait DefaultAuthSetupTrait {
  * @return void
  */
 	public function setupAuthentication() {
-		if (!$this->components()->loaded('Auth')) {
+		if (!in_array('Auth', $this->components()->loaded())) {
 			$this->components()->load('Auth');
 		}
 		$this->components()->Auth->config('authenticate', [
