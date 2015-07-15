@@ -292,4 +292,11 @@ class UserBehaviorTest extends TestCase {
 
 		$this->UserBehavior->sendEmail();
 	}
+
+/**
+ * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
+ */
+	public function testInitPasswordResetRecordNotFoundException() {
+		$this->User->initPasswordReset('does-not-exist');
+	}
 }

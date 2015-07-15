@@ -596,7 +596,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @return boolean
+ * @return array
  */
 	public function initPasswordReset($value, $options = []) {
 		$defaults = [
@@ -724,7 +724,7 @@ class UserBehavior extends Behavior {
  * sendEmail
  *
  * @param array $options
- * @return boolean
+ * @return array
  */
 	public function sendEmail($options = []) {
 		$Email = $this->getMailInstance();
@@ -739,7 +739,7 @@ class UserBehavior extends Behavior {
  *
  * @param \Cake\ORM\Entity $user
  * @param array $options
- * @return void
+ * @return array
  */
 	public function sendPasswordResetToken(Entity $user, $options = []) {
 		$defaults = [

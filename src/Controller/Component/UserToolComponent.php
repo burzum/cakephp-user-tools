@@ -168,12 +168,26 @@ class UserToolComponent extends Component {
 	public $UserTable = null;
 
 /**
+ * Response object
+ *
+ * @var \Cake\Network\Response
+ */
+	public $response = null;
+
+/**
  * Helper property to detect a redirect
  *
  * @see UserToolComponent::handleFlashAndRedirect();
  * @var \Cake\Network\Response
  */
 	protected $_redirectResponse = null;
+
+/**
+ * Convenience property to avoid the need to go through the registry all time.
+ *
+ * @var \Cake\Controller\Controller;
+ */
+	protected $_controller = null;
 
 /**
  * Constructor. Parses the accepted content types accepted by the client using HTTP_ACCEPT
@@ -187,10 +201,8 @@ class UserToolComponent extends Component {
 			$this->_translateConfigMessages(),
 			(array)Configure::read('UserTools.Component')
 		);
-		$this->Collection = $registry;
-		$this->Controller = $registry->getController();
-		$this->request = $this->Controller->request;
-		$this->response = $this->Controller->response;
+		$this->_controller = $registry->getController();
+		$this->response = $this->_controller->response;
 		parent::__construct($registry, $config);
 	}
 
@@ -255,8 +267,8 @@ class UserToolComponent extends Component {
  * @return \Cake\ORM\Query
  */
 	public function listing($options = []) {
-		$this->Controller->set('users', $this->Controller->paginate($this->UserTable, $options));
-		$this->Controller->set('_serialize', ['users']);
+		$this->_controller->set('users', $this->_controller->paginate($this->UserTable, $options));
+		$this->_controller->set('_serialize', ['users']);
 	}
 
 /**
@@ -283,7 +295,7 @@ class UserToolComponent extends Component {
  */
 	public function setUserTable($table = null) {
 		if ($table === null) {
-			$this->UserTable = $this->Controller->{$this->Controller->modelClass};
+			$this->UserTable = $this->_controller->{$this->_controller->modelClass};
 		} else {
 			if (is_object($table)) {
 				if (!is_a($table, '\Cake\ORM\Table')) {
@@ -295,7 +307,7 @@ class UserToolComponent extends Component {
 				$this->UserTable = TableRegistry::get($table);
 			}
 		}
-		$this->Controller->set('userTable', $this->UserTable->alias());
+		$this->_controller->set('userTable', $this->UserTable->alias());
 	}
 
 /**
@@ -317,7 +329,7 @@ class UserToolComponent extends Component {
 /**
  * Maps a called controller action to a component method
  *
- * @return boolean False if the action could not be mapped
+ * @return bool|\Cake\Network\Response
  */
 	public function mapAction() {
 		$action = $this->request->params['action'];
@@ -330,7 +342,7 @@ class UserToolComponent extends Component {
 			if ($result instanceof Response) {
 				return $result;
 			}
-			return $this->Controller->render($action);
+			return $this->_controller->render($action);
 		}
 
 		if (isset($this->_config['actionMap'][$action]) && method_exists($this, $this->_config['actionMap'][$action]['method'])) {
@@ -339,7 +351,7 @@ class UserToolComponent extends Component {
 				return $this->_redirectResponse;
 			}
 			if (is_string($this->_config['actionMap'][$action]['view'])) {
-				return $this->Controller->render($this->_config['actionMap'][$action]['view']);
+				return $this->_controller->render($this->_config['actionMap'][$action]['view']);
 			} else {
 				return $this->response;
 			}
@@ -391,7 +403,7 @@ class UserToolComponent extends Component {
 			}
 		}
 		if ($options['setEntity']) {
-			$this->Controller->set('userEntity', $entity);
+			$this->_controller->set('userEntity', $entity);
 		}
 		return false;
 	}
@@ -415,8 +427,8 @@ class UserToolComponent extends Component {
 		}
 		$entity = $this->UserTable->getUser($userId);
 		if ($options['viewVar'] !== false) {
-			$this->Controller->set($options['viewVar'], $entity);
-			$this->Controller->set('_serialize', [$options['viewVar']]);
+			$this->_controller->set($options['viewVar'], $entity);
+			$this->_controller->set('_serialize', [$options['viewVar']]);
 		}
 		return $entity;
 	}
@@ -457,11 +469,11 @@ class UserToolComponent extends Component {
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
 		if (empty($user)) {
-			$this->Controller->redirect($this->Controller->referer());
+			$this->_controller->redirect($this->_controller->referer());
 			return;
 		}
 		$this->handleFlashAndRedirect('success', $options);
-		$this->Controller->redirect($Auth->logout());
+		$this->_controller->redirect($Auth->logout());
 		return;
 	}
 
@@ -494,21 +506,21 @@ class UserToolComponent extends Component {
 			if ($this->UserTable->register($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
 				if ($options['setEntity'] === true) {
-					$this->Controller->set('usersEntity', $entity);
+					$this->_controller->set('usersEntity', $entity);
 				}
 				return true;
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 				if ($options['setEntity'] === true) {
-					$this->Controller->set('usersEntity', $entity);
+					$this->_controller->set('usersEntity', $entity);
 				}
 				return false;
 			}
 		}
 		if ($options['setEntity'] === true) {
-			$this->Controller->set('userEntity', $entity);
+			$this->_controller->set('userEntity', $entity);
 			// BC
-			$this->Controller->set('usersEntity', $entity);
+			$this->_controller->set('usersEntity', $entity);
 		}
 	}
 
@@ -541,7 +553,7 @@ class UserToolComponent extends Component {
 					$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 					$this->handleFlashAndRedirect('success', $options);
 					if ($options['setEntity']) {
-						$this->Controller->set('userEntity', $entity);
+						$this->_controller->set('userEntity', $entity);
 					}
 					return true;
 				} catch (RecordNotFoundException $e) {
@@ -553,13 +565,13 @@ class UserToolComponent extends Component {
 				if ($entity->dirty('email') && !$entity->errors('email')) {
 					$entity->email = '';
 				}
-				$this->Controller->set('userEntity', $entity);
+				$this->_controller->set('userEntity', $entity);
 			}
 			unset($this->request->data[$options['field']]);
 			return false;
 		}
 		if ($options['setEntity']) {
-			$this->Controller->set('userEntity', $entity);
+			$this->_controller->set('userEntity', $entity);
 		}
 	}
 
@@ -602,7 +614,7 @@ class UserToolComponent extends Component {
 		} else {
 			$entity = $this->UserTable->newEntity();
 		}
-		$this->Controller->set('entity', $entity);
+		$this->_controller->set('entity', $entity);
 	}
 
 /**
@@ -617,19 +629,19 @@ class UserToolComponent extends Component {
 		$entity->accessible(['id', 'old_password', 'new_password', 'confirm_password'], true);
 		if ($this->request->is(['post', 'put'])) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
-			$entity->id = $this->Controller->Auth->user('id');
+			$entity->id = $this->_controller->Auth->user('id');
 			$entity->isNew(false);
 			if ($this->UserTable->changePassword($entity)) {
 				$this->request->data = [];
 				$entity = $this->UserTable->newEntity();
-				$entity->id = $this->Controller->Auth->user('id');
+				$entity->id = $this->_controller->Auth->user('id');
 				$entity->isNew(false);
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
-		$this->Controller->set('entity', $entity);
+		$this->_controller->set('entity', $entity);
 	}
 
 /**
@@ -682,7 +694,7 @@ class UserToolComponent extends Component {
  */
 	protected function _handleRedirect($type, $options) {
 		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
-			$result = $this->Controller->redirect($options[$type . 'RedirectUrl']);
+			$result = $this->_controller->redirect($options[$type . 'RedirectUrl']);
 			return $this->_redirectResponse = $result;
 		}
 		return false;
@@ -721,13 +733,13 @@ class UserToolComponent extends Component {
  * @return AuthComponent
  */
 	protected function _getAuthObject() {
-		if (!$this->Collection->has('Auth')) {
-			$Auth = $this->Collection->load('Auth', $this->_config['auth']);
+		if (!$this->_registry->has('Auth')) {
+			$Auth = $this->_registry->load('Auth', $this->_config['auth']);
 			$Auth->request = $this->request;
 			$Auth->response = $this->response;
 			return $Auth;
 		} else {
-			return $this->Collection->Auth;
+			return $this->_registry->Auth;
 		}
 	}
 
