@@ -21,6 +21,7 @@ use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
 use Cake\Utility\Text;
+use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
@@ -578,6 +579,19 @@ class UserBehavior extends Behavior {
 	}
 
 /**
+ * Validation rules for the password reset request.
+ *
+ * @param \Cake\Validation\Validator $validator
+ * @return \Cake\Validation\Validator
+ * @see Burzum\UserTools\Controller\Component\UserToolComponent::requestPassword()
+ */
+	public function validationRequestPassword(Validator $validator) {
+		$validator = $this->_table->validationDefault($validator);
+		$validator->remove($this->_field('email'), 'unique');
+		return $validator;
+	}
+
+/**
  * Initializes a password reset process.
  *
  * @param mixed $value
@@ -598,8 +612,10 @@ class UserBehavior extends Behavior {
 		}
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
 		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
-		$this->_table->save($result, ['validate' => false]);
-		return $this->sendPasswordResetToken($result, ['to' => $result->{$this->_field('email')}]);
+		$this->_table->save($result, ['checkRules' => false]);
+		return $this->sendPasswordResetToken($result, [
+			'to' => $result->{$this->_field('email')}
+		]);
 	}
 
 /**

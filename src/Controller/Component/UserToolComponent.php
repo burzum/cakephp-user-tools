@@ -532,9 +532,9 @@ class UserToolComponent extends Component {
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->_config['requestPassword'], $options);
 
-		$entity = $this->UserTable->newEntity();
+		$entity = $this->UserTable->newEntity(['validate' => 'requestPassword']);
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'requestPassword']);
 
 			if (!$entity->errors($options['field'])) {
 				try {
