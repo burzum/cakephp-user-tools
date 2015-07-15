@@ -251,7 +251,7 @@ class UserToolComponent extends Component {
 /**
  * Initializes the component
  *
- * @param Event $Event
+ * @param array $config
  * @return void
  */
 	public function initialize(array $config) {
@@ -543,22 +543,12 @@ class UserToolComponent extends Component {
  */
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->_config['requestPassword'], $options);
-
 		$entity = $this->UserTable->newEntity(['validate' => 'requestPassword']);
 		if ($this->request->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'requestPassword']);
 
-			if (!$entity->errors($options['field'])) {
-				try {
-					$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
-					$this->handleFlashAndRedirect('success', $options);
-					if ($options['setEntity']) {
-						$this->_controller->set('userEntity', $entity);
-					}
-					return true;
-				} catch (RecordNotFoundException $e) {
-					$this->handleFlashAndRedirect('error', $options);
-				}
+			if (!$entity->errors($options['field']) && $this->_initPasswordReset($entity, $options)) {
+				return true;
 			}
 
 			if ($options['setEntity']) {
@@ -573,6 +563,20 @@ class UserToolComponent extends Component {
 		if ($options['setEntity']) {
 			$this->_controller->set('userEntity', $entity);
 		}
+	}
+
+	protected function _initPasswordReset($entity, $options) {
+		try {
+			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
+			$this->handleFlashAndRedirect('success', $options);
+			if ($options['setEntity']) {
+				$this->_controller->set('userEntity', $entity);
+			}
+			return true;
+		} catch (RecordNotFoundException $e) {
+			$this->handleFlashAndRedirect('error', $options);
+		}
+		return false;
 	}
 
 /**
