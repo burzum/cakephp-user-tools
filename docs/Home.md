@@ -14,6 +14,7 @@ Documentation
 
 * [Overview](Documentation/Overview.md)
 * [Installation](Documentation/Installation.md)
+* [Authentication/Authorization](Documentation/Authentication.md)
 * [The UserToolsComponent](Documentation/The-User-Tools-Component.md)
 * [The UserBehavior](Documentation/The-User-Behavior.md)
 * [The AuthHelper](Documentation/The-Auth-Helper.md)
