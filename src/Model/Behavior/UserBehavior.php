@@ -170,7 +170,9 @@ class UserBehavior extends Behavior {
  */
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
 		$options = Hash::merge($this->_config['updateLastActivity'], $options);
-		if ($this->_table->exists([$this->_table->alias() . '.' . $this->_table->primaryKey()])) {
+		if ($this->_table->exists([
+			$this->_table->alias() . '.' . $this->_table->primaryKey() => $userId
+		])) {
 			return $this->_table->updateAll(
 				[$field => date($options['dateFormat'])],
 				[$this->_table->primaryKey() => $userId]
