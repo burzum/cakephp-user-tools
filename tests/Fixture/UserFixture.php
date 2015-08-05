@@ -23,6 +23,7 @@ class UserFixture extends TestFixture {
 		'slug' => ['type' => 'string', 'null' => true, 'default' => null],
 		'password' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
 		'password_token' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
+		'password_token_expires' => ['type' => 'datetime', 'null' => true, 'default' => null],
 		'email' => ['type' => 'string', 'null' => true, 'default' => null],
 		'email_verified' => ['type' => 'boolean', 'null' => true, 'default' => '0'],
 		'email_token' => ['type' => 'string', 'null' => true, 'default' => null],
@@ -73,6 +74,7 @@ class UserFixture extends TestFixture {
 			'slug' => 'newuser',
 			'password' => 'test', // test
 			'password_token' => 'newusertoken',
+			'password_token_expires' => null,
 			'email' => 'newuser@testuser.com',
 			'email_verified' => 1,
 			'email_token' => 'secondusertesttoken',
@@ -92,6 +94,7 @@ class UserFixture extends TestFixture {
 			'slug' => 'notverified',
 			'password' => 'test', // test
 			'password_token' => 'notverified',
+			'password_token_expires' => null,
 			'email' => 'notverified@testuser.com',
 			'email_verified' => 0,
 			'email_token' => 'thirdusertesttoken',

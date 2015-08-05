@@ -10,34 +10,10 @@ namespace Burzum\UserTools\Shell;
 
 use Cake\Cache\Cache;
 use Cake\Console\Shell;
-use Cake\Core\Configure;
-use Cake\Model\Model;
-use Cake\Core\ConventionsTrait;
 use Cake\ORM\TableRegistry;
+use Cake\Datasource\ConnectionManager;
 
 class UserShell extends Shell {
-
-/**
- * The connection being used.
- *
- * @var string
- */
-	public $connection = 'default';
-
-/**
- * Constructor
- *
- * @param ConsoleIo $io
- * @internal param $ \Cake
- */
-	public function __construct(ConsoleIo $io = null) {
-		parent::__construct($io);
-		$table = 'Users';
-		$this->UserTable = TableRegistry::get($table);
-		if (!$this->UserTable->hasBehavior('UserTools.User')) {
-			$this->UserTable->addBehavior('UserTools.User');
-		}
-	}
 
 /**
  * Assign $this->connection to the active task if a connection param is set.
@@ -47,6 +23,18 @@ class UserShell extends Shell {
 	public function startup() {
 		parent::startup();
 		Cache::disable();
+		$this->UserTable = TableRegistry::get($this->param('model'), [
+			'connection' => ConnectionManager::get($this->param('connection'))
+		]);
+		if (!$this->UserTable->hasBehavior('Burzum/UserTools.User')) {
+			$this->UserTable->addBehavior('Burzum/UserTools.User');
+		}
+		try {
+			$this->UserTable->schema();
+		} catch (\Exception $e) {
+			$this->err($e->getMessage());
+			$this->_stop(1);
+		}
 	}
 
 /**
@@ -56,11 +44,19 @@ class UserShell extends Shell {
  */
 	public function removeExpired() {
 		$count = $this->UserTable->removeExpiredRegistrations();
-		$this->out(__dn('user_tools', 'Removed {0,number,integer} expired registration.', 'Removed {0,number,integer} expired registrations.', $count, $count));
+		$this->out(__dn(
+			'user_tools',
+			'Removed {0,number,integer} expired registration.',
+			'Removed {0,number,integer} expired registrations.',
+			$count,
+			$count
+		));
 	}
 
 /**
- * Sets a new password for an user
+ * Sets a new password for an user.
+ *
+ * cake user setPassword <searchTerm> <newPassword> <field | optional>
  *
  * @return void
  */
@@ -70,7 +66,7 @@ class UserShell extends Shell {
 		}
 		$field = 'username';
 		if (count($this->args) >= 3) {
-			$field = $this->args[3];
+			$field = $this->args[2];
 		}
 		$user = $this->UserTable->find()->where([$field => $this->args[0]])->first();
 		$user->password = $this->UserTable->hashPassword($this->args[1]);
@@ -90,10 +86,15 @@ class UserShell extends Shell {
 		$parser->description(
 			'Users utility shell'
 		)
-		->addOption('table', [
-			'short' => 't',
+		->addOption('model', [
+			'short' => 'm',
 			'help' => 'User model to load',
 			'default' => 'Users'
+		])
+		->addOption('connection', [
+			'short' => 'c',
+			'help' => 'The connection to use',
+			'default' => 'default'
 		])
 		->addOption('behavior', [
 			'short' => 'b',
@@ -103,5 +104,4 @@ class UserShell extends Shell {
 
 		return $parser;
 	}
-
 }

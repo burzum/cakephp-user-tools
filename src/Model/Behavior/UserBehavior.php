@@ -9,20 +9,19 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
-use Burzum\UserTools\Validation\UsersValidator;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
-use Cake\Event\EventManager;
 use Cake\Event\EventManagerTrait;
 use Cake\I18n\Time;
-use Cake\Network\Exception\NotFoundException;
 use Cake\Network\Email\Email;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
 use Cake\Utility\Text;
+use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
@@ -72,7 +71,6 @@ class UserBehavior extends Behavior {
 		],
 		'updateLastActivity' => [
 			'dateFormat' => 'Y-m-d H:i:s',
-			'validate' => false
 		],
 		'initPasswordReset' => [
 			'tokenLength' => 32,
@@ -115,7 +113,7 @@ class UserBehavior extends Behavior {
  * @param array $config The settings for this behavior.
  */
 	public function __construct(Table $table, array $config = []) {
-		$this->_defaultConfig = Hash::merge($this->_defaultConfig, (array)Configure::read('UserTools.Behavior'));
+		$this->_defaultConfig = Hash::merge($this->_defaultConfig, (array) Configure::read('UserTools.Behavior'));
 		parent::__construct($table, $config);
 		$this->_table = $table;
 
@@ -172,11 +170,13 @@ class UserBehavior extends Behavior {
  */
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
 		$options = Hash::merge($this->_config['updateLastActivity'], $options);
-		if ($this->_table->exists([$this->_table->alias() . '.' . $this->_table->primaryKey()])) {
-			return $this->_table->save($this->_table->newEntity([
-				$this->_table->primaryKey() => $userId,
-				$field => date($options['dateFormat'])
-			]), ['validate' => $options['validate']]);
+		if ($this->_table->exists([
+			$this->_table->alias() . '.' . $this->_table->primaryKey() => $userId
+		])) {
+			return $this->_table->updateAll(
+				[$field => date($options['dateFormat'])],
+				[$this->_table->primaryKey() => $userId]
+			);
 		}
 		return false;
 	}
@@ -199,7 +199,7 @@ class UserBehavior extends Behavior {
  *
  * @param \Cake\ORM\Entity $entity
  * @param array $options
- * @return void
+ * @return Entity
  */
 	protected function _beforeRegister(Entity $entity, $options = []) {
 		extract(Hash::merge($this->_config['register'], $options));
@@ -210,7 +210,7 @@ class UserBehavior extends Behavior {
 		}
 
 		if ($userActive === true) {
-			$entity->{$this->_field('active')} = 1;
+			$entity->{$this->_field('active')} = true;
 		}
 
 		if ($emailVerification === true) {
@@ -218,9 +218,9 @@ class UserBehavior extends Behavior {
 			if ($verificationExpirationTime !== false) {
 				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($verificationExpirationTime);
 			}
-			$entity->{$this->_field('emailVerified')} = 0;
+			$entity->{$this->_field('emailVerified')} = false;
 		} else {
-			$entity->{$this->_field('emailVerified')} = 1;
+			$entity->{$this->_field('emailVerified')} = true;
 		}
 
 		if (!isset($entity->{$this->_field('role')})) {
@@ -228,7 +228,7 @@ class UserBehavior extends Behavior {
 		}
 
 		if ($generatePassword === true) {
-			$password = $this->generatePassword((int)$generatePassword);
+			$password = $this->generatePassword((int) $generatePassword);
 			$entity->{$this->_field('password')} = $password;
 			$entity->clear_password = $password;
 		}
@@ -300,7 +300,7 @@ class UserBehavior extends Behavior {
 		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
-			return (bool)$event->result;
+			return (bool) $event->result;
 		}
 
 		$result = $this->_table->save($entity, array('validate' => false));
@@ -344,7 +344,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $token The token to check.
  * @param array $options Options array.
- * @throws \Cake\Network\Exception\NotFoundException if the token was not found at all
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean|\Cake\ORM\Entity Returns false if the token has expired
  */
 	public function verifyToken($token, $options = []) {
@@ -371,7 +371,7 @@ class UserBehavior extends Behavior {
 		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
-			return (bool)$event->result;
+			return (bool) $event->result;
 		}
 
 		if ($options['returnData'] === true) {
@@ -404,7 +404,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $token Token string to check.
  * @param array $options Options array.
- * @throws NotFoundException if the token was not found at all
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean Returns false if the token has expired
  */
 	public function verifyEmailToken($token, $options = []) {
@@ -420,7 +420,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $token
  * @param array $options
- * @throws NotFoundException if the token was not found at all
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
  * @return boolean Returns false if the token has expired
  */
 	public function verifyPasswordResetToken($token, $options = []) {
@@ -456,7 +456,7 @@ class UserBehavior extends Behavior {
  * @return string
  */
 	public function generatePassword($length = 8, $options = []) {
-		srand((double)microtime() * 1000000);
+		srand((double) microtime() * 1000000);
 
 		$defaults = [
 			'vowels' => [
@@ -581,11 +581,24 @@ class UserBehavior extends Behavior {
 	}
 
 /**
+ * Validation rules for the password reset request.
+ *
+ * @param \Cake\Validation\Validator $validator
+ * @return \Cake\Validation\Validator
+ * @see Burzum\UserTools\Controller\Component\UserToolComponent::requestPassword()
+ */
+	public function validationRequestPassword(Validator $validator) {
+		$validator = $this->_table->validationDefault($validator);
+		$validator->remove($this->_field('email'), 'unique');
+		return $validator;
+	}
+
+/**
  * Initializes a password reset process.
  *
  * @param mixed $value
  * @param array $options
- * @return boolean
+ * @return array
  */
 	public function initPasswordReset($value, $options = []) {
 		$defaults = [
@@ -596,10 +609,15 @@ class UserBehavior extends Behavior {
 		];
 		$options = Hash::merge($defaults, $this->_config['initPasswordReset'], $options);
 		$result = $this->_getUser($value, $options);
+		if (empty($result)) {
+			throw new RecordNotFoundException(__d('user_tools', 'User not found.'));
+		}
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
 		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
-		$this->_table->save($result, ['validate' => false]);
-		return $this->sendPasswordResetToken($result, ['to' => $result->{$this->_field('email')}]);
+		$this->_table->save($result, ['checkRules' => false]);
+		return $this->sendPasswordResetToken($result, [
+			'to' => $result->{$this->_field('email')}
+		]);
 	}
 
 /**
@@ -607,7 +625,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @throws \Cake\ORM\Exception\NotFoundException
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException;
  * @return \Cake\ORM\Entity
  */
 	public function getUser($value, $options = []) {
@@ -622,7 +640,7 @@ class UserBehavior extends Behavior {
  *
  * @param mixed $value
  * @param array $options
- * @throws \Cake\ORM\Exception\NotFoundException
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException
  * @return \Cake\ORM\Entity
  */
 	protected function _getUser($value, $options = []) {
@@ -636,7 +654,7 @@ class UserBehavior extends Behavior {
 
 		if (is_array($options['field'])) {
 			foreach ($options['field'] as $field) {
-				$query->orWhere( [$field => $value]);
+				$query->orWhere([$field => $value]);
 			}
 		} else {
 			$query->where([$options['field'] => $value]);
@@ -645,7 +663,7 @@ class UserBehavior extends Behavior {
 		$result = $query->first();
 
 		if (empty($result)) {
-			throw new NotFoundException($options['notFoundErrorMessage']);
+			throw new RecordNotFoundException($options['notFoundErrorMessage']);
 		}
 		return $result;
 	}
@@ -659,7 +677,7 @@ class UserBehavior extends Behavior {
  *
  * @param string $email
  * @param array $options
- * @throws \Cake\ORM\Exception\NotFoundException
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException
  * @return boolean
  */
 	public function sendNewPassword($email, $options = []) {
@@ -669,7 +687,7 @@ class UserBehavior extends Behavior {
 			])
 			->first();
 		if (empty($result)) {
-			throw new NotFoundException(__d('user_tools', 'Invalid user'));
+			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
 		}
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
@@ -708,13 +726,14 @@ class UserBehavior extends Behavior {
  * sendEmail
  *
  * @param array $options
- * @return boolean
+ * @return array
  */
 	public function sendEmail($options = []) {
 		$Email = $this->getMailInstance();
 		foreach ($options as $option => $value) {
 			$Email->{$option}($value);
 		}
+		return $Email->send();
 	}
 
 /**
@@ -722,7 +741,7 @@ class UserBehavior extends Behavior {
  *
  * @param \Cake\ORM\Entity $user
  * @param array $options
- * @return void
+ * @return array
  */
 	public function sendPasswordResetToken(Entity $user, $options = []) {
 		$defaults = [

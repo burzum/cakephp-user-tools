@@ -4,9 +4,9 @@ Installation
 The plugin should be installed using Composer.
 
 Use the inline `require` for composer:
-```
-composer require burzum/cakephp-user-tools:dev-develop
 
+```
+composer require burzum/cakephp-user-tools:~1.0
 ```
 
 or add this to your composer.json configuration:
@@ -14,7 +14,7 @@ or add this to your composer.json configuration:
 ```
 {
 	"require" : {
-		"burzum/cakephp-user-tools": "dev-develop"
+		"burzum/cakephp-user-tools": "~1.0"
 	}
 }
 ```
@@ -39,8 +39,8 @@ If you're unsure how to do that see the [Quick Start](../Tutorials/Quick-Start.m
 
 Some default URLs that become available when the routes are loaded:
 
-* /<your-controller>/index
-* /<your-controller>/login
-* /<your-controller>/request_password
+* `/<your-controller>/index`
+* `/<your-controller>/login`
+* `/<your-controller>/request_password`
 
 For all the customization options the plugin offers please see the documentation or check the default configuration of the component and behavior in the class files. Second is the better option right now because the documentation is not yet completed.

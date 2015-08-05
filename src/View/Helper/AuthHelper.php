@@ -8,7 +8,6 @@
  */
 namespace Burzum\UserTools\View\Helper;
 
-use Cake\Event\Event;
 use Cake\Utility\Hash;
 use Cake\View\Helper;
 use Cake\View\View;
@@ -23,7 +22,7 @@ class AuthHelper extends Helper {
 	protected $_defaultConfig = [
 		'session' => false,
 		'viewVar' => 'userData',
-		'viewVarException' => true,
+		'viewVarException' => false,
 		'roleField' => 'role'
 	];
 
@@ -57,9 +56,9 @@ class AuthHelper extends Helper {
 		if (is_string($this->_config['session'])) {
 			$this->_userData = $this->_View->request->session()->read($this->_config['session']);
 		} else {
-			if (!isset($this->_View->viewVars[$this->_config['viewVar']]) && $this->_View->viewVars[$this->_config['viewVar']] !== null) {
+			if (!array_key_exists($this->_config['viewVar'], $this->_View->viewVars)) {
 				if ($this->_config['viewVarException'] === true) {
-					throw new \RuntimeException(sprintf('View var `%s` not present!', $this->_config['viewVar']));
+					throw new \RuntimeException(sprintf('View var `%s` not present! Please set the auth data to the view. See the documentation.', $this->_config['viewVar']));
 				} else {
 					$this->_userData = [];
 				}
@@ -124,7 +123,7 @@ class AuthHelper extends Helper {
  * Role check.
  *
  * @param string String of the role identifier.
- * @return boolean True if the role is in the set of roles for the active user data.
+ * @return boolean|null True if the role is in the set of roles for the active user data.
  */
 	public function hasRole($role) {
 		if (!is_string($role)) {

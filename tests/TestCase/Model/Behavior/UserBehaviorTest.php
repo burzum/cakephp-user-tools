@@ -50,6 +50,15 @@ class UserBehaviorTest extends TestCase {
 			'transport' => 'default',
 			'from' => 'you@localhost',
 		]);
+
+		$this->UserBehavior = $this->getMockBuilder('\Burzum\UserTools\Model\Behavior\UserBehavior')
+			->setConstructorArgs([$this->User])
+			->setMethods(['getMailInstance'])
+			->getMock();
+
+		$this->MockEmail = $this->getMockBuilder('\Cake\Network\Email')
+			->setMethods(['send'])
+			->getMock();
 	}
 
 /**
@@ -77,6 +86,29 @@ class UserBehaviorTest extends TestCase {
 		]);
 		$result = $this->User->register($data);
 		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
+	}
+
+/**
+ * testExpirationTime
+ *
+ * @return void
+ */
+	public function testExpirationTime() {
+		$result = $this->User->expirationTime();
+		$this->assertStringStartsWith(date('Y-m-d', strtotime('+1 day')), $result);
+	}
+
+/**
+ * testUpdateLastActivity
+ *
+ * @return void
+ */
+	public function testUpdateLastActivity() {
+		$before = $this->User->get(1);
+		$result = $this->User->updateLastActivity(1);
+		$after = $this->User->get(1);
+		$this->assertEquals($result, 1);
+		$this->assertNotEquals($before->last_action, $after->last_action);
 	}
 
 /**
@@ -140,7 +172,7 @@ class UserBehaviorTest extends TestCase {
 /**
  * testVerifyTokenNotFoundException
  *
- * @expectedException \Cake\Network\Exception\NotFoundException
+ * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
  * @return void
  */
 	public function testVerifyTokenNotFoundException() {
@@ -199,7 +231,7 @@ class UserBehaviorTest extends TestCase {
 /**
  * testGetUserRecordNotFoundException
  *
- * @expectedException \Cake\Network\Exception\NotFoundException
+ * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
  * @return void
  */
 	public function testGetUserRecordNotFoundException() {
@@ -212,7 +244,16 @@ class UserBehaviorTest extends TestCase {
  * @return void
  */
 	public function testResetPassword() {
-
+		$user = $this->User->find()->where(['id' => '1'])->first();
+		$user = $this->User->patchEntity($user, [
+			'password' => 'password1234',
+			'confirm_password' => 'password1234'
+		]);
+		$result = $this->User->resetPassword($user);
+		$this->assertInstanceOf('\Cake\ORM\Entity', $result);
+		$user = $this->User->find()->where(['id' => '1'])->first();
+		$this->assertEquals($user->password_token, null);
+		$this->assertEquals($user->password_token_expires, null);
 	}
 
 /**
@@ -235,7 +276,27 @@ class UserBehaviorTest extends TestCase {
 		$this->assertTrue(is_a($result, '\Cake\Auth\DefaultPasswordHasher'));
 	}
 
-	public function testSendNewpassword() {
-		//$result = $this->User->sendNewPassword('newuser@testuser.com');
+/**
+ * testSendEmail
+ *
+ * @return void
+ */
+	public function testSendEmail() {
+		$this->UserBehavior->expects($this->any())
+			->method('getMailInstance')
+			->will($this->returnValue($this->MockEmail));
+
+		$this->MockEmail->expects($this->at(0))
+			->method('send')
+			->will($this->returnValue(true));
+
+		$this->UserBehavior->sendEmail();
+	}
+
+/**
+ * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
+ */
+	public function testInitPasswordResetRecordNotFoundException() {
+		$this->User->initPasswordReset('does-not-exist');
 	}
 }
