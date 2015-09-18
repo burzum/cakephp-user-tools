@@ -11,7 +11,7 @@ namespace App\Controller;
 use App\Controller\AppController;
 use Cake\Event\Event;
 
-UsersController extends AppController {
+class UsersController extends AppController {
 	public function initialize() {
 		parent::initialize();
 		$this->loadComponent('Burzum/UserTools.UserTool');
