@@ -11,13 +11,6 @@ namespace Burzum\UserTools\Auth;
 trait DefaultAuthSetupTrait {
 
 /**
- * Gets the component registry.
- *
- * @return \Cake\Controller\ComponentRegistry
- */
-	abstract public function components();
-
-/**
  * Sets the default authentication settings up.
  *
  * Call this in your beforeFilter().
