@@ -419,7 +419,7 @@ class UserToolComponent extends Component {
 		$Auth = $this->_getAuthObject();
 		$Auth->setUser($user);
 		if ($options['successRedirectUrl'] === null) {
-			$options['successRedirectUrl'] = $Auth->redirectUrl();
+			$options['successRedirectUrl'] = $this->request->referer();
 		}
 		$this->handleFlashAndRedirect('success', $options);
 		return true;
