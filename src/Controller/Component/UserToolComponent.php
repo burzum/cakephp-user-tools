@@ -539,6 +539,7 @@ class UserToolComponent extends Component {
 		if ($options['enabled'] === false) {
 			throw new NotFoundException();
 		}
+		$return = false;
 		$entity = $this->UserTable->newEntity();
 		// Make the field accessible in the case the default entity class is used.
 		$entity->accessible('confirm_password', true);
@@ -546,23 +547,17 @@ class UserToolComponent extends Component {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data());
 			if ($this->UserTable->register($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
-				if ($options['setEntity'] === true) {
-					$this->_controller->set('usersEntity', $entity);
-				}
-				return true;
+				$return = true;
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
-				if ($options['setEntity'] === true) {
-					$this->_controller->set('usersEntity', $entity);
-				}
-				return false;
 			}
 		}
 		if ($options['setEntity'] === true) {
 			$this->_controller->set('userEntity', $entity);
-			// BC
+			// For backward compatibility
 			$this->_controller->set('usersEntity', $entity);
 		}
+		return $return;
 	}
 
 /**
