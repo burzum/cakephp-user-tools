@@ -9,6 +9,7 @@
 namespace Burzum\UserTools\Controller\Component;
 
 use Cake\Controller\Component;
+use Cake\Datasource\EntityInterface;
 use Cake\Event\EventManagerTrait;
 use Cake\ORM\TableRegistry;
 use Cake\Event\Event;
@@ -69,6 +70,9 @@ class UserToolComponent extends Component {
 			'setEntity' => true,
 		],
 		'login' => [
+			'alreadyLoggedInFlashOptions' => [],
+			'alreadyLoggedInRedirectUrl' => null,
+			'successRedirectUrl' => null,
 			'successFlashOptions' => [],
 			'successRedirectUrl' => null,
 			'errorFlashOptions' => [],
@@ -359,6 +363,69 @@ class UserToolComponent extends Component {
 	}
 
 /**
+ * Handles the case when the user is already logged in and triggers a redirect
+ * and flash message if configured for that.
+ *
+ * @see UserToolComponent::login()
+ * @param array $options
+ * @return void
+ */
+	public function _handleUserBeingAlreadyLoggedIn(array $options) {
+		$Auth = $this->_getAuthObject();
+		if ((bool)$Auth->user()) {
+			if ($options['alreadyLoggedInFlashOptions'] === null) {
+				$options['alreadyLoggedInRedirectUrl'] = $Auth->redirectUrl();
+			}
+			$this->handleFlashAndRedirect('alreadyLoggedIn', $options);
+		}
+	}
+
+/**
+ * Internal callback to prepare the credentials for the login.
+ *
+ * @param \Cake\Datasource\EntityInterface
+ * @param array $options
+ * @return mixed
+ */
+	protected function _beforeLogin(EntityInterface $entity, array $options) {
+		$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => false]);
+
+		$event = new Event('User.beforeLogin', $this, [
+			'options' => $options,
+			'entity' => $entity
+		]);
+
+		$this->eventManager()->dispatch($event);
+		if ($event->isStopped()) {
+			return $event->result;
+		}
+
+		return $this->_getAuthObject()->identify();
+	}
+
+/**
+ * Internal callback to handle the after login procedure.
+ *
+ * @param array $user
+ * @param array $options
+ * @return mixed
+ */
+	protected function _afterLogin($user, array $options) {
+		$event = new Event('User.afterLogin', $this, ['options' => $options]);
+		$this->eventManager()->dispatch($event);
+		if ($event->isStopped()) {
+			return $event->result;
+		}
+		$Auth = $this->_getAuthObject();
+		$Auth->setUser($user);
+		if ($options['successRedirectUrl'] === null) {
+			$options['successRedirectUrl'] = $Auth->redirectUrl();
+		}
+		$this->handleFlashAndRedirect('success', $options);
+		return true;
+	}
+
+/**
  * Login
  *
  * @var array
@@ -366,36 +433,12 @@ class UserToolComponent extends Component {
  */
 	public function login($options = []) {
 		$options = Hash::merge($this->_config['login'], $options);
-
+		$this->_handleUserBeingAlreadyLoggedIn($options);
 		$entity = $this->UserTable->newEntity([], ['validate' => false]);
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => false]);
-
-			$event = new Event('User.beforeLogin', $this, [
-				'options' => $options,
-				'entity' => $entity
-			]);
-
-			$this->eventManager()->dispatch($event);
-			if ($event->isStopped()) {
-				return $event->result;
-			}
-
-			$Auth = $this->_getAuthObject();
-			$user = $Auth->identify();
-
+			$user = $this->_beforeLogin($entity, $options);
 			if ($user) {
-				$event = new Event('User.afterLogin', $this, ['options' => $options]);
-				$this->eventManager()->dispatch($event);
-				if ($event->isStopped()) {
-					return $event->result;
-				}
-				$Auth->setUser($user);
-				if ($options['successRedirectUrl'] === null) {
-					$options['successRedirectUrl'] = $Auth->redirectUrl();
-				}
-				$this->handleFlashAndRedirect('success', $options);
-				return true;
+				return $this->_afterLogin($user, $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
