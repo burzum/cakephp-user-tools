@@ -365,7 +365,16 @@ class UserToolComponent extends Component {
  * @return bool
  */
 	public function login($options = []) {
+		$Auth = $this->_getAuthObject();
+
 		$options = Hash::merge($this->_config['login'], $options);
+		if ($options['successRedirectUrl'] === null) {
+			$options['successRedirectUrl'] = $Auth->redirectUrl();
+		}
+
+		if ($Auth->user('id')) {
+			return $this->handleFlashAndRedirect('success', $options);
+		}
 
 		$entity = $this->UserTable->newEntity([], ['validate' => false]);
 		if ($this->request->is('post')) {
@@ -381,7 +390,6 @@ class UserToolComponent extends Component {
 				return $event->result;
 			}
 
-			$Auth = $this->_getAuthObject();
 			$user = $Auth->identify();
 
 			if ($user) {
@@ -391,9 +399,6 @@ class UserToolComponent extends Component {
 					return $event->result;
 				}
 				$Auth->setUser($user);
-				if ($options['successRedirectUrl'] === null) {
-					$options['successRedirectUrl'] = $Auth->redirectUrl();
-				}
 				$this->handleFlashAndRedirect('success', $options);
 				return true;
 			} else {
