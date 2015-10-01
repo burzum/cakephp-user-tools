@@ -14,7 +14,7 @@ use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
-use Cake\Event\EventManagerTrait;
+use Cake\Event\EventDispatcherTrait ;
 use Cake\I18n\Time;
 use Cake\Network\Email\Email;
 use Cake\ORM\Behavior;
@@ -26,7 +26,7 @@ use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
-	use EventManagerTrait;
+	use EventDispatcherTrait;
 
 /**
  * Default config
@@ -192,6 +192,13 @@ class UserBehavior extends Behavior {
 		return $this->passwordHasher()->hash($password);
 	}
 
+/**
+ * _emailVerification
+ *
+ * @param \Cake\Datasource\EntityInterface $entity
+ * @param array $options
+ * @return void
+ */
 	protected function _emailVerification(EntityInterface &$entity, $options) {
 		if ($options['emailVerification'] === true) {
 			$entity->{$this->_field('emailToken')} = $this->generateToken($options['tokenLength']);
