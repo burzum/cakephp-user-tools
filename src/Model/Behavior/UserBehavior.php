@@ -11,6 +11,7 @@ namespace Burzum\UserTools\Model\Behavior;
 
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
+use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventManagerTrait;
@@ -191,6 +192,18 @@ class UserBehavior extends Behavior {
 		return $this->passwordHasher()->hash($password);
 	}
 
+	protected function _emailVerification(EntityInterface &$entity, $options) {
+		if ($options['emailVerification'] === true) {
+			$entity->{$this->_field('emailToken')} = $this->generateToken($options['tokenLength']);
+			if ($options['verificationExpirationTime'] !== false) {
+				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($options['verificationExpirationTime']);
+			}
+			$entity->{$this->_field('emailVerified')} = false;
+		} else {
+			$entity->{$this->_field('emailVerified')} = true;
+		}
+	}
+
 /**
  * Behavior internal before registration callback
  *
@@ -213,15 +226,7 @@ class UserBehavior extends Behavior {
 			$entity->{$this->_field('active')} = true;
 		}
 
-		if ($emailVerification === true) {
-			$entity->{$this->_field('emailToken')} = $this->generateToken($tokenLength);
-			if ($verificationExpirationTime !== false) {
-				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($verificationExpirationTime);
-			}
-			$entity->{$this->_field('emailVerified')} = false;
-		} else {
-			$entity->{$this->_field('emailVerified')} = true;
-		}
+		$this->_emailVerification($entity, $options);
 
 		if (!isset($entity->{$this->_field('role')})) {
 			$entity->{$this->_field('role')} = $defaultRole;
@@ -563,7 +568,11 @@ class UserBehavior extends Behavior {
 	}
 
 /**
+ * Validates the old password.
  *
+ * @param mixed $value
+ * @param string $field
+ * @param mixed $context
  */
 	public function validateOldPassword($value, $field, $context) {
 		$result = $this->_table->find('all', [
