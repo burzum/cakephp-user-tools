@@ -373,8 +373,8 @@ class UserToolComponent extends Component {
 	public function _handleUserBeingAlreadyLoggedIn(array $options) {
 		$Auth = $this->_getAuthObject();
 		if ((bool)$Auth->user()) {
-			if ($options['alreadyLoggedInFlashOptions'] === null) {
-				$options['alreadyLoggedInRedirectUrl'] = $Auth->redirectUrl();
+			if ($options['alreadyLoggedInRedirectUrl'] === null) {
+				$options['alreadyLoggedInRedirectUrl'] = $this->request->referer();
 			}
 			$this->handleFlashAndRedirect('alreadyLoggedIn', $options);
 		}
@@ -419,7 +419,7 @@ class UserToolComponent extends Component {
 		$Auth = $this->_getAuthObject();
 		$Auth->setUser($user);
 		if ($options['successRedirectUrl'] === null) {
-			$options['successRedirectUrl'] = $this->request->referer();
+			$options['successRedirectUrl'] = $Auth->redirectUrl();
 		}
 		$this->handleFlashAndRedirect('success', $options);
 		return true;
