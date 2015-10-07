@@ -1,6 +1,8 @@
 Quick Start
 ===========
 
+The prequisite for this is the assumption that you are familiar with the basics of CakePHP and that you know how to use the AuthComponent. If not please [read the documentation](http://book.cakephp.org/3.0/en/controllers/components/authentication.html) about it first and [do the tutorial](http://book.cakephp.org/3.0/en/tutorials-and-examples/blog-auth-example/auth.html).
+
 If your database follows the schema the plugin expects to work with you can simply kick start your users in the application by just adding the component and helper. This tutorial is the minimalistic implementation and will use the component and helper with their default settings. For customization of the default behavior check the documentation or read the code of the settings arrays.
 
 In `src\Controller\UsersController.php`:
@@ -19,6 +21,11 @@ class UsersController extends AppController {
 
 	// To use the helper you'll have to set the user data to the view!
 	public function beforeRender(Event $event) {
+		/** 
+		 * It is expected that you have the Auth component 
+		 * loaded and configured in your AppController!
+		 * Otherwise this will thow an error.
+		 */
 		$this->set('userData', $this->Auth->user());
 	}
 }
