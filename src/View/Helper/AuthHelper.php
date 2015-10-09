@@ -122,17 +122,25 @@ class AuthHelper extends Helper {
 /**
  * Role check.
  *
- * @param string String of the role identifier.
+ * @param array|string Role string or set of role identifiers.
  * @return boolean|null True if the role is in the set of roles for the active user data.
  */
 	public function hasRole($requestedRole) {
-		if (!is_string($requestedRole) && !is_array($requestedRole)) {
-			throw new \InvalidArgumentException('Role must be a string!');
-		}
 		$roles = $this->user($this->config('roleField'));
 		if (is_null($roles)) {
 			return false;
 		}
+		return $this->_checkRoles($requestedRole, $roles);
+	}
+
+/**
+ * Checks the roles.
+ *
+ * @param string|array $requestedRole
+ * @param string|array $roles
+ * @return boolean
+ */
+	protected function _checkRoles($requestedRole, $roles) {
 		if (is_string($roles)) {
 			$roles = [$roles];
 		}
