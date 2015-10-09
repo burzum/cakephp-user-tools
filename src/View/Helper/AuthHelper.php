@@ -116,7 +116,7 @@ class AuthHelper extends Helper {
 		if ($key === null) {
 			return $this->_userData;
 		}
-		return Hash::get($this->_userData(true), $key);
+		return Hash::get((array)$this->_userData(true), $key);
 	}
 
 /**
@@ -125,17 +125,21 @@ class AuthHelper extends Helper {
  * @param string String of the role identifier.
  * @return boolean|null True if the role is in the set of roles for the active user data.
  */
-	public function hasRole($role) {
-		if (!is_string($role)) {
+	public function hasRole($requestedRole) {
+		if (!is_string($requestedRole) && !is_array($requestedRole)) {
 			throw new \InvalidArgumentException('Role must be a string!');
 		}
 		$roles = $this->user($this->config('roleField'));
+		if (is_null($roles)) {
+			return false;
+		}
 		if (is_string($roles)) {
-			return ($role === $roles);
+			$roles = [$roles];
 		}
-		if (is_array($roles)) {
-			return (in_array($role, $roles));
+		if (is_string($requestedRole)) {
+			$requestedRole = [$requestedRole];
 		}
+		$result = array_intersect($roles, $requestedRole);
+		return (count($result) > 0);
 	}
-
 }

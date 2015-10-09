@@ -92,6 +92,13 @@ class AuthHelperTestCase extends TestCase {
 		$this->assertTrue($Auth->hasRole('manager'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
 
+		$this->View->viewVars['userData']['role'] = array(
+			'manager', 'user'
+		);
+		$Auth = new AuthHelper($this->View);
+		$this->assertTrue($Auth->hasRole('manager'));
+		$this->assertFalse($Auth->hasRole('doesnotexist'));
+
 		try {
 			$object = new \stdClass();
 			$Auth->hasRole($object);
