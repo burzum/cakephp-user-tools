@@ -11,9 +11,10 @@ namespace Burzum\UserTools\Model\Behavior;
 
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
+use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
-use Cake\Event\EventManagerTrait;
+use Cake\Event\EventDispatcherTrait ;
 use Cake\I18n\Time;
 use Cake\Network\Email\Email;
 use Cake\ORM\Behavior;
@@ -25,7 +26,7 @@ use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
-	use EventManagerTrait;
+	use EventDispatcherTrait;
 
 /**
  * Default config
@@ -192,6 +193,25 @@ class UserBehavior extends Behavior {
 	}
 
 /**
+ * _emailVerification
+ *
+ * @param \Cake\Datasource\EntityInterface $entity
+ * @param array $options
+ * @return void
+ */
+	protected function _emailVerification(EntityInterface &$entity, $options) {
+		if ($options['emailVerification'] === true) {
+			$entity->{$this->_field('emailToken')} = $this->generateToken($options['tokenLength']);
+			if ($options['verificationExpirationTime'] !== false) {
+				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($options['verificationExpirationTime']);
+			}
+			$entity->{$this->_field('emailVerified')} = false;
+		} else {
+			$entity->{$this->_field('emailVerified')} = true;
+		}
+	}
+
+/**
  * Behavior internal before registration callback
  *
  * This method deals with most of the settings for the registration that can be
@@ -202,38 +222,30 @@ class UserBehavior extends Behavior {
  * @return Entity
  */
 	protected function _beforeRegister(Entity $entity, $options = []) {
-		extract(Hash::merge($this->_config['register'], $options));
+		$options = Hash::merge($this->_config['register'], $options);
 
 		if ($this->_config['useUuid'] === true) {
 			$primaryKey = $this->_table->primaryKey();
 			$entity->{$primaryKey} = Text::uuid();
 		}
 
-		if ($userActive === true) {
+		if ($options['userActive'] === true) {
 			$entity->{$this->_field('active')} = true;
 		}
 
-		if ($emailVerification === true) {
-			$entity->{$this->_field('emailToken')} = $this->generateToken($tokenLength);
-			if ($verificationExpirationTime !== false) {
-				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($verificationExpirationTime);
-			}
-			$entity->{$this->_field('emailVerified')} = false;
-		} else {
-			$entity->{$this->_field('emailVerified')} = true;
-		}
+		$this->_emailVerification($entity, $options);
 
 		if (!isset($entity->{$this->_field('role')})) {
-			$entity->{$this->_field('role')} = $defaultRole;
+			$entity->{$this->_field('role')} = $options['defaultRole'];
 		}
 
-		if ($generatePassword === true) {
-			$password = $this->generatePassword((int) $generatePassword);
+		if ($options['generatePassword'] === true) {
+			$password = $this->generatePassword();
 			$entity->{$this->_field('password')} = $password;
 			$entity->clear_password = $password;
 		}
 
-		if ($hashPassword === true) {
+		if ($options['hashPassword'] === true) {
 			$entity->{$this->_field('password')} = $this->hashPassword($entity->{$this->_field('password')});
 		}
 
@@ -249,7 +261,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findEmailVerified(Query $query, array $options) {
 		$query->where([
-			$this->alias() . '.email_verified' => true,
+			$this->alias() . '.' . $this->_field('emailVerified') => true,
 		]);
 		return $query;
 	}
@@ -263,7 +275,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findActive(Query $query, array $options) {
 		$query->where([
-			$this->alias() . '.active' => true,
+			$this->alias() . '.' . $this->_field('active') => true,
 		]);
 		return $query;
 	}
@@ -456,8 +468,20 @@ class UserBehavior extends Behavior {
  * @return string
  */
 	public function generatePassword($length = 8, $options = []) {
-		srand((double) microtime() * 1000000);
+		$options = $this->_passwordDictionary($options);
+		$password = '';
 
+		srand((double) microtime() * 1000000);
+		for ($i = 0; $i < $length; $i++) {
+			$password .=
+				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
+				$options['vowels'][mt_rand(0, count($options['vowels']) - 1)];
+		}
+
+		return substr($password, 0, $length);
+	}
+
+	public function _passwordDictionary(array $options = []) {
 		$defaults = [
 			'vowels' => [
 				'a', 'e', 'i', 'o', 'u'
@@ -468,25 +492,13 @@ class UserBehavior extends Behavior {
 				'dr', 'ch', 'ph', 'wr', 'st', 'sp', 'sw', 'pr', 'sl', 'cl'
 			]
 		];
-
 		if (isset($options['cons'])) {
 			unset($defaults['cons']);
 		}
-
 		if (isset($options['vowels'])) {
 			unset($defaults['vowels']);
 		}
-
-		$options = Hash::merge($defaults, $options);
-		$password = '';
-
-		for ($i = 0; $i < $length; $i++) {
-			$password .=
-				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
-				$options['vowels'][mt_rand(0, count($options['vowels']) - 1)];
-		}
-
-		return substr($password, 0, $length);
+		return Hash::merge($defaults, $options);
 	}
 
 /**
@@ -540,6 +552,18 @@ class UserBehavior extends Behavior {
  * @return boolean
  */
 	public function changePassword(Entity $entity) {
+		$this->_changePasswordValidation();
+		if ($entity->errors()) {
+			return false;
+		}
+		$entity->password = $this->hashPassword($entity->password);
+		if ($this->_table->save($entity, ['validate' => false])) {
+			return true;
+		}
+		return false;
+	}
+
+	protected function _changePasswordValidation() {
 		$validator = $this->_table->validator('default');
 		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notBlank', [
@@ -552,18 +576,15 @@ class UserBehavior extends Behavior {
 			'message' => __d('user_tools', 'Wrong password, please try again.')
 		]);
 		$this->_table->validator('default', $validator);
-		if ($entity->errors()) {
-			return false;
-		}
-		$entity->password = $this->hashPassword($entity->password);
-		if ($this->_table->save($entity, ['validate' => false])) {
-			return true;
-		}
-		return false;
 	}
 
 /**
+ * Validates the old password.
  *
+ * @param mixed $value
+ * @param string $field
+ * @param mixed $context
+ * @return boolean
  */
 	public function validateOldPassword($value, $field, $context) {
 		$result = $this->_table->find('all', [
@@ -607,13 +628,17 @@ class UserBehavior extends Behavior {
 				$this->_table->alias() . '.' . $this->_field('username')
 			]
 		];
+
 		$options = Hash::merge($defaults, $this->_config['initPasswordReset'], $options);
 		$result = $this->_getUser($value, $options);
+
 		if (empty($result)) {
 			throw new RecordNotFoundException(__d('user_tools', 'User not found.'));
 		}
+
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
 		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
+
 		$this->_table->save($result, ['checkRules' => false]);
 		return $this->sendPasswordResetToken($result, [
 			'to' => $result->{$this->_field('email')}
@@ -669,7 +694,7 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Sends a new password to an user by email
+ * Sends a new password to an user by email.
  *
  * Note that this is *not* a recommended way to reset an user password. A much
  * more secure approach is to have the user manually enter a new password and
