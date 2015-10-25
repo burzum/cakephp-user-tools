@@ -678,10 +678,20 @@ class UserToolComponent extends Component {
  */
 	public function changePassword($options = []) {
 		$options = (Hash::merge($this->_defaultConfig['changePassword'], $options));
+
 		$entity = $this->UserTable->newEntity();
-		$entity->accessible(['id', 'old_password', 'new_password', 'confirm_password'], true);
+		$entity->accessible([
+			'id',
+			'old_password',
+			'new_password',
+			'confirm_password'
+		], true);
+
 		if ($this->request->is(['post', 'put'])) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+			$this->request->data['id'] = $this->_getAuthObject()->user('id');
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
+				'validate' => 'changePassword'
+			]);
 			$entity->id = $this->_controller->Auth->user('id');
 			$entity->isNew(false);
 			if ($this->UserTable->changePassword($entity)) {
