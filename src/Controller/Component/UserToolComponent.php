@@ -110,7 +110,12 @@ class UserToolComponent extends Component {
 			'queryParam' => 'token',
 			'tokenOptions' => [],
 		],
-		'changePassword' => [],
+		'changePassword' => [
+			'successFlashOptions' => [],
+			'successRedirectUrl' => '/',
+			'errorFlashOptions' => [],
+			'errorRedirectUrl' => false,
+		],
 		'verifyToken' => [
 			'queryParam' => 'token',
 			'type' => 'Email',
@@ -257,7 +262,7 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function initialize(array $config) {
-		$this->setUserTable($this->_config['userModel']);
+		$this->setUserTable($this->config('userModel'));
 		$this->loadUserBehaviour();
 	}
 
@@ -278,9 +283,9 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function loadUserBehaviour() {
-		if ($this->_config['autoloadBehavior'] && !$this->UserTable->hasBehavior('UserTools.User')) {
-			if (is_array($this->_config['autoloadBehavior'])) {
-				$this->UserTable->addBehavior('Burzum/UserTools.User', $this->_config['autoloadBehavior']);
+		if ($this->config('autoloadBehavior') && !$this->UserTable->hasBehavior('UserTools.User')) {
+			if (is_array($this->config('autoloadBehavior'))) {
+				$this->UserTable->addBehavior('Burzum/UserTools.User', $this->config('autoloadBehavior'));
 			} else {
 				$this->UserTable->addBehavior('Burzum/UserTools.User');
 			}
@@ -319,7 +324,7 @@ class UserToolComponent extends Component {
  * @return Response|null
  */
 	public function startup(Event $Event) {
-		if ($this->_config['actionMapping'] === true) {
+		if ($this->config('actionMapping') === true) {
 			$result = $this->mapAction();
 			if ($result instanceof Response) {
 				return $result;
@@ -334,30 +339,36 @@ class UserToolComponent extends Component {
  */
 	public function mapAction() {
 		$action = $this->request->params['action'];
-
-		if ($this->_config['directMapping'] === true) {
-			if (!method_exists($this, $action)) {
-				return false;
-			}
-			$result = $this->{$action}();
-			if ($result instanceof Response) {
-				return $result;
-			}
-			return $this->_controller->render($action);
+		if ($this->config('directMapping') === true) {
+			$this->_directMapping($action);
 		}
+		return $this->_mapAction($action);
+	}
 
-		if (isset($this->_config['actionMap'][$action]) && method_exists($this, $this->_config['actionMap'][$action]['method'])) {
-			$this->{$this->_config['actionMap'][$action]['method']}();
+	protected function _directMapping($action) {
+		if (!method_exists($this, $action)) {
+			return false;
+		}
+		$result = $this->{$action}();
+		if ($result instanceof Response) {
+			return $result;
+		}
+		return $this->_controller->render($action);
+	}
+
+	protected function _mapAction($action) {
+		$actionMap = $this->config('actionMap');
+		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
+			$this->{$actionMap[$action]['method']}();
 			if ($this->_redirectResponse instanceof Response) {
 				return $this->_redirectResponse;
 			}
-			if (is_string($this->_config['actionMap'][$action]['view'])) {
-				return $this->_controller->render($this->_config['actionMap'][$action]['view']);
+			if (is_string($actionMap[$action]['view'])) {
+				return $this->_controller->render($actionMap[$action]['view']);
 			} else {
 				return $this->response;
 			}
 		}
-
 		return false;
 	}
 
@@ -431,7 +442,7 @@ class UserToolComponent extends Component {
  * @return bool
  */
 	public function login($options = []) {
-		$options = Hash::merge($this->_config['login'], $options);
+		$options = Hash::merge($this->config('login'), $options);
 		$this->_handleUserBeingAlreadyLoggedIn($options);
 		$entity = $this->UserTable->newEntity([], ['validate' => false]);
 		if ($this->request->is('post')) {
@@ -459,7 +470,7 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function getUser($userId = null, $options = []) {
-		$options = Hash::merge($this->_config['getUser'], $options);
+		$options = Hash::merge($this->config('getUser'), $options);
 		if (is_null($userId)) {
 			if (isset($this->request->params['pass'][0])) {
 				$userId = $this->request->params['pass'][0];
@@ -518,7 +529,7 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function logout($options = []) {
-		$options = Hash::merge($this->_config['logout'], $options);
+		$options = Hash::merge($this->config('logout'), $options);
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
 		if (empty($user)) {
@@ -547,7 +558,7 @@ class UserToolComponent extends Component {
  * @return boolean|null
  */
 	public function register($options = []) {
-		$options = Hash::merge($this->_config['registration'], $options);
+		$options = Hash::merge($this->config('registration'), $options);
 		if ($options['enabled'] === false) {
 			throw new NotFoundException();
 		}
@@ -590,7 +601,7 @@ class UserToolComponent extends Component {
  * @return boolean|null
  */
 	public function requestPassword($options = []) {
-		$options = Hash::merge($this->_config['requestPassword'], $options);
+		$options = Hash::merge($this->config('requestPassword'), $options);
 		$entity = $this->UserTable->newEntity(['validate' => 'requestPassword']);
 
 		if ($this->request->is('post')) {
@@ -636,23 +647,24 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function resetPassword($token = null, $options = []) {
-		$options = (Hash::merge($this->_defaultConfig['resetPassword'], $options));
+		$options = (Hash::merge($this->config('resetPassword'), $options));
+
 		if (!empty($this->request->query[$options['queryParam']])) {
 			$token = $this->request->query[$options['queryParam']];
 		}
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
 		} catch (RecordNotFoundException $e) {
-			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
-				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
+			if (empty($options['invalidErrorMessage'])) {
+				$options['invalidErrorMessage'] = $e->getMessage();
 			}
 			$this->handleFlashAndRedirect('invalidError', $options);
 			$entity = $this->UserTable->newEntity();
 		}
 
 		if (isset($entity->token_is_expired) && $entity->token_is_expired === true) {
-			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
-				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
+			if (empty($options['invalidErrorMessage'])) {
+				$options['invalidErrorMessage'] = $e->getMessage();
 			}
 			$this->handleFlashAndRedirect('expiredError', $options);
 		}
@@ -677,7 +689,7 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function changePassword($options = []) {
-		$options = (Hash::merge($this->_defaultConfig['changePassword'], $options));
+		$options = (Hash::merge($this->config('changePassword'), $options));
 
 		$entity = $this->UserTable->newEntity();
 		$entity->accessible([
@@ -797,7 +809,7 @@ class UserToolComponent extends Component {
  */
 	protected function _getAuthObject() {
 		if (!$this->_registry->has('Auth')) {
-			$Auth = $this->_registry->load('Auth', $this->_config['auth']);
+			$Auth = $this->_registry->load('Auth', $this->config('auth'));
 			$Auth->request = $this->request;
 			$Auth->response = $this->response;
 			return $Auth;
