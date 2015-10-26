@@ -11,6 +11,7 @@ namespace Burzum\UserTools\View\Helper;
 use Cake\Utility\Hash;
 use Cake\View\Helper;
 use Cake\View\View;
+use InvalidArgumentException;
 
 class AuthHelper extends Helper {
 
@@ -146,6 +147,9 @@ class AuthHelper extends Helper {
 		}
 		if (is_string($requestedRole)) {
 			$requestedRole = [$requestedRole];
+		}
+		if (!is_array($requestedRole)) {
+			throw new InvalidArgumentException('The requested role is not a string or an array!');
 		}
 		$result = array_intersect($roles, $requestedRole);
 		return (count($result) > 0);

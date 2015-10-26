@@ -16,7 +16,7 @@ use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventDispatcherTrait ;
 use Cake\I18n\Time;
-use Cake\Network\Email\Email;
+use Cake\Mailer\Email;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
@@ -36,7 +36,6 @@ class UserBehavior extends Behavior {
 	protected $_defaultConfig = [
 		'emailConfig' => 'default',
 		'defaultValidation' => true,
-		'validatorClass' => '\Burzum\UserTools\Validation\UsersValidator',
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
 		'register' => [
@@ -145,9 +144,11 @@ class UserBehavior extends Behavior {
  * @return void
  */
 	public function setupDefaultValidation() {
-		$class = $this->_config['validatorClass'];
-		$Validator = new $class($this->_table);
-		$this->_table->validator('default', $Validator);
+		$validator = $this->_table->validator('default');
+		$validator = $this->validationUserName($validator);
+		$validator = $this->validationPassword($validator);
+		$validator = $this->validationConfirmPassword($validator);
+		$this->validationEmail($validator);
 	}
 
 /**
@@ -261,7 +262,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findEmailVerified(Query $query, array $options) {
 		$query->where([
-			$this->alias() . '.' . $this->_field('emailVerified') => true,
+			$this->_table->aliasField($this->_field('emailVerified')) => true,
 		]);
 		return $query;
 	}
@@ -275,7 +276,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findActive(Query $query, array $options) {
 		$query->where([
-			$this->alias() . '.' . $this->_field('active') => true,
+			$this->_table->aliasField($this->_field('active')) => true,
 		]);
 		return $query;
 	}
@@ -445,7 +446,7 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Password reset, compares the two passwords and saves the new password
+ * Password reset, compares the two passwords and saves the new password.
  *
  * @param \Cake\ORM\Entity $user Entity object.
  * @return void
@@ -461,7 +462,7 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Generates a random password that is more or less user friendly
+ * Generates a random password that is more or less user friendly.
  *
  * @param int $length Password length, default is 8
  * @param array $options Options array.
@@ -481,6 +482,12 @@ class UserBehavior extends Behavior {
 		return substr($password, 0, $length);
 	}
 
+/**
+ * The dictionary of vowels and consonants for the password generation.
+ *
+ * @param array $options
+ * @return array
+ */
 	public function _passwordDictionary(array $options = []) {
 		$defaults = [
 			'vowels' => [
@@ -529,8 +536,8 @@ class UserBehavior extends Behavior {
  */
 	public function removeExpiredRegistrations($conditions = []) {
 		$defaults = [
-			$this->_table->alias() . '.' . $this->_field('emailVerified') => 0,
-			$this->_table->alias() . '.' . $this->_field('emailTokenExpires') . ' <' => date('Y-m-d H:i:s')
+			$this->_table->aliasField($this->_field('emailVerified')) => 0,
+			$this->_table->aliasField($this->_field('emailTokenExpires')) . ' <' => date('Y-m-d H:i:s')
 		];
 
 		$conditions = Hash::merge($defaults, $conditions);
@@ -552,19 +559,27 @@ class UserBehavior extends Behavior {
  * @return boolean
  */
 	public function changePassword(Entity $entity) {
-		$this->_changePasswordValidation();
 		if ($entity->errors()) {
 			return false;
 		}
 		$entity->password = $this->hashPassword($entity->password);
-		if ($this->_table->save($entity, ['validate' => false])) {
+		if ($this->_table->save($entity)) {
 			return true;
 		}
 		return false;
 	}
 
-	protected function _changePasswordValidation() {
-		$validator = $this->_table->validator('default');
+	public function validationChangePassword($validator) {
+		$validator->provider('userBehavior', $this);
+		$validator = $this->validationPassword($validator);
+		$validator = $this->validationConfirmPassword($validator);
+		$validator = $this->validationOldPassword($validator);
+		return $validator;
+	}
+
+	protected function validationOldPassword($validator) {
+		$validator->provider('userBehavior', $this);
+
 		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notBlank', [
 			'rule' => 'notBlank',
@@ -572,14 +587,14 @@ class UserBehavior extends Behavior {
 		]);
 		$validator->add('old_password', 'oldPassword', [
 			'rule' => ['validateOldPassword', 'password'],
-			'provider' => 'userTable',
+			'provider' => 'userBehavior',
 			'message' => __d('user_tools', 'Wrong password, please try again.')
 		]);
-		$this->_table->validator('default', $validator);
+		return $validator;
 	}
 
 /**
- * Validates the old password.
+ * Validation method for the old password.
  *
  * @param mixed $value
  * @param string $field
@@ -587,14 +602,19 @@ class UserBehavior extends Behavior {
  * @return boolean
  */
 	public function validateOldPassword($value, $field, $context) {
-		$result = $this->_table->find('all', [
-			'fields' => [
-				'password'
-			],
-			'conditions' => [
+		if (Configure::read('debug') > 0 && empty($context['data'][$this->_table->primaryKey()])) {
+			throw new \RuntimeException('The user id is required as well to validate the old password!');
+		}
+
+		$result = $this->_table->find()
+			->select([
+				$this->_field('password')
+			])
+			->where([
 				$this->_table->primaryKey() => $context['data'][$this->_table->primaryKey()],
-			]
-		])->first();
+			])
+			->first();
+
 		if (!$result) {
 			return false;
 		}
@@ -646,7 +666,7 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Finds a single user, convenience method
+ * Finds a single user, convenience method.
  *
  * @param mixed $value
  * @param array $options
@@ -658,7 +678,7 @@ class UserBehavior extends Behavior {
 	}
 
 /**
- * Finds the user for the password reset
+ * Finds the user for the password reset.
  *
  * Extend the behavior and override this method if the configuration options
  * are not sufficient.
@@ -738,7 +758,7 @@ class UserBehavior extends Behavior {
  * Returns an email instance
  *
  * @param array $config
- * @return \Cake\Network\Email\Email Email instance
+ * @return \Cake\Mailer\Email;
  */
 	public function getMailInstance($config = null) {
 		if (empty($config)) {
@@ -810,5 +830,154 @@ class UserBehavior extends Behavior {
 			]
 		];
 		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendVerificationEmail'], $options));
+	}
+
+/**
+ * Validates the password reset.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validationPasswordReset(Validator $validator) {
+		return $this->validateOldPassword($validator)
+			->validatePassword($validator)
+			->validateConfirmPassword($validator);
+	}
+
+/**
+ * Validates the username field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validationUserName(Validator $validator) {
+		$validator->provider('userTable', $this->_table);
+
+		$validator->add($this->_field('username'), [
+			'notBlank' => [
+				'rule' => 'notBlank',
+				'message' => __d('user_tools', 'An username is required.')
+			],
+			'length' => [
+				'rule' => ['lengthBetween', 3, 32],
+				'message' => __d('user_tools', 'The username must be between 3 and 32 characters.')
+			],
+			'unique' => [
+				'rule' => ['validateUnique', ['scope' => 'username']],
+				'provider' => 'userTable',
+				'message' => __d('user_tools', 'The username is already in use.')
+			],
+			'alphaNumeric' => [
+				'rule' => 'alphaNumeric',
+				'message' => __d('user_tools', 'The username must be alpha numeric.')
+			]
+		]);
+		return $validator;
+	}
+
+/**
+ * Validates the email field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validationEmail(Validator $validator) {
+		$validator->provider('userTable', $this->_table);
+
+		$validator->add($this->_field('email'), [
+			'notBlank' => [
+				'rule' => 'notBlank',
+				'message' => __d('user_tools', 'An email is required.')
+			],
+			'unique' => [
+				'rule' => ['validateUnique', [
+					'scope' => $this->_field('email')
+				]],
+				'provider' => 'table',
+				'message' => __d('user_tools', 'The email is already in use.')
+			],
+			'validEmail' => [
+				'rule' => 'email',
+				'message' => __d('user_tools', 'Must be a valid email address.')
+			]
+		]);
+		return $validator;
+	}
+
+/**
+ * Validates the password field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validationPassword(Validator $validator) {
+		$validator->provider('userTable', $this->_table);
+
+		$validator->add($this->_field('password'), [
+			'notBlank' => [
+				'rule' => 'notBlank',
+				'message' => __d('user_tools', 'A password is required.')
+			],
+			'minLength' => [
+				'rule' => ['minLength', 6],
+				'message' => __d('user_tools', 'The password must have at least 6 characters.')
+			],
+			'confirmPassword' => [
+				'rule' => ['compareFields', 'confirm_password'],
+				'message' => __d('user_tools', 'The passwords don\'t match!'),
+				'provider' => 'userTable',
+			]
+		]);
+		return $validator;
+	}
+
+/**
+ * Validates the confirm_password field.
+ *
+ * Override it as needed to change the rules for only that field.
+ *
+ * @return void
+ */
+	public function validationConfirmPassword(Validator $validator) {
+		$validator->provider('userBehavior', $this);
+
+		$validator->add($this->_field('passwordCheck'), [
+			'notBlank' => [
+				'rule' => 'notBlank',
+				'message' => __d('user_tools', 'A password is required.')
+			],
+			'minLength' => [
+				'rule' => ['minLength', 6],
+				'message' => __d('user_tools', 'The password must have at least 6 characters.')
+			],
+			'confirmPassword' => [
+				'rule' => ['compareFields', 'password'],
+				'message' => __d('user_tools', 'The passwords don\'t match!'),
+				'provider' => 'userBehavior',
+			]
+		]);
+		return $validator;
+	}
+
+/**
+ * Compares the value of two fields.
+ *
+ * @param mixed $value
+ * @param string $field
+ * @param Entity $context
+ * @return boolean
+ */
+	public function compareFields($value, $field, $context) {
+		if (!isset($context['data'][$field])) {
+			return true;
+		}
+		if ($value === $context['data'][$field]) {
+			return true;
+		}
+		return false;
 	}
 }

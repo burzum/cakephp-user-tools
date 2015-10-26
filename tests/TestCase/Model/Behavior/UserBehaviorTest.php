@@ -299,4 +299,20 @@ class UserBehaviorTest extends TestCase {
 	public function testInitPasswordResetRecordNotFoundException() {
 		$this->User->initPasswordReset('does-not-exist');
 	}
+
+/**
+ * testCompareFields
+ *
+ * @return void
+ */
+	public function testCompareFields() {
+		$result = $this->UserBehavior->compareFields('test', 'username', [
+			'data' => ['username' => 'test']
+		]);
+		$this->assertTrue($result);
+		$result = $this->UserBehavior->compareFields('wrong', 'username', [
+			'data' => ['username' => 'test']
+		]);
+		$this->assertFalse($result);
+	}
 }
