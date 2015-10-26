@@ -262,7 +262,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findEmailVerified(Query $query, array $options) {
 		$query->where([
-			$this->alias() . '.' . $this->_field('emailVerified') => true,
+			$this->_table->aliasField($this->_field('emailVerified')) => true,
 		]);
 		return $query;
 	}
@@ -276,7 +276,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findActive(Query $query, array $options) {
 		$query->where([
-			$this->alias() . '.' . $this->_field('active') => true,
+			$this->_table->aliasField($this->_field('active')) => true,
 		]);
 		return $query;
 	}
@@ -536,8 +536,8 @@ class UserBehavior extends Behavior {
  */
 	public function removeExpiredRegistrations($conditions = []) {
 		$defaults = [
-			$this->_table->alias() . '.' . $this->_field('emailVerified') => 0,
-			$this->_table->alias() . '.' . $this->_field('emailTokenExpires') . ' <' => date('Y-m-d H:i:s')
+			$this->_table->aliasField($this->_field('emailVerified')) => 0,
+			$this->_table->aliasField($this->_field('emailTokenExpires')) . ' <' => date('Y-m-d H:i:s')
 		];
 
 		$conditions = Hash::merge($defaults, $conditions);
@@ -893,7 +893,9 @@ class UserBehavior extends Behavior {
 				'message' => __d('user_tools', 'An email is required.')
 			],
 			'unique' => [
-				'rule' => ['validateUnique', ['scope' => 'email']],
+				'rule' => ['validateUnique', [
+					'scope' => $this->_field('email')
+				]],
 				'provider' => 'table',
 				'message' => __d('user_tools', 'The email is already in use.')
 			],
