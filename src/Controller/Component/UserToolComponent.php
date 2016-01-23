@@ -68,6 +68,7 @@ class UserToolComponent extends Component {
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
 			'setEntity' => true,
+			'validation' => 'default'
 		],
 		'login' => [
 			'alreadyLoggedInFlashOptions' => [],
@@ -567,7 +568,9 @@ class UserToolComponent extends Component {
 		// Make the field accessible in the case the default entity class is used.
 		$entity->accessible('confirm_password', true);
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data());
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data(), [
+				'validate' => $options['validation']
+			]);
 			if ($this->UserTable->register($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
 				$return = true;
