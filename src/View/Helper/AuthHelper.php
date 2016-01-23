@@ -11,6 +11,7 @@ namespace Burzum\UserTools\View\Helper;
 use Cake\Utility\Hash;
 use Cake\View\Helper;
 use Cake\View\View;
+use InvalidArgumentException;
 
 class AuthHelper extends Helper {
 
@@ -116,26 +117,41 @@ class AuthHelper extends Helper {
 		if ($key === null) {
 			return $this->_userData;
 		}
-		return Hash::get($this->_userData(true), $key);
+		return Hash::get((array)$this->_userData(true), $key);
 	}
 
 /**
  * Role check.
  *
- * @param string String of the role identifier.
+ * @param array|string Role string or set of role identifiers.
  * @return boolean|null True if the role is in the set of roles for the active user data.
  */
-	public function hasRole($role) {
-		if (!is_string($role)) {
-			throw new \InvalidArgumentException('Role must be a string!');
-		}
+	public function hasRole($requestedRole) {
 		$roles = $this->user($this->config('roleField'));
-		if (is_string($roles)) {
-			return ($role === $roles);
+		if (is_null($roles)) {
+			return false;
 		}
-		if (is_array($roles)) {
-			return (in_array($role, $roles));
-		}
+		return $this->_checkRoles($requestedRole, $roles);
 	}
 
+/**
+ * Checks the roles.
+ *
+ * @param string|array $requestedRole
+ * @param string|array $roles
+ * @return boolean
+ */
+	protected function _checkRoles($requestedRole, $roles) {
+		if (is_string($roles)) {
+			$roles = [$roles];
+		}
+		if (is_string($requestedRole)) {
+			$requestedRole = [$requestedRole];
+		}
+		if (!is_array($requestedRole)) {
+			throw new InvalidArgumentException('The requested role is not a string or an array!');
+		}
+		$result = array_intersect($roles, $requestedRole);
+		return (count($result) > 0);
+	}
 }

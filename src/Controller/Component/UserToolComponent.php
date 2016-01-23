@@ -8,16 +8,17 @@
  */
 namespace Burzum\UserTools\Controller\Component;
 
-use Cake\Controller\Component;
-use Cake\Event\EventManagerTrait;
-use Cake\ORM\TableRegistry;
-use Cake\Event\Event;
-use Cake\Controller\ComponentRegistry;
-use Cake\Utility\Hash;
-use Cake\Network\Exception\NotFoundException;
-use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Core\Configure;
+use Cake\Controller\Component;
+use Cake\Controller\ComponentRegistry;
+use Cake\Datasource\EntityInterface;
+use Cake\Datasource\Exception\RecordNotFoundException;
+use Cake\Event\EventManagerTrait;
+use Cake\Event\Event;
+use Cake\Network\Exception\NotFoundException;
 use Cake\Network\Response;
+use Cake\ORM\TableRegistry;
+use Cake\Utility\Hash;
 
 class UserToolComponent extends Component {
 
@@ -67,8 +68,12 @@ class UserToolComponent extends Component {
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
 			'setEntity' => true,
+			'validation' => 'default'
 		],
 		'login' => [
+			'alreadyLoggedInFlashOptions' => [],
+			'alreadyLoggedInRedirectUrl' => null,
+			'successRedirectUrl' => null,
 			'successFlashOptions' => [],
 			'successRedirectUrl' => null,
 			'errorFlashOptions' => [],
@@ -106,7 +111,12 @@ class UserToolComponent extends Component {
 			'queryParam' => 'token',
 			'tokenOptions' => [],
 		],
-		'changePassword' => [],
+		'changePassword' => [
+			'successFlashOptions' => [],
+			'successRedirectUrl' => '/',
+			'errorFlashOptions' => [],
+			'errorRedirectUrl' => false,
+		],
 		'verifyToken' => [
 			'queryParam' => 'token',
 			'type' => 'Email',
@@ -198,7 +208,7 @@ class UserToolComponent extends Component {
 		$this->_defaultConfig = Hash::merge(
 			$this->_defaultConfig,
 			$this->_translateConfigMessages(),
-			(array) Configure::read('UserTools.Component')
+			(array)Configure::read('UserTools.Component')
 		);
 		$this->_controller = $registry->getController();
 		$this->response = $this->_controller->response;
@@ -248,18 +258,17 @@ class UserToolComponent extends Component {
 	}
 
 /**
- * Initializes the component
+ * Initializes the component.
  *
  * @return void
  */
 	public function initialize(array $config) {
-		$this->setUserTable($this->_config['userModel']);
+		$this->setUserTable($this->config('userModel'));
 		$this->loadUserBehaviour();
 	}
 
-
 /**
- * User listing with pagination
+ * User listing with pagination.
  *
  * @param array $options Pagination options
  * @return \Cake\ORM\Query
@@ -275,9 +284,9 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function loadUserBehaviour() {
-		if ($this->_config['autoloadBehavior'] && !$this->UserTable->hasBehavior('UserTools.User')) {
-			if (is_array($this->_config['autoloadBehavior'])) {
-				$this->UserTable->addBehavior('Burzum/UserTools.User', $this->_config['autoloadBehavior']);
+		if ($this->config('autoloadBehavior') && !$this->UserTable->hasBehavior('UserTools.User')) {
+			if (is_array($this->config('autoloadBehavior'))) {
+				$this->UserTable->addBehavior('Burzum/UserTools.User', $this->config('autoloadBehavior'));
 			} else {
 				$this->UserTable->addBehavior('Burzum/UserTools.User');
 			}
@@ -316,7 +325,7 @@ class UserToolComponent extends Component {
  * @return Response|null
  */
 	public function startup(Event $Event) {
-		if ($this->_config['actionMapping'] === true) {
+		if ($this->config('actionMapping') === true) {
 			$result = $this->mapAction();
 			if ($result instanceof Response) {
 				return $result;
@@ -331,31 +340,100 @@ class UserToolComponent extends Component {
  */
 	public function mapAction() {
 		$action = $this->request->params['action'];
-
-		if ($this->_config['directMapping'] === true) {
-			if (!method_exists($this, $action)) {
-				return false;
-			}
-			$result = $this->{$action}();
-			if ($result instanceof Response) {
-				return $result;
-			}
-			return $this->_controller->render($action);
+		if ($this->config('directMapping') === true) {
+			$this->_directMapping($action);
 		}
+		return $this->_mapAction($action);
+	}
 
-		if (isset($this->_config['actionMap'][$action]) && method_exists($this, $this->_config['actionMap'][$action]['method'])) {
-			$this->{$this->_config['actionMap'][$action]['method']}();
+	protected function _directMapping($action) {
+		if (!method_exists($this, $action)) {
+			return false;
+		}
+		$result = $this->{$action}();
+		if ($result instanceof Response) {
+			return $result;
+		}
+		return $this->_controller->render($action);
+	}
+
+	protected function _mapAction($action) {
+		$actionMap = $this->config('actionMap');
+		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
+			$this->{$actionMap[$action]['method']}();
 			if ($this->_redirectResponse instanceof Response) {
 				return $this->_redirectResponse;
 			}
-			if (is_string($this->_config['actionMap'][$action]['view'])) {
-				return $this->_controller->render($this->_config['actionMap'][$action]['view']);
+			if (is_string($actionMap[$action]['view'])) {
+				return $this->_controller->render($actionMap[$action]['view']);
 			} else {
 				return $this->response;
 			}
 		}
-
 		return false;
+	}
+
+/**
+ * Handles the case when the user is already logged in and triggers a redirect
+ * and flash message if configured for that.
+ *
+ * @see UserToolComponent::login()
+ * @param array $options
+ * @return void
+ */
+	public function _handleUserBeingAlreadyLoggedIn(array $options) {
+		$Auth = $this->_getAuthObject();
+		if ((bool)$Auth->user()) {
+			if ($options['alreadyLoggedInRedirectUrl'] === null) {
+				$options['alreadyLoggedInRedirectUrl'] = $this->request->referer();
+			}
+			$this->handleFlashAndRedirect('alreadyLoggedIn', $options);
+		}
+	}
+
+/**
+ * Internal callback to prepare the credentials for the login.
+ *
+ * @param \Cake\Datasource\EntityInterface
+ * @param array $options
+ * @return mixed
+ */
+	protected function _beforeLogin(EntityInterface $entity, array $options) {
+		$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => false]);
+
+		$event = new Event('User.beforeLogin', $this, [
+			'options' => $options,
+			'entity' => $entity
+		]);
+
+		$this->eventManager()->dispatch($event);
+		if ($event->isStopped()) {
+			return $event->result;
+		}
+
+		return $this->_getAuthObject()->identify();
+	}
+
+/**
+ * Internal callback to handle the after login procedure.
+ *
+ * @param array $user
+ * @param array $options
+ * @return mixed
+ */
+	protected function _afterLogin($user, array $options) {
+		$event = new Event('User.afterLogin', $this, ['options' => $options]);
+		$this->eventManager()->dispatch($event);
+		if ($event->isStopped()) {
+			return $event->result;
+		}
+		$Auth = $this->_getAuthObject();
+		$Auth->setUser($user);
+		if ($options['successRedirectUrl'] === null) {
+			$options['successRedirectUrl'] = $Auth->redirectUrl();
+		}
+		$this->handleFlashAndRedirect('success', $options);
+		return true;
 	}
 
 /**
@@ -365,43 +443,19 @@ class UserToolComponent extends Component {
  * @return bool
  */
 	public function login($options = []) {
-		$options = Hash::merge($this->_config['login'], $options);
-
+		$options = Hash::merge($this->config('login'), $options);
+		$this->_handleUserBeingAlreadyLoggedIn($options);
 		$entity = $this->UserTable->newEntity([], ['validate' => false]);
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => false]);
-
-			$event = new Event('User.beforeLogin', $this, [
-				'options' => $options,
-				'entity' => $entity
-			]);
-
-			$this->eventManager()->dispatch($event);
-			if ($event->isStopped()) {
-				return $event->result;
-			}
-
-			$Auth = $this->_getAuthObject();
-			$user = $Auth->identify();
-
+			$user = $this->_beforeLogin($entity, $options);
 			if ($user) {
-				$event = new Event('User.afterLogin', $this, ['options' => $options]);
-				$this->eventManager()->dispatch($event);
-				if ($event->isStopped()) {
-					return $event->result;
-				}
-				$Auth->setUser($user);
-				if ($options['successRedirectUrl'] === null) {
-					$options['successRedirectUrl'] = $Auth->redirectUrl();
-				}
-				$this->handleFlashAndRedirect('success', $options);
-				return true;
+				return $this->_afterLogin($user, $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
 		if ($options['setEntity']) {
-			$this->_controller->set('userEntity', $entity);
+			$this->_setViewVar('userEntity', $entity);
 		}
 		return false;
 	}
@@ -417,7 +471,7 @@ class UserToolComponent extends Component {
  * @return mixed
  */
 	public function getUser($userId = null, $options = []) {
-		$options = Hash::merge($this->_config['getUser'], $options);
+		$options = Hash::merge($this->config('getUser'), $options);
 		if (is_null($userId)) {
 			if (isset($this->request->params['pass'][0])) {
 				$userId = $this->request->params['pass'][0];
@@ -439,14 +493,7 @@ class UserToolComponent extends Component {
  * @return boolean
  */
 	public function deleteUser($userId = null, $options = []) {
-		if (is_string($userId) || is_integer($userId)) {
-			$entity = $this->UserTable->newEntity([
-				$this->UserTable->primaryKey() => $userId
-			]);
-		}
-		if (is_array($userId)) {
-			$entity = $this->UserTable->newEntity($userId);
-		}
+		$entity = $this->_getUserEntity($userId);
 		if ($this->UserTable->delete($entity)) {
 			$this->handleFlashAndRedirect('success', $options);
 			return true;
@@ -457,13 +504,33 @@ class UserToolComponent extends Component {
 	}
 
 /**
+ * Gets or constructs an user entity with a given id.
+ *
+ * @paramx mixed array|int|string $userId
+ * @return \Cake\Datasource\EntityInterface
+ */
+	protected function _getUserEntity($userId) {
+		if (is_a($userId, 'Cake\Datasource\EntityInterface')) {
+			return $userId;
+		}
+		if (is_string($userId) || is_integer($userId)) {
+			return $this->UserTable->newEntity([
+				$this->UserTable->primaryKey() => $userId
+			]);
+		}
+		if (is_array($userId)) {
+			return $this->UserTable->newEntity($userId);
+		}
+	}
+
+/**
  * Logout
  *
  * @param array $options Options array.
  * @return void
  */
 	public function logout($options = []) {
-		$options = Hash::merge($this->_config['logout'], $options);
+		$options = Hash::merge($this->config('logout'), $options);
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
 		if (empty($user)) {
@@ -492,34 +559,31 @@ class UserToolComponent extends Component {
  * @return boolean|null
  */
 	public function register($options = []) {
-		$options = Hash::merge($this->_config['registration'], $options);
+		$options = Hash::merge($this->config('registration'), $options);
 		if ($options['enabled'] === false) {
 			throw new NotFoundException();
 		}
+		$return = false;
 		$entity = $this->UserTable->newEntity();
 		// Make the field accessible in the case the default entity class is used.
 		$entity->accessible('confirm_password', true);
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data());
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data(), [
+				'validate' => $options['validation']
+			]);
 			if ($this->UserTable->register($entity)) {
 				$this->handleFlashAndRedirect('success', $options);
-				if ($options['setEntity'] === true) {
-					$this->_controller->set('usersEntity', $entity);
-				}
-				return true;
+				$return = true;
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
-				if ($options['setEntity'] === true) {
-					$this->_controller->set('usersEntity', $entity);
-				}
-				return false;
 			}
 		}
 		if ($options['setEntity'] === true) {
-			$this->_controller->set('userEntity', $entity);
-			// BC
-			$this->_controller->set('usersEntity', $entity);
+			$this->_setViewVar('userEntity', $entity);
+			// For backward compatibility
+			$this->_setViewVar('usersEntity', $entity);
 		}
+		return $return;
 	}
 
 /**
@@ -540,8 +604,9 @@ class UserToolComponent extends Component {
  * @return boolean|null
  */
 	public function requestPassword($options = []) {
-		$options = Hash::merge($this->_config['requestPassword'], $options);
+		$options = Hash::merge($this->config('requestPassword'), $options);
 		$entity = $this->UserTable->newEntity(['validate' => 'requestPassword']);
+
 		if ($this->request->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'requestPassword']);
 
@@ -553,7 +618,7 @@ class UserToolComponent extends Component {
 				if ($entity->dirty('email') && !$entity->errors('email')) {
 					$entity->email = '';
 				}
-				$this->_controller->set('userEntity', $entity);
+				$this->_setViewVar('userEntity', $entity);
 			}
 			unset($this->request->data[$options['field']]);
 			return false;
@@ -568,7 +633,7 @@ class UserToolComponent extends Component {
 			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 			$this->handleFlashAndRedirect('success', $options);
 			if ($options['setEntity']) {
-				$this->_controller->set('userEntity', $entity);
+				$this->_setViewVar('userEntity', $entity);
 			}
 			return true;
 		} catch (RecordNotFoundException $e) {
@@ -585,23 +650,24 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function resetPassword($token = null, $options = []) {
-		$options = (Hash::merge($this->_defaultConfig['resetPassword'], $options));
+		$options = (Hash::merge($this->config('resetPassword'), $options));
+
 		if (!empty($this->request->query[$options['queryParam']])) {
 			$token = $this->request->query[$options['queryParam']];
 		}
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
 		} catch (RecordNotFoundException $e) {
-			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
-				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
+			if (empty($options['invalidErrorMessage'])) {
+				$options['invalidErrorMessage'] = $e->getMessage();
 			}
 			$this->handleFlashAndRedirect('invalidError', $options);
 			$entity = $this->UserTable->newEntity();
 		}
 
 		if (isset($entity->token_is_expired) && $entity->token_is_expired === true) {
-			if (empty($this->_config['resetPassword']['invalidErrorMessage'])) {
-				$this->_config['resetPassword']['invalidErrorMessage'] = $e->getMessage();
+			if (empty($options['invalidErrorMessage'])) {
+				$options['invalidErrorMessage'] = $e->getMessage();
 			}
 			$this->handleFlashAndRedirect('expiredError', $options);
 		}
@@ -616,7 +682,7 @@ class UserToolComponent extends Component {
 		} else {
 			$entity = $this->UserTable->newEntity();
 		}
-		$this->_controller->set('entity', $entity);
+		$this->_setViewVar('entity', $entity);
 	}
 
 /**
@@ -626,11 +692,21 @@ class UserToolComponent extends Component {
  * @return void
  */
 	public function changePassword($options = []) {
-		$options = (Hash::merge($this->_defaultConfig['changePassword'], $options));
+		$options = (Hash::merge($this->config('changePassword'), $options));
+
 		$entity = $this->UserTable->newEntity();
-		$entity->accessible(['id', 'old_password', 'new_password', 'confirm_password'], true);
+		$entity->accessible([
+			'id',
+			'old_password',
+			'new_password',
+			'confirm_password'
+		], true);
+
 		if ($this->request->is(['post', 'put'])) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+			$this->request->data['id'] = $this->_getAuthObject()->user('id');
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
+				'validate' => 'changePassword'
+			]);
 			$entity->id = $this->_controller->Auth->user('id');
 			$entity->isNew(false);
 			if ($this->UserTable->changePassword($entity)) {
@@ -643,7 +719,7 @@ class UserToolComponent extends Component {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
-		$this->_controller->set('entity', $entity);
+		$this->_setViewVar('entity', $entity);
 	}
 
 /**
@@ -736,7 +812,7 @@ class UserToolComponent extends Component {
  */
 	protected function _getAuthObject() {
 		if (!$this->_registry->has('Auth')) {
-			$Auth = $this->_registry->load('Auth', $this->_config['auth']);
+			$Auth = $this->_registry->load('Auth', $this->config('auth'));
 			$Auth->request = $this->request;
 			$Auth->response = $this->response;
 			return $Auth;
@@ -745,4 +821,17 @@ class UserToolComponent extends Component {
 		}
 	}
 
+/**
+ * Handles the optional setting of view vars within the component.
+ *
+ * @param boolean|string $viewVar
+ * @param \Cake\Datesource\EntityInterface
+ * @return void
+ */
+	protected function _setViewVar($viewVar, $entity) {
+		if ($viewVar === false) {
+			return;
+		}
+		$this->_controller->set($viewVar, $entity);
+	}
 }
