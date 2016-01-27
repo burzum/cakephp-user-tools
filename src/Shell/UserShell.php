@@ -3,7 +3,7 @@
  * UserShell
  *
  * @author Florian Krämer
- * @copyright 2013 - 2015 Florian Krämer
+ * @copyright 2013 - 2016 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Shell;
@@ -15,11 +15,11 @@ use Cake\Datasource\ConnectionManager;
 
 class UserShell extends Shell {
 
-/**
- * Assign $this->connection to the active task if a connection param is set.
- *
- * @return void
- */
+	/**
+	 * Assign $this->connection to the active task if a connection param is set.
+	 *
+	 * @return void
+	 */
 	public function startup() {
 		parent::startup();
 		Cache::disable();
@@ -37,11 +37,11 @@ class UserShell extends Shell {
 		}
 	}
 
-/**
- * Removes expired registrations
- *
- * @return void
- */
+	/**
+	 * Removes expired registrations
+	 *
+	 * @return void
+	 */
 	public function removeExpired() {
 		$count = $this->UserTable->removeExpiredRegistrations();
 		$this->out(__dn(
@@ -53,13 +53,13 @@ class UserShell extends Shell {
 		));
 	}
 
-/**
- * Sets a new password for an user.
- *
- * cake user setPassword <searchTerm> <newPassword> <field | optional>
- *
- * @return void
- */
+	/**
+	 * Sets a new password for an user.
+	 *
+	 * cake user setPassword <searchTerm> <newPassword> <field | optional>
+	 *
+	 * @return void
+	 */
 	public function setPassword() {
 		if (count($this->args) < 2) {
 			$this->error(__d('user_tools', 'You need to call this command with at least tow arguments.'));
@@ -75,11 +75,11 @@ class UserShell extends Shell {
 		}
 	}
 
-/**
- * Gets the option parser instance and configures it.
- *
- * @return \Cake\Console\ConsoleOptionParser
- */
+	/**
+	 * Gets the option parser instance and configures it.
+	 *
+	 * @return \Cake\Console\ConsoleOptionParser
+	 */
 	public function getOptionParser() {
 		$parser = parent::getOptionParser();
 
