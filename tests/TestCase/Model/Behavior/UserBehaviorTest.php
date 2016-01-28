@@ -11,7 +11,7 @@ use Cake\TestSuite\TestCase;
  * UserBehaviorTest
  *
  * @author Florian Krämer
- * ]@copyright 2013 - 2015 Florian Krämer
+ * ]@copyright 2013 - 2016 Florian Krämer
  * @license MIT
  */
 class UserToolUser extends Table {

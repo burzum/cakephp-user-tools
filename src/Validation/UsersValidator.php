@@ -3,7 +3,7 @@
  * UserRegistrationValidator
  *
  * @author Florian Krämer
- * @copyright 2013 - 2015 Florian Krämer
+ * @copyright 2013 - 2016 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Validation;
@@ -12,9 +12,9 @@ use Cake\Validation\Validator;
 
 class UsersValidator extends Validator {
 
-/**
- * Constructor
- */
+	/**
+	 * Constructor
+	 */
 	public function __construct() {
 		$this->provider('myself', $this);
 		$this->validateUserName();
@@ -23,13 +23,13 @@ class UsersValidator extends Validator {
 		$this->validateConfirmPassword();
 	}
 
-/**
- * Validates the username field.
- *
- * Override it as needed to change the rules for only that field.
- *
- * @return void
- */
+	/**
+	 * Validates the username field.
+	 *
+	 * Override it as needed to change the rules for only that field.
+	 *
+	 * @return void
+	 */
 	public function validateUserName() {
 		$this->add('username', [
 			'notBlank' => [
@@ -52,13 +52,13 @@ class UsersValidator extends Validator {
 		]);
 	}
 
-/**
- * Validates the email field.
- *
- * Override it as needed to change the rules for only that field.
- *
- * @return void
- */
+	/**
+	 * Validates the email field.
+	 *
+	 * Override it as needed to change the rules for only that field.
+	 *
+	 * @return void
+	 */
 	public function validateEmail() {
 		$this->add('email', [
 			'notBlank' => [
@@ -77,13 +77,13 @@ class UsersValidator extends Validator {
 		]);
 	}
 
-/**
- * Validates the password field.
- *
- * Override it as needed to change the rules for only that field.
- *
- * @return void
- */
+	/**
+	 * Validates the password field.
+	 *
+	 * Override it as needed to change the rules for only that field.
+	 *
+	 * @return void
+	 */
 	public function validatePassword() {
 		$this->add('password', [
 			'notBlank' => [
@@ -102,13 +102,13 @@ class UsersValidator extends Validator {
 		]);
 	}
 
-/**
- * Validates the confirm_password field.
- *
- * Override it as needed to change the rules for only that field.
- *
- * @return void
- */
+	/**
+	 * Validates the confirm_password field.
+	 *
+	 * Override it as needed to change the rules for only that field.
+	 *
+	 * @return void
+	 */
 	public function validateConfirmPassword() {
 		$this->add('confirm_password', [
 			'notBlank' => [
@@ -127,14 +127,14 @@ class UsersValidator extends Validator {
 		]);
 	}
 
-/**
- * Compares the value of two fields.
- *
- * @param mixed $value
- * @param string $field
- * @param Entity $context
- * @return boolean
- */
+	/**
+	 * Compares the value of two fields.
+	 *
+	 * @param mixed $value
+	 * @param string $field
+	 * @param Entity $context
+	 * @return boolean
+	 */
 	public function compareFields($value, $field, $context) {
 		if (!isset($context['data'][$field])) {
 			return true;
