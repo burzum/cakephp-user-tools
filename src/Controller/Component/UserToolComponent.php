@@ -82,7 +82,7 @@ class UserToolComponent extends Component {
 		],
 		'logout' => [
 			'successFlashOptions' => [],
-			'successRedirectUrl' => '/',
+			'successRedirectUrl' => null,
 		],
 		'verifyEmailToken' => [
 			'queryParam' => 'token',
@@ -566,6 +566,9 @@ class UserToolComponent extends Component {
 			return $this->_controller->redirect($this->_controller->referer());
 		}
 
+		if (is_null($options['successRedirectUrl'])) {
+			$options['successRedirectUrl'] = $Auth->logout();
+		}
 		return $this->handleFlashAndRedirect('success', $options);
 	}
 
