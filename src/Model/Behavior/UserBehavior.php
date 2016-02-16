@@ -717,6 +717,10 @@ class UserBehavior extends Behavior {
 			$query->where([$options['field'] => $value]);
 		}
 
+		if (isset($options['queryCallback']) && is_callable($options['queryCallback'])) {
+			$query = $options['queryCallback']($query, $options);
+		}
+
 		$result = $query->first();
 
 		if (empty($result)) {
