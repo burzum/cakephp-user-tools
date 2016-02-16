@@ -463,7 +463,7 @@ class UserToolComponent extends Component {
 	public function login($options = []) {
 		$options = Hash::merge($this->config('login'), $options);
 		$this->_handleUserBeingAlreadyLoggedIn($options);
-		$entity = $this->UserTable->newEntity([], ['validate' => false]);
+		$entity = $this->UserTable->newEntity(null, ['validate' => false]);
 		if ($this->request->is('post')) {
 			$user = $this->_beforeLogin($entity, $options);
 			if ($user) {
@@ -623,7 +623,7 @@ class UserToolComponent extends Component {
 	 */
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->config('requestPassword'), $options);
-		$entity = $this->UserTable->newEntity(['validate' => 'requestPassword']);
+		$entity = $this->UserTable->newEntity(null, ['validate' => 'requestPassword']);
 
 		if ($this->request->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'requestPassword']);
@@ -641,12 +641,20 @@ class UserToolComponent extends Component {
 			unset($this->request->data[$options['field']]);
 			return false;
 		}
+
 		if ($options['setEntity']) {
 			$this->_controller->set('userEntity', $entity);
 		}
 	}
 
-	protected function _initPasswordReset($entity, $options) {
+	/**
+	 * Initializes the password reset and handles a possible errors.
+	 *
+	 * @param \Cake\Datasource\EntityInterface
+	 * @param array $options Options array
+	 * @return bool
+	 */
+	protected function _initPasswordReset(Entity $entity, $options) {
 		try {
 			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 			$this->handleFlashAndRedirect('success', $options);
@@ -810,7 +818,7 @@ class UserToolComponent extends Component {
 				if (isset($options[$type . 'FlashOptions'])) {
 					$flashOptions = $options[$type . 'FlashOptions'];
 				}
-				$this->Flash->set($options[$type . 'Message'], $flashOptions);
+				$this->Flash->$type($options[$type . 'Message'], $flashOptions);
 				return true;
 			}
 		}
