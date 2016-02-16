@@ -364,6 +364,10 @@ class UserToolComponent extends Component {
 		return $this->_mapAction($action);
 	}
 
+	/**
+	 * @param string $action
+	 * @return \Cake\Network\Response A response object containing the rendered view.
+	 */
 	protected function _directMapping($action) {
 		if (!method_exists($this, $action)) {
 			return false;
@@ -375,6 +379,12 @@ class UserToolComponent extends Component {
 		return $this->_controller->render($action);
 	}
 
+	/**
+	 * Maps an action of the controller to the component
+	 *
+	 * @param string $action
+	 * @return bool|\Cake\Network\Response
+	 */
 	protected function _mapAction($action) {
 		$actionMap = $this->config('actionMap');
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
@@ -545,19 +555,18 @@ class UserToolComponent extends Component {
 	 * Logout
 	 *
 	 * @param array $options Options array.
-	 * @return void
+	 * @return \Cake\Network\Response
 	 */
 	public function logout($options = []) {
 		$options = Hash::merge($this->config('logout'), $options);
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
+
 		if (empty($user)) {
-			$this->_controller->redirect($this->_controller->referer());
-			return;
+			return $this->_controller->redirect($this->_controller->referer());
 		}
-		$this->handleFlashAndRedirect('success', $options);
-		$this->_controller->redirect($Auth->logout());
-		return;
+
+		return $this->handleFlashAndRedirect('success', $options);
 	}
 
 	/**

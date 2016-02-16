@@ -595,7 +595,7 @@ class UserBehavior extends Behavior {
 		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notBlank', [
 			'rule' => 'notBlank',
-			'message' => __d('userTools', 'Enter your old password.')
+			'message' => __d('user_tools', 'Enter your old password.')
 		]);
 		$validator->add('old_password', 'oldPassword', [
 			'rule' => ['validateOldPassword', 'password'],

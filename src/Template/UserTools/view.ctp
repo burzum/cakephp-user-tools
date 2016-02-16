@@ -1,13 +1,13 @@
 <h2><?= h($user->username) ?></h2>
 <dl>
-	<dt><?= __('Username') ?></dt>
+	<dt><?= __d('user_tools', 'Username') ?></dt>
 	<dd><?= h($user->username) ?></dd>
-	<dt><?= __('Email') ?></dt>
+	<dt><?= __d('user_tools', 'Email') ?></dt>
 	<dd><?= h($user->email) ?></dd>
-	<dt><?= __('Active') ?></dt>
+	<dt><?= __d('user_tools', 'Active') ?></dt>
 	<dd><?= h($user->active) ?></dd>
-	<dt><?= __('Email Verified') ?></dt>
+	<dt><?= __d('user_tools', 'Email Verified') ?></dt>
 	<dd><?= h($user->email_verified) ?></dd>
-	<dt><?= __('Created') ?></dt>
+	<dt><?= __d('user_tools', 'Created') ?></dt>
 	<dd><?= h($user->created) ?></dd>
 </dl>
