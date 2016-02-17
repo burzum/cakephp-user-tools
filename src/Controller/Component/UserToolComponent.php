@@ -23,6 +23,7 @@ use Cake\Utility\Hash;
 class UserToolComponent extends Component {
 
 	use EventManagerTrait;
+	use FlashAndRedirectTrait;
 
 	/**
 	 * Components
@@ -200,14 +201,6 @@ class UserToolComponent extends Component {
 	 * @var \Cake\Network\Response
 	 */
 	public $response = null;
-
-	/**
-	 * Helper property to detect a redirect
-	 *
-	 * @see UserToolComponent::handleFlashAndRedirect();
-	 * @var \Cake\Network\Response
-	 */
-	protected $_redirectResponse = null;
 
 	/**
 	 * Convenience property to avoid the need to go through the registry all time.
@@ -789,54 +782,6 @@ class UserToolComponent extends Component {
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Handles flashes and redirects
-	 *
-	 * @param string $type Prefix for the array key, mostly "success" or "error"
-	 * @param array $options Options
-	 * @return mixed
-	 */
-	public function handleFlashAndRedirect($type, $options) {
-		$this->_handleFlash($type, $options);
-		$this->_handleRedirect($type, $options);
-	}
-
-	/**
-	 * Handles the redirect options.
-	 *
-	 * @param string $type Prefix for the array key, mostly "success" or "error"
-	 * @param array $options Options
-	 * @return mixed
-	 */
-	protected function _handleRedirect($type, $options) {
-		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
-			$result = $this->_controller->redirect($options[$type . 'RedirectUrl']);
-			return $this->_redirectResponse = $result;
-		}
-		return false;
-	}
-
-	/**
-	 * Handles the flash options.
-	 *
-	 * @param string $type Prefix for the array key, mostly "success" or "error"
-	 * @param array $options Options
-	 * @return boolean
-	 */
-	protected function _handleFlash($type, $options) {
-		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {
-			if (is_string($options[$type . 'Message'])) {
-				$flashOptions = [];
-				if (isset($options[$type . 'FlashOptions'])) {
-					$flashOptions = $options[$type . 'FlashOptions'];
-				}
-				$this->Flash->$type($options[$type . 'Message'], $flashOptions);
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**
