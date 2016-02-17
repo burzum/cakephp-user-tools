@@ -566,9 +566,11 @@ class UserToolComponent extends Component {
 			return $this->_controller->redirect($this->_controller->referer());
 		}
 
+		$logoutRedirect = $Auth->logout();
 		if (is_null($options['successRedirectUrl'])) {
-			$options['successRedirectUrl'] = $Auth->logout();
+			$options['successRedirectUrl'] = $logoutRedirect;
 		}
+
 		return $this->handleFlashAndRedirect('success', $options);
 	}
 
