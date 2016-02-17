@@ -702,7 +702,7 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _getUser($value, $options = []) {
 		$defaults = [
-			'notFoundErrorMessage' => __d('user_tools', 'User not found'),
+			'notFoundErrorMessage' => __d('user_tools', 'User not found.'),
 			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
 		];
 		$options = Hash::merge($defaults, $options);

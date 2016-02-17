@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2016-02-16 23:14+0000\n"
+"POT-Creation-Date: 2016-02-17 00:30+0000\n"
 "PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
@@ -78,7 +78,7 @@ msgstr ""
 msgid "Token verified!"
 msgstr ""
 
-#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:771
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:776
 msgid "No token present!"
 msgstr ""
 
@@ -98,12 +98,8 @@ msgstr ""
 msgid "Wrong password, please try again."
 msgstr ""
 
-#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:668
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:668;705
 msgid "User not found."
-msgstr ""
-
-#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:705
-msgid "User not found"
 msgstr ""
 
 #: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:751
