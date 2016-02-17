@@ -1,0 +1,301 @@
+# LANGUAGE translation of CakePHP Application
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2016-02-17 00:30+0000\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:244
+msgid "An email was send to your address, please check your inbox."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:245
+msgid "Invalid user."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:248
+msgid "Your password has been reset, you can now login."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:249
+msgid "Please check your inputs."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:250
+msgid "Invalid token!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:251
+msgid "The token has expired!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:254
+msgid "Your password has been updated."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:255
+msgid "Could not update your password, please check for errors and try again."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:258
+msgid "Thank you for signing up!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:259
+msgid "Please check your inputs"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:262
+msgid "You are logged in!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:263
+msgid "Invalid login credentials."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:266
+msgid "You are logged out!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:269
+msgid "Email verified, you can now login!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:270
+msgid "Invalid email token!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:273
+msgid "Token verified!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Controller/Component/UserToolComponent.php:776
+msgid "No token present!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:136
+msgid "Invalid field \"%s\"!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:373
+msgid "Invalid token."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:598
+msgid "Enter your old password."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:603
+msgid "Wrong password, please try again."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:668;705
+msgid "User not found."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:751
+msgid "Invalid user"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:808
+msgid "Your password reset"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:825
+msgid "Your new password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:842
+msgid "Please verify your Email"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:878
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:37
+msgid "An username is required."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:882
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:41
+msgid "The username must be between 3 and 32 characters."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:887
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:46
+msgid "The username is already in use."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:891
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:50
+msgid "The username must be alpha numeric."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:911
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:66
+msgid "An email is required."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:918
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:71
+msgid "The email is already in use."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:922
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:75
+msgid "Must be a valid email address."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:942;971
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:91;116
+msgid "A password is required."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:946;975
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:95;120
+msgid "The password must have at least 6 characters."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Model/Behavior/UserBehavior.php:950;979
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Validation/UsersValidator.php:99;124
+msgid "The passwords don't match!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Shell/UserShell.php:65
+msgid "You need to call this command with at least tow arguments."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Shell/UserShell.php:47
+msgid "Removed {0,number,integer} expired registration."
+msgid_plural "Removed {0,number,integer} expired registrations."
+msgstr[0] ""
+msgstr[1] ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/login_form.ctp:4
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/request_password_form.ctp:4
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/table.ctp:4
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/view.ctp:5
+msgid "Email"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/login_form.ctp:9
+msgid "Password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/login_form.ctp:15
+msgid "Register"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/login_form.ctp:17
+msgid "Reset Password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/login_form.ctp:21
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/login.ctp:2
+msgid "Login"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/registration_form.ctp:9
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/table.ctp:3
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/view.ctp:3
+msgid "Username"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/registration_form.ctp:16
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/register.ctp:2
+msgid "Sign up"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/request_password_form.ctp:7
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/reset_password_form.ctp:12
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/change_password.ctp:21
+msgid "Submit"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/reset_password_form.ctp:4
+msgid "New Password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/reset_password_form.ctp:9
+msgid "Repeat Password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/table.ctp:5
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/view.ctp:9
+msgid "Email Verified"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/table.ctp:6
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/view.ctp:11
+msgid "Created"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/table.ctp:17
+msgid "Yes"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/table.ctp:17
+msgid "No"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Element/table.ctp:22
+msgid "N/A"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Email/text/Users/new_password.ctp:1
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Email/text/Users/password_reset.ctp:1
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Email/text/Users/verification_email.ctp:1
+msgid "Hello {0}!"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Email/text/Users/new_password.ctp:3
+msgid "Your new password is: %s"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Email/text/Users/password_reset.ctp:3
+msgid "Please click this link to reset your password."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/Email/text/Users/verification_email.ctp:3
+msgid "Please click this link to activate your account."
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/change_password.ctp:2
+msgid "Change password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/change_password.ctp:8
+msgid "Old password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/change_password.ctp:15
+msgid "New password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/change_password.ctp:19
+msgid "Confirm password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/index.ctp:2
+msgid "Users"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/request_password.ctp:2
+msgid "Request a new password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/reset_password.ctp:2
+msgid "Reset your password"
+msgstr ""
+
+#: C:/xampp/htdocs/hema/vendor/burzum/cakephp-user-tools/src/Template/UserTools/view.ctp:7
+msgid "Active"
+msgstr ""
+

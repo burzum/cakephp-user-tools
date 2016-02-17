@@ -23,6 +23,7 @@ use Cake\Utility\Hash;
 class UserToolComponent extends Component {
 
 	use EventManagerTrait;
+	use FlashAndRedirectTrait;
 
 	/**
 	 * Components
@@ -82,7 +83,7 @@ class UserToolComponent extends Component {
 		],
 		'logout' => [
 			'successFlashOptions' => [],
-			'successRedirectUrl' => '/',
+			'successRedirectUrl' => null,
 		],
 		'verifyEmailToken' => [
 			'queryParam' => 'token',
@@ -200,14 +201,6 @@ class UserToolComponent extends Component {
 	 * @var \Cake\Network\Response
 	 */
 	public $response = null;
-
-	/**
-	 * Helper property to detect a redirect
-	 *
-	 * @see UserToolComponent::handleFlashAndRedirect();
-	 * @var \Cake\Network\Response
-	 */
-	protected $_redirectResponse = null;
 
 	/**
 	 * Convenience property to avoid the need to go through the registry all time.
@@ -364,6 +357,10 @@ class UserToolComponent extends Component {
 		return $this->_mapAction($action);
 	}
 
+	/**
+	 * @param string $action
+	 * @return \Cake\Network\Response A response object containing the rendered view.
+	 */
 	protected function _directMapping($action) {
 		if (!method_exists($this, $action)) {
 			return false;
@@ -375,6 +372,12 @@ class UserToolComponent extends Component {
 		return $this->_controller->render($action);
 	}
 
+	/**
+	 * Maps an action of the controller to the component
+	 *
+	 * @param string $action
+	 * @return bool|\Cake\Network\Response
+	 */
 	protected function _mapAction($action) {
 		$actionMap = $this->config('actionMap');
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
@@ -463,7 +466,7 @@ class UserToolComponent extends Component {
 	public function login($options = []) {
 		$options = Hash::merge($this->config('login'), $options);
 		$this->_handleUserBeingAlreadyLoggedIn($options);
-		$entity = $this->UserTable->newEntity([], ['validate' => false]);
+		$entity = $this->UserTable->newEntity(null, ['validate' => false]);
 		if ($this->request->is('post')) {
 			$user = $this->_beforeLogin($entity, $options);
 			if ($user) {
@@ -545,19 +548,23 @@ class UserToolComponent extends Component {
 	 * Logout
 	 *
 	 * @param array $options Options array.
-	 * @return void
+	 * @return \Cake\Network\Response
 	 */
 	public function logout($options = []) {
 		$options = Hash::merge($this->config('logout'), $options);
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
+
 		if (empty($user)) {
-			$this->_controller->redirect($this->_controller->referer());
-			return;
+			return $this->_controller->redirect($this->_controller->referer());
 		}
-		$this->handleFlashAndRedirect('success', $options);
-		$this->_controller->redirect($Auth->logout());
-		return;
+
+		$logoutRedirect = $Auth->logout();
+		if (is_null($options['successRedirectUrl'])) {
+			$options['successRedirectUrl'] = $logoutRedirect;
+		}
+
+		return $this->handleFlashAndRedirect('success', $options);
 	}
 
 	/**
@@ -623,7 +630,7 @@ class UserToolComponent extends Component {
 	 */
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->config('requestPassword'), $options);
-		$entity = $this->UserTable->newEntity(['validate' => 'requestPassword']);
+		$entity = $this->UserTable->newEntity(null, ['validate' => 'requestPassword']);
 
 		if ($this->request->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'requestPassword']);
@@ -641,12 +648,20 @@ class UserToolComponent extends Component {
 			unset($this->request->data[$options['field']]);
 			return false;
 		}
+
 		if ($options['setEntity']) {
 			$this->_controller->set('userEntity', $entity);
 		}
 	}
 
-	protected function _initPasswordReset($entity, $options) {
+	/**
+	 * Initializes the password reset and handles a possible errors.
+	 *
+	 * @param \Cake\Datasource\EntityInterface
+	 * @param array $options Options array
+	 * @return bool
+	 */
+	protected function _initPasswordReset(Entity $entity, $options) {
 		try {
 			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 			$this->handleFlashAndRedirect('success', $options);
@@ -767,54 +782,6 @@ class UserToolComponent extends Component {
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Handles flashes and redirects
-	 *
-	 * @param string $type Prefix for the array key, mostly "success" or "error"
-	 * @param array $options Options
-	 * @return mixed
-	 */
-	public function handleFlashAndRedirect($type, $options) {
-		$this->_handleFlash($type, $options);
-		$this->_handleRedirect($type, $options);
-	}
-
-	/**
-	 * Handles the redirect options.
-	 *
-	 * @param string $type Prefix for the array key, mostly "success" or "error"
-	 * @param array $options Options
-	 * @return mixed
-	 */
-	protected function _handleRedirect($type, $options) {
-		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
-			$result = $this->_controller->redirect($options[$type . 'RedirectUrl']);
-			return $this->_redirectResponse = $result;
-		}
-		return false;
-	}
-
-	/**
-	 * Handles the flash options.
-	 *
-	 * @param string $type Prefix for the array key, mostly "success" or "error"
-	 * @param array $options Options
-	 * @return boolean
-	 */
-	protected function _handleFlash($type, $options) {
-		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {
-			if (is_string($options[$type . 'Message'])) {
-				$flashOptions = [];
-				if (isset($options[$type . 'FlashOptions'])) {
-					$flashOptions = $options[$type . 'FlashOptions'];
-				}
-				$this->Flash->set($options[$type . 'Message'], $flashOptions);
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**

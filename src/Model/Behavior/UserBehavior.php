@@ -595,7 +595,7 @@ class UserBehavior extends Behavior {
 		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notBlank', [
 			'rule' => 'notBlank',
-			'message' => __d('userTools', 'Enter your old password.')
+			'message' => __d('user_tools', 'Enter your old password.')
 		]);
 		$validator->add('old_password', 'oldPassword', [
 			'rule' => ['validateOldPassword', 'password'],
@@ -702,7 +702,7 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _getUser($value, $options = []) {
 		$defaults = [
-			'notFoundErrorMessage' => __d('user_tools', 'User not found'),
+			'notFoundErrorMessage' => __d('user_tools', 'User not found.'),
 			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
 		];
 		$options = Hash::merge($defaults, $options);
@@ -715,6 +715,10 @@ class UserBehavior extends Behavior {
 			}
 		} else {
 			$query->where([$options['field'] => $value]);
+		}
+
+		if (isset($options['queryCallback']) && is_callable($options['queryCallback'])) {
+			$query = $options['queryCallback']($query, $options);
 		}
 
 		$result = $query->first();
