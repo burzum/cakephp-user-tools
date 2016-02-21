@@ -22,8 +22,9 @@
 	},
 	"suggested": {
 		"cakephp/migration": "*",
-		"friendsofcake/authenticate": "dev-cake3",
-		"admad/cakephp-jwt-auth": "dev-master"
+		"friendsofcake/authenticate": "Authentication adapter collection",
+		"admad/cakephp-jwt-auth": "JWT Auth adapter",
+		"burzum/cakephp-simple-rbac": "An easy to use role based authorization adapter"
 	},
 	"autoload": {
 		"psr-4": {
