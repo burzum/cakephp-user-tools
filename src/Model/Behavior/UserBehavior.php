@@ -133,7 +133,7 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _field($field) {
 		if (!isset($this->_config['fieldMap'][$field])) {
-			throw new \RuntimeException(__d('user_tools', 'Invalid field "%s"!', $field));
+			throw new \RuntimeException(__d('burzum/user_tools', 'Invalid field "%s"!', $field));
 		}
 		return $this->_config['fieldMap'][$field];
 	}
@@ -370,7 +370,7 @@ class UserBehavior extends Behavior {
 
 		$result = $this->_getUser($token, [
 			'field' => $options['tokenField'],
-			'notFoundErrorMessage' => __d('user_tools', 'Invalid token.')
+			'notFoundErrorMessage' => __d('burzum/user_tools', 'Invalid token!')
 		]);
 
 		$time = new Time();
@@ -595,12 +595,12 @@ class UserBehavior extends Behavior {
 		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notBlank', [
 			'rule' => 'notBlank',
-			'message' => __d('user_tools', 'Enter your old password.')
+			'message' => __d('burzum/user_tools', 'Enter your old password.')
 		]);
 		$validator->add('old_password', 'oldPassword', [
 			'rule' => ['validateOldPassword', 'password'],
 			'provider' => 'userBehavior',
-			'message' => __d('user_tools', 'Wrong password, please try again.')
+			'message' => __d('burzum/user_tools', 'Wrong password, please try again.')
 		]);
 		return $validator;
 	}
@@ -665,7 +665,7 @@ class UserBehavior extends Behavior {
 		$result = $this->_getUser($value, $options);
 
 		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'User not found.'));
+			throw new RecordNotFoundException(__d('burzum/user_tools', 'User not found.'));
 		}
 
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
@@ -702,7 +702,7 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _getUser($value, $options = []) {
 		$defaults = [
-			'notFoundErrorMessage' => __d('user_tools', 'User not found.'),
+			'notFoundErrorMessage' => __d('burzum/user_tools', 'User not found.'),
 			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
 		];
 		$options = Hash::merge($defaults, $options);
@@ -748,7 +748,7 @@ class UserBehavior extends Behavior {
 			])
 			->first();
 		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+			throw new RecordNotFoundException(__d('burzum/user_tools', 'Invalid user.'));
 		}
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
@@ -805,7 +805,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendPasswordResetToken(Entity $user, $options = []) {
 		$defaults = [
-			'subject' => __d('user_tools', 'Your password reset'),
+			'subject' => __d('burzum/user_tools', 'Your password reset'),
 			'viewVars' => [
 				'user' => $user
 			]
@@ -822,7 +822,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendNewPasswordEmail(Entity $user, $options = []) {
 		$defaults = [
-			'subject' => __d('user_tools', 'Your new password'),
+			'subject' => __d('burzum/user_tools', 'Your new password'),
 			'viewVars' => [
 				'user' => $user
 			]
@@ -839,7 +839,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendVerificationEmail(Entity $data, $options = []) {
 		$defaults = [
-			'subject' => __d('user_tools', 'Please verify your Email'),
+			'subject' => __d('burzum/user_tools', 'Please verify your Email'),
 			'viewVars' => [
 				'user' => $data
 			]
@@ -875,20 +875,20 @@ class UserBehavior extends Behavior {
 		$validator->add($this->_field('username'), [
 			'notBlank' => [
 				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'An username is required.')
+				'message' => __d('burzum/user_tools', 'An username is required.')
 			],
 			'length' => [
 				'rule' => ['lengthBetween', 3, 32],
-				'message' => __d('user_tools', 'The username must be between 3 and 32 characters.')
+				'message' => __d('burzum/user_tools', 'The username must be between 3 and 32 characters.')
 			],
 			'unique' => [
 				'rule' => ['validateUnique', ['scope' => 'username']],
 				'provider' => 'userTable',
-				'message' => __d('user_tools', 'The username is already in use.')
+				'message' => __d('burzum/user_tools', 'The username is already in use.')
 			],
 			'alphaNumeric' => [
 				'rule' => 'alphaNumeric',
-				'message' => __d('user_tools', 'The username must be alpha numeric.')
+				'message' => __d('burzum/user_tools', 'The username must be alpha numeric.')
 			]
 		]);
 		return $validator;
@@ -908,18 +908,18 @@ class UserBehavior extends Behavior {
 		$validator->add($this->_field('email'), [
 			'notBlank' => [
 				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'An email is required.')
+				'message' => __d('burzum/user_tools', 'An email is required.')
 			],
 			'unique' => [
 				'rule' => ['validateUnique', [
 					'scope' => $this->_field('email')
 				]],
 				'provider' => 'table',
-				'message' => __d('user_tools', 'The email is already in use.')
+				'message' => __d('burzum/user_tools', 'The email is already in use.')
 			],
 			'validEmail' => [
 				'rule' => 'email',
-				'message' => __d('user_tools', 'Must be a valid email address.')
+				'message' => __d('burzum/user_tools', 'Must be a valid email address.')
 			]
 		]);
 		return $validator;
@@ -939,15 +939,15 @@ class UserBehavior extends Behavior {
 		$validator->add($this->_field('password'), [
 			'notBlank' => [
 				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'A password is required.')
+				'message' => __d('burzum/user_tools', 'A password is required.')
 			],
 			'minLength' => [
 				'rule' => ['minLength', 6],
-				'message' => __d('user_tools', 'The password must have at least 6 characters.')
+				'message' => __d('burzum/user_tools', 'The password must have at least 6 characters.')
 			],
 			'confirmPassword' => [
 				'rule' => ['compareFields', 'confirm_password'],
-				'message' => __d('user_tools', 'The passwords don\'t match!'),
+				'message' => __d('burzum/user_tools', 'The passwords don\'t match!'),
 				'provider' => 'userTable',
 			]
 		]);
@@ -968,15 +968,15 @@ class UserBehavior extends Behavior {
 		$validator->add($this->_field('passwordCheck'), [
 			'notBlank' => [
 				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'A password is required.')
+				'message' => __d('burzum/user_tools', 'A password is required.')
 			],
 			'minLength' => [
 				'rule' => ['minLength', 6],
-				'message' => __d('user_tools', 'The password must have at least 6 characters.')
+				'message' => __d('burzum/user_tools', 'The password must have at least 6 characters.')
 			],
 			'confirmPassword' => [
 				'rule' => ['compareFields', 'password'],
-				'message' => __d('user_tools', 'The passwords don\'t match!'),
+				'message' => __d('burzum/user_tools', 'The passwords don\'t match!'),
 				'provider' => 'userBehavior',
 			]
 		]);

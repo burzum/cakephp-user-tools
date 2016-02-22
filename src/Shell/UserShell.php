@@ -45,7 +45,7 @@ class UserShell extends Shell {
 	public function removeExpired() {
 		$count = $this->UserTable->removeExpiredRegistrations();
 		$this->out(__dn(
-			'user_tools',
+			'burzum/user_tools',
 			'Removed {0,number,integer} expired registration.',
 			'Removed {0,number,integer} expired registrations.',
 			$count,
@@ -62,7 +62,7 @@ class UserShell extends Shell {
 	 */
 	public function setPassword() {
 		if (count($this->args) < 2) {
-			$this->error(__d('user_tools', 'You need to call this command with at least tow arguments.'));
+			$this->error(__d('burzum/user_tools', 'You need to call this command with at least tow arguments.'));
 		}
 		$field = 'username';
 		if (count($this->args) >= 3) {
