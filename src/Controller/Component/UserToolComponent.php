@@ -661,7 +661,7 @@ class UserToolComponent extends Component {
 	 * @param array $options Options array
 	 * @return bool
 	 */
-	protected function _initPasswordReset(Entity $entity, $options) {
+	protected function _initPasswordReset(EntityInterface $entity, $options) {
 		try {
 			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 			$this->handleFlashAndRedirect('success', $options);
