@@ -67,36 +67,60 @@ By default the users component will intercept requests to certain actions if the
 You can use it to configure different views than the defaults for the actions. It's defaults are:
 
 ```php
-'index' => [
-	'method' => 'listing',
-	'view' => 'UserTools.UserTools/index',
-],
-'register' => [
-	'method' => 'register',
-	'view' => 'UserTools.UserTools/register'
-],
-'login' => [
-	'method' => 'login',
-	'view' => 'UserTools.UserTools/login',
-],
-'logout' => [
-	'method' => 'logout',
-	'view' => null
-],
-'reset_password' => [
-	'method' => 'resetPassword',
-	'view' => 'UserTools.UserTools/reset_password',
-],
-'request_password' => [
-	'method' => 'requestPassword',
-	'view' => 'UserTools.UserTools/request_password',
-],
-'verify_email' => [
-	'method' => 'verifyEmailToken',
-	'view' => 'UserTools.UserTools/verify_email',
-],
-'view' => [
-	'method' => 'getUser',
-	'view' => 'UserTools.UserTools/view',
-],
+'actionMap' => [
+    'index' => [
+        'method' => 'listing',
+        'view' => 'Burzum/UserTools.UserTools/index',
+    ],
+    'register' => [
+        'method' => 'register',
+        'view' => 'Burzum/UserTools.UserTools/register'
+    ],
+    'login' => [
+        'method' => 'login',
+        'view' => 'Burzum/UserTools.UserTools/login',
+    ],
+    'logout' => [
+        'method' => 'logout',
+        'view' => null
+    ],
+    'view' => [
+        'method' => 'getUser',
+        'view' => 'Burzum/UserTools.UserTools/view',
+    ],
+    // camelCased method names
+    'resetPassword' => [
+        'method' => 'resetPassword',
+        'view' => 'Burzum/UserTools.UserTools/reset_password',
+    ],
+    'requestPassword' => [
+        'method' => 'requestPassword',
+        'view' => 'Burzum/UserTools.UserTools/request_password',
+    ],
+    'changePassword' => [
+        'method' => 'changePassword',
+        'view' => 'Burzum/UserTools.UserTools/change_password',
+    ],
+    'verifyEmail' => [
+        'method' => 'verifyEmailToken',
+        'view' => 'Burzum/UserTools.UserTools/verify_email',
+    ],
+    // DEPRECATED underscored method names
+    'reset_password' => [
+        'method' => 'resetPassword',
+        'view' => 'Burzum/UserTools.UserTools/reset_password',
+    ],
+    'request_password' => [
+        'method' => 'requestPassword',
+        'view' => 'Burzum/UserTools.UserTools/request_password',
+    ],
+    'change_password' => [
+        'method' => 'changePassword',
+        'view' => 'Burzum/UserTools.UserTools/change_password',
+    ],
+    'verify_email' => [
+        'method' => 'verifyEmailToken',
+        'view' => 'Burzum/UserTools.UserTools/verify_email',
+    ]
+]
 ```
