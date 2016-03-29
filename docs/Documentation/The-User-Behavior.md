@@ -7,7 +7,7 @@ This behavior contains almost everything that is commonly needed for dealing wit
 class User extends Table {
 	public function initialize() {
 		parent::initialize();
-		$this->loadBehavior('Burzum/UserTools.User');
+		$this->addBehavior('Burzum/UserTools.User');
 	);
 }
 ```
