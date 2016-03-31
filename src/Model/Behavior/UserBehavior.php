@@ -9,6 +9,7 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
+use Burzum\UserTools\Model\UserValidationTrait;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
@@ -16,17 +17,18 @@ use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventDispatcherTrait ;
 use Cake\I18n\Time;
-use Cake\Mailer\Email;
+use Cake\Mailer\MailerAwareTrait;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
 use Cake\Utility\Text;
-use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
 	use EventDispatcherTrait;
+	use MailerAwareTrait;
+	use UserValidationTrait;
 
 	/**
 	 * Default config
@@ -38,6 +40,8 @@ class UserBehavior extends Behavior {
 		'defaultValidation' => true,
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
+		'mailer' => 'Burzum/UserTools.Users',
+		'passwordMinLength' => 6,
 		'register' => [
 			'defaultRole' => null,
 			'hashPassword' => true,
@@ -133,7 +137,7 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _field($field) {
 		if (!isset($this->_config['fieldMap'][$field])) {
-			throw new \RuntimeException(__d('burzum/user_tools', 'Invalid field "%s"!', $field));
+			throw new \RuntimeException(__d('user_tools', 'Invalid field "%s"!', $field));
 		}
 		return $this->_config['fieldMap'][$field];
 	}
@@ -570,83 +574,6 @@ class UserBehavior extends Behavior {
 	}
 
 	/**
-	 * Configures the validator with rules for the password change
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationChangePassword($validator) {
-		$validator->provider('userBehavior', $this);
-		$validator = $this->validationPassword($validator);
-		$validator = $this->validationConfirmPassword($validator);
-		$validator = $this->validationOldPassword($validator);
-		return $validator;
-	}
-
-	/**
-	 * Configures the validator with rules to check the old password
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	protected function validationOldPassword($validator) {
-		$validator->provider('userBehavior', $this);
-
-		$validator->provider('userTable', $this->_table);
-		$validator->add('old_password', 'notBlank', [
-			'rule' => 'notBlank',
-			'message' => __d('burzum/user_tools', 'Enter your old password.')
-		]);
-		$validator->add('old_password', 'oldPassword', [
-			'rule' => ['validateOldPassword', 'password'],
-			'provider' => 'userBehavior',
-			'message' => __d('burzum/user_tools', 'Wrong password, please try again.')
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validation method for the old password.
-	 *
-	 * @param mixed $value
-	 * @param string $field
-	 * @param mixed $context
-	 * @return boolean
-	 */
-	public function validateOldPassword($value, $field, $context) {
-		if (Configure::read('debug') > 0 && empty($context['data'][$this->_table->primaryKey()])) {
-			throw new \RuntimeException('The user id is required as well to validate the old password!');
-		}
-
-		$result = $this->_table->find()
-			->select([
-				$this->_field('password')
-			])
-			->where([
-				$this->_table->primaryKey() => $context['data'][$this->_table->primaryKey()],
-			])
-			->first();
-
-		if (!$result) {
-			return false;
-		}
-		return $this->passwordHasher()->check($value, $result->password);
-	}
-
-	/**
-	 * Validation rules for the password reset request.
-	 *
-	 * @param \Cake\Validation\Validator $validator
-	 * @return \Cake\Validation\Validator
-	 * @see Burzum\UserTools\Controller\Component\UserToolComponent::requestPassword()
-	 */
-	public function validationRequestPassword(Validator $validator) {
-		$validator = $this->_table->validationDefault($validator);
-		$validator->remove($this->_field('email'), 'unique');
-		return $validator;
-	}
-
-	/**
 	 * Initializes a password reset process.
 	 *
 	 * @param mixed $value
@@ -702,7 +629,7 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _getUser($value, $options = []) {
 		$defaults = [
-			'notFoundErrorMessage' => __d('burzum/user_tools', 'User not found.'),
+			'notFoundErrorMessage' => __d('user_tools', 'User not found.'),
 			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
 		];
 		$options = Hash::merge($defaults, $options);
@@ -748,7 +675,7 @@ class UserBehavior extends Behavior {
 			])
 			->first();
 		if (empty($result)) {
-			throw new RecordNotFoundException(__d('burzum/user_tools', 'Invalid user.'));
+			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
 		}
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
@@ -770,217 +697,39 @@ class UserBehavior extends Behavior {
 	}
 
 	/**
-	 * Returns an email instance
+	 * sendNewPasswordEmail
 	 *
-	 * @param array $config
-	 * @return \Cake\Mailer\Email;
-	 */
-	public function getMailInstance($config = null) {
-		if (empty($config)) {
-			$config = $this->_config['emailConfig'];
-		}
-		return new Email($config);
-	}
-
-	/**
-	 * sendEmail
-	 *
+	 * @param \Cake\Datasource\EntityInterface $user
 	 * @param array $options
 	 * @return array
 	 */
-	public function sendEmail($options = []) {
-		$Email = $this->getMailInstance();
-		foreach ($options as $option => $value) {
-			$Email->{$option}($value);
-		}
-		return $Email->send();
+	public function sendPasswordResetToken(EntityInterface $user, $options = []) {
+		$options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
+		$this->getMailer($this->config('mailer'))->send('passwordResetToken', $user, $options);
 	}
 
 	/**
 	 * sendNewPasswordEmail
 	 *
-	 * @param \Cake\ORM\Entity $user
-	 * @param array $options
-	 * @return array
-	 */
-	public function sendPasswordResetToken(Entity $user, $options = []) {
-		$defaults = [
-			'subject' => __d('burzum/user_tools', 'Your password reset'),
-			'viewVars' => [
-				'user' => $user
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendPasswordResetToken'], $options));
-	}
-
-	/**
-	 * sendNewPasswordEmail
-	 *
-	 * @param \Cake\ORM\Entity $user
+	 * @param \Cake\Datasource\EntityInterface $user
 	 * @param array $options
 	 * @return bool
 	 */
-	public function sendNewPasswordEmail(Entity $user, $options = []) {
-		$defaults = [
-			'subject' => __d('burzum/user_tools', 'Your new password'),
-			'viewVars' => [
-				'user' => $user
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendNewPasswordEmail'], $options));
+	public function sendNewPasswordEmail(EntityInterface $user, $options = []) {
+		$options = Hash::merge($this->_config['sendNewPasswordEmail'], $options);
+		$this->getMailer($this->config('mailer'))->send('verificationEmail', $user, $options);
 	}
 
 	/**
 	 * sendVerificationEmail
 	 *
-	 * @param \Cake\ORM\Entity $data
+	 * @param \Cake\Datasource\EntityInterface $user
 	 * @param array $options
 	 * @return array
 	 */
-	public function sendVerificationEmail(Entity $data, $options = []) {
-		$defaults = [
-			'subject' => __d('burzum/user_tools', 'Please verify your Email'),
-			'viewVars' => [
-				'user' => $data
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendVerificationEmail'], $options));
-	}
-
-	/**
-	 * Validates the password reset.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationPasswordReset(Validator $validator) {
-		return $this->validateOldPassword($validator)
-			->validatePassword($validator)
-			->validateConfirmPassword($validator);
-	}
-
-	/**
-	 * Validates the username field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationUserName(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
-
-		$validator->add($this->_field('username'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('burzum/user_tools', 'An username is required.')
-			],
-			'length' => [
-				'rule' => ['lengthBetween', 3, 32],
-				'message' => __d('burzum/user_tools', 'The username must be between 3 and 32 characters.')
-			],
-			'unique' => [
-				'rule' => ['validateUnique', ['scope' => 'username']],
-				'provider' => 'userTable',
-				'message' => __d('burzum/user_tools', 'The username is already in use.')
-			],
-			'alphaNumeric' => [
-				'rule' => 'alphaNumeric',
-				'message' => __d('burzum/user_tools', 'The username must be alpha numeric.')
-			]
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validates the email field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationEmail(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
-
-		$validator->add($this->_field('email'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('burzum/user_tools', 'An email is required.')
-			],
-			'unique' => [
-				'rule' => ['validateUnique', [
-					'scope' => $this->_field('email')
-				]],
-				'provider' => 'table',
-				'message' => __d('burzum/user_tools', 'The email is already in use.')
-			],
-			'validEmail' => [
-				'rule' => 'email',
-				'message' => __d('burzum/user_tools', 'Must be a valid email address.')
-			]
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validates the password field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationPassword(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
-
-		$validator->add($this->_field('password'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('burzum/user_tools', 'A password is required.')
-			],
-			'minLength' => [
-				'rule' => ['minLength', 6],
-				'message' => __d('burzum/user_tools', 'The password must have at least 6 characters.')
-			],
-			'confirmPassword' => [
-				'rule' => ['compareFields', 'confirm_password'],
-				'message' => __d('burzum/user_tools', 'The passwords don\'t match!'),
-				'provider' => 'userTable',
-			]
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validates the confirm_password field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationConfirmPassword(Validator $validator) {
-		$validator->provider('userBehavior', $this);
-
-		$validator->add($this->_field('passwordCheck'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('burzum/user_tools', 'A password is required.')
-			],
-			'minLength' => [
-				'rule' => ['minLength', 6],
-				'message' => __d('burzum/user_tools', 'The password must have at least 6 characters.')
-			],
-			'confirmPassword' => [
-				'rule' => ['compareFields', 'password'],
-				'message' => __d('burzum/user_tools', 'The passwords don\'t match!'),
-				'provider' => 'userBehavior',
-			]
-		]);
-		return $validator;
+	public function sendVerificationEmail(EntityInterface $user, $options = []) {
+		$options = Hash::merge($this->_config['sendVerificationEmail'], $options);
+		$this->getMailer($this->config('mailer'))->send('verificationEmail', $user, $options);
 	}
 
 	/**
