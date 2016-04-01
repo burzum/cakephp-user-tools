@@ -22,6 +22,13 @@ class UsersMailer extends Mailer {
 		$this->set('user', $user);
 	}
 
+	/**
+	 * Sends the password reset token
+	 *
+	 * @param \Burzum\UserTools\Model\Entity\User
+	 * @param array $options
+	 * @return void
+	 */
 	public function passwordResetToken($user, array $options = []) {
 		$defaults = [
 			'to' => empty($user->email) ? '' : $user->email,
@@ -32,6 +39,13 @@ class UsersMailer extends Mailer {
 		$this->set('user', $user);
 	}
 
+	/**
+	 * Sends the new password email
+	 *
+	 * @param \Burzum\UserTools\Model\Entity\User
+	 * @param array $options
+	 * @return void
+	 */
 	public function sendNewPasswordEmail($user, array $options = []) {
 		$defaults = [
 			'to' => empty($user->email) ? '' : $user->email,
@@ -42,6 +56,12 @@ class UsersMailer extends Mailer {
 		$this->set('user', $user);
 	}
 
+	/**
+	 * Sets the options from the array to the corresponding mailer methods
+	 *
+	 * @param array
+	 * @return void
+	 */
 	protected function _applyOptions($options) {
 		foreach ($options as $method => $value) {
 			if (method_exists($this, $method)) {
@@ -49,4 +69,5 @@ class UsersMailer extends Mailer {
 			}
 		}
 	}
+
 }

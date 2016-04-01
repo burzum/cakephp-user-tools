@@ -1,6 +1,7 @@
 <?php
 namespace Burzum\UserTools\Model;
 
+use RuntimeException;
 use Cake\Validation\Validator;
 
 trait UserValidationTrait {
@@ -200,7 +201,7 @@ trait UserValidationTrait {
 	 */
 	public function validateOldPassword($value, $field, $context) {
 		if (Configure::read('debug') > 0 && empty($context['data'][$this->_table->primaryKey()])) {
-			throw new \RuntimeException('The user id is required as well to validate the old password!');
+			throw new RuntimeException('The user id is required as well to validate the old password!');
 		}
 
 		$result = $this->_table->find()
@@ -216,6 +217,24 @@ trait UserValidationTrait {
 			return false;
 		}
 		return $this->passwordHasher()->check($value, $result->password);
+	}
+
+	/**
+	 * Compares the value of two fields.
+	 *
+	 * @param mixed $value
+	 * @param string $field
+	 * @param Entity $context
+	 * @return boolean
+	 */
+	public function compareFields($value, $field, $context) {
+		if (!isset($context['data'][$field])) {
+			return true;
+		}
+		if ($value === $context['data'][$field]) {
+			return true;
+		}
+		return false;
 	}
 
 }

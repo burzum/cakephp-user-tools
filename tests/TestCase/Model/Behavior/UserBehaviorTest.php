@@ -277,23 +277,6 @@ class UserBehaviorTest extends TestCase {
 	}
 
 /**
- * testSendEmail
- *
- * @return void
- */
-	public function testSendEmail() {
-		$this->UserBehavior->expects($this->any())
-			->method('getMailInstance')
-			->will($this->returnValue($this->MockEmail));
-
-		$this->MockEmail->expects($this->at(0))
-			->method('send')
-			->will($this->returnValue(true));
-
-		$this->UserBehavior->sendEmail();
-	}
-
-/**
  * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
  */
 	public function testInitPasswordResetRecordNotFoundException() {

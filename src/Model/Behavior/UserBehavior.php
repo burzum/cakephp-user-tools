@@ -9,6 +9,7 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
+use Burzum\UserTools\Model\PasswordAndTokenTrait;
 use Burzum\UserTools\Model\UserValidationTrait;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
@@ -29,6 +30,7 @@ class UserBehavior extends Behavior {
 	use EventDispatcherTrait;
 	use MailerAwareTrait;
 	use UserValidationTrait;
+	use PasswordAndTokenTrait;
 
 	/**
 	 * Default config
@@ -466,73 +468,6 @@ class UserBehavior extends Behavior {
 	}
 
 	/**
-	 * Generates a random password that is more or less user friendly.
-	 *
-	 * @param int $length Password length, default is 8
-	 * @param array $options Options array.
-	 * @return string
-	 */
-	public function generatePassword($length = 8, $options = []) {
-		$options = $this->_passwordDictionary($options);
-		$password = '';
-
-		srand((double) microtime() * 1000000);
-		for ($i = 0; $i < $length; $i++) {
-			$password .=
-				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
-				$options['vowels'][mt_rand(0, count($options['vowels']) - 1)];
-		}
-
-		return substr($password, 0, $length);
-	}
-
-	/**
-	 * The dictionary of vowels and consonants for the password generation.
-	 *
-	 * @param array $options
-	 * @return array
-	 */
-	public function _passwordDictionary(array $options = []) {
-		$defaults = [
-			'vowels' => [
-				'a', 'e', 'i', 'o', 'u'
-			],
-			'cons' => [
-				'b', 'c', 'd', 'g', 'h', 'j', 'k', 'l', 'm', 'n',
-				'p', 'r', 's', 't', 'u', 'v', 'w', 'tr', 'cr', 'br', 'fr', 'th',
-				'dr', 'ch', 'ph', 'wr', 'st', 'sp', 'sw', 'pr', 'sl', 'cl'
-			]
-		];
-		if (isset($options['cons'])) {
-			unset($defaults['cons']);
-		}
-		if (isset($options['vowels'])) {
-			unset($defaults['vowels']);
-		}
-		return Hash::merge($defaults, $options);
-	}
-
-	/**
-	 * Generate token used by the user registration system
-	 *
-	 * @param integer $length Token Length
-	 * @param string $chars
-	 * @return string
-	 */
-	public function generateToken($length = 10, $chars = '0123456789abcdefghijklmnopqrstuvwxyz') {
-		$token = '';
-		$i = 0;
-		while ($i < $length) {
-			$char = substr($chars, mt_rand(0, strlen($chars) - 1), 1);
-			if (!stristr($token, $char)) {
-				$token .= $char;
-				$i++;
-			}
-		}
-		return $token;
-	}
-
-	/**
 	 * Removes all users from the user table that did not complete the registration
 	 *
 	 * @param array $conditions
@@ -559,10 +494,10 @@ class UserBehavior extends Behavior {
 	/**
 	 * Changes the password for an user.
 	 *
-	 * @param \Cake\ORM\Entity $entity User entity
+	 * @param \Cake\Datasource\EntityInterface $entity User entity
 	 * @return boolean
 	 */
-	public function changePassword(Entity $entity) {
+	public function changePassword(EntityInterface $entity) {
 		if ($entity->errors()) {
 			return false;
 		}
@@ -663,20 +598,26 @@ class UserBehavior extends Behavior {
 	 * more secure approach is to have the user manually enter a new password and
 	 * only send him an URL with a token.
 	 *
-	 * @param string $email
-	 * @param array $options
+	 * @param string|EntityInterface $email The user entity or the email
+	 * @param array $options Optional options array, use it to pass config options.
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
 	 * @return boolean
 	 */
 	public function sendNewPassword($email, $options = []) {
-		$result = $this->_table->find()
-			->where([
-				$this->_table->alias() . '.' . $this->_field('email') => $email
-			])
-			->first();
-		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+		if ($email instanceof EntityInterface) {
+			$result = $email;
+			$email = $result->{$this->_field('email')};
+		} else {
+			$result = $this->_table->find()
+				->where([
+					$this->_table->alias() . '.' . $this->_field('email') => $email
+				])
+				->first();
+			if (empty($result)) {
+				throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+			}
 		}
+
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
 		$this->_table->save($result, ['validate' => false]);
@@ -732,21 +673,4 @@ class UserBehavior extends Behavior {
 		$this->getMailer($this->config('mailer'))->send('verificationEmail', $user, $options);
 	}
 
-	/**
-	 * Compares the value of two fields.
-	 *
-	 * @param mixed $value
-	 * @param string $field
-	 * @param Entity $context
-	 * @return boolean
-	 */
-	public function compareFields($value, $field, $context) {
-		if (!isset($context['data'][$field])) {
-			return true;
-		}
-		if ($value === $context['data'][$field]) {
-			return true;
-		}
-		return false;
-	}
 }
