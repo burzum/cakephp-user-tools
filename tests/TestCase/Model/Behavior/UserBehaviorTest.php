@@ -28,20 +28,20 @@ class UserToolUser extends Table {
  */
 class UserBehaviorTest extends TestCase {
 
-/**
- * Fixtures
- *
- * @var array
- */
+	/**
+	 * Fixtures
+	 *
+	 * @var array
+	 */
 	public $fixtures = array(
 		'plugin.Burzum\UserTools.User'
 	);
 
-/**
- * setup
- *
- * @return void
- */
+	/**
+	 * setup
+	 *
+	 * @return void
+	 */
 	public function setUp() {
 		parent::setUp();
 		$this->User = TableRegistry::get('Users');
@@ -61,21 +61,21 @@ class UserBehaviorTest extends TestCase {
 			->getMock();
 	}
 
-/**
- * tearDown
- *
- * @return void
- */
+	/**
+	 * tearDown
+	 *
+	 * @return void
+	 */
 	public function tearDown() {
 		unset($this->User);
 	}
 
-/**
- * testRegister
- *
- * @todo figure out why its not reading the default email config, better to mock it any way
- * @return void
- */
+	/**
+	 * testRegister
+	 *
+	 * @todo figure out why its not reading the default email config, better to mock it any way
+	 * @return void
+	 */
 	public function testRegister() {
 		$this->markTestSkipped('');
 		$data = new Entity([
@@ -88,21 +88,21 @@ class UserBehaviorTest extends TestCase {
 		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
 	}
 
-/**
- * testExpirationTime
- *
- * @return void
- */
+	/**
+	 * testExpirationTime
+	 *
+	 * @return void
+	 */
 	public function testExpirationTime() {
 		$result = $this->User->expirationTime();
 		$this->assertStringStartsWith(date('Y-m-d', strtotime('+1 day')), $result);
 	}
 
-/**
- * testUpdateLastActivity
- *
- * @return void
- */
+	/**
+	 * testUpdateLastActivity
+	 *
+	 * @return void
+	 */
 	public function testUpdateLastActivity() {
 		$before = $this->User->get(1);
 		$result = $this->User->updateLastActivity(1);
@@ -111,11 +111,11 @@ class UserBehaviorTest extends TestCase {
 		$this->assertNotEquals($before->last_action, $after->last_action);
 	}
 
-/**
- * testGeneratePassword
- *
- * @return void
- */
+	/**
+	 * testGeneratePassword
+	 *
+	 * @return void
+	 */
 	public function testGeneratePassword() {
 		$result = $this->User->generatePassword();
 		$this->assertTrue(is_string($result));
@@ -126,11 +126,11 @@ class UserBehaviorTest extends TestCase {
 		$this->assertEquals(strlen($result), 5);
 	}
 
-/**
- * testGeneratePassword
- *
- * @return void
- */
+	/**
+	 * testGeneratePassword
+	 *
+	 * @return void
+	 */
 	public function testGenerateToken() {
 		$result = $this->User->generateToken();
 		$this->assertTrue(is_string($result));
@@ -141,11 +141,11 @@ class UserBehaviorTest extends TestCase {
 		$this->assertEquals(strlen($result), 5);
 	}
 
-/**
- * testVerifyToken
- *
- * @return void
- */
+	/**
+	 * testVerifyToken
+	 *
+	 * @return void
+	 */
 	public function testVerifyToken() {
 		$this->User->save(new Entity([
 			'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
@@ -169,21 +169,21 @@ class UserBehaviorTest extends TestCase {
 		$this->assertTrue($result->token_is_expired);
 	}
 
-/**
- * testVerifyTokenNotFoundException
- *
- * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
- * @return void
- */
+	/**
+	 * testVerifyTokenNotFoundException
+	 *
+	 * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
+	 * @return void
+	 */
 	public function testVerifyTokenNotFoundException() {
 		$this->User->verifyToken('DOES-NOT-EXIST');
 	}
 
-/**
- * testRemoveExpiredRegistrations
- *
- * @return void
- */
+	/**
+	 * testRemoveExpiredRegistrations
+	 *
+	 * @return void
+	 */
 	public function testRemoveExpiredRegistrations() {
 		$result = $this->User
 			->find()
@@ -207,42 +207,42 @@ class UserBehaviorTest extends TestCase {
 		$this->assertEquals($result, 0);
 	}
 
-/**
- * testGetUser
- *
- * @return void
- */
+	/**
+	 * testGetUser
+	 *
+	 * @return void
+	 */
 	public function testGetUser() {
 		$result = $this->User->getUser('1');
 		$this->assertEquals($result->id, '1');
 		$this->assertEquals($result->username, 'adminuser');
 	}
 
-/**
- * testhashPassword
- *
- * @return void
- */
+	/**
+	 * testhashPassword
+	 *
+	 * @return void
+	 */
 	public function testhashPassword() {
 		$result = $this->User->hashPassword('password!');
 		$this->assertTrue(is_string($result));
 	}
 
-/**
- * testGetUserRecordNotFoundException
- *
- * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
- * @return void
- */
+	/**
+	 * testGetUserRecordNotFoundException
+	 *
+	 * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
+	 * @return void
+	 */
 	public function testGetUserRecordNotFoundException() {
 		$this->User->getUser('DOES-NOT-EXIST');
 	}
 
-/**
- * testResetPassword
- *
- * @return void
- */
+	/**
+	 * testResetPassword
+	 *
+	 * @return void
+	 */
 	public function testResetPassword() {
 		$user = $this->User->find()->where(['id' => '1'])->first();
 		$user = $this->User->patchEntity($user, [
@@ -256,38 +256,38 @@ class UserBehaviorTest extends TestCase {
 		$this->assertEquals($user->password_token_expires, null);
 	}
 
-/**
- * loadBehaviour helper method
- *
- * @param array $options
- * @return void
- */
+	/**
+	 * loadBehaviour helper method
+	 *
+	 * @param array $options
+	 * @return void
+	 */
 	public function loadBehaviour($options = []) {
 		$this->User->addBehavior('UserTools.User', $options);
 	}
 
-/**
- * testPasswordHasher
- *
- * @return void
- */
+	/**
+	 * testPasswordHasher
+	 *
+	 * @return void
+	 */
 	public function testPasswordHasher() {
 		$result = $this->User->passwordHasher();
 		$this->assertTrue(is_a($result, '\Cake\Auth\DefaultPasswordHasher'));
 	}
 
-/**
- * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
- */
+	/**
+	 * @expectedException \Cake\Datasource\Exception\RecordNotFoundException
+	 */
 	public function testInitPasswordResetRecordNotFoundException() {
 		$this->User->initPasswordReset('does-not-exist');
 	}
 
-/**
- * testCompareFields
- *
- * @return void
- */
+	/**
+	 * testCompareFields
+	 *
+	 * @return void
+	 */
 	public function testCompareFields() {
 		$result = $this->UserBehavior->compareFields('test', 'username', [
 			'data' => ['username' => 'test']
@@ -298,4 +298,5 @@ class UserBehaviorTest extends TestCase {
 		]);
 		$this->assertFalse($result);
 	}
+
 }

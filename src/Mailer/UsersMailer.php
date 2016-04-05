@@ -1,5 +1,5 @@
 <?php
-namespace Burzum\UserTools;
+namespace Burzum\UserTools\Mailer;
 
 use Cake\Mailer\Mailer;
 
