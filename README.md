@@ -20,9 +20,9 @@ Complementary plugins
 
 The following plugins are not required but are a suggestions if you're looking for additional user related things.
 
- * [Authenticate](https://github.com/friendsofcake/authenticate) - An authentication adapter collection
+ * [Cookie Auth](https://github.com/Xety/Cake3-CookieAuth) - A cookie Auth adapter
  * [JWT Auth](https://github.com/ADmad/cakephp-jwt-auth) - A JWT Auth adapter
- * [SimpleRbac](https://github.com/burzum/cakephp-simple-rbac) - An easy to use role based authorization adapter
+ * [Simple RBAC](https://github.com/burzum/cakephp-simple-rbac) - An easy to use role based authorization adapter
 
 Documentation
 -------------
