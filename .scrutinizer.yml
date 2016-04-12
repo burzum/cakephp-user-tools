@@ -13,6 +13,9 @@ tools:
         enabled: true
         excluded_dirs: [vendor, tests, config, docs]
 build:
+    environment:
+        php:
+            version: 5.6
     tests:
         override:
             -
