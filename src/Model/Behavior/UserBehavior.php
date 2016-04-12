@@ -42,7 +42,7 @@ class UserBehavior extends Behavior {
 		'defaultValidation' => true,
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
-		'mailer' => 'Burzum/UserTools.Users',
+		'mailer' => 'Burzum\UserTools\Mailer\UsersMailer',
 		'passwordMinLength' => 6,
 		'register' => [
 			'defaultRole' => null,
@@ -331,7 +331,7 @@ class UserBehavior extends Behavior {
 		}
 
 		if ($options['afterRegister'] === true) {
-			$entity = $this->_afterRegister($result, $options);
+			$this->_afterRegister($result, $options);
 		}
 
 		$event = new Event('User.afterRegister', $this, [
@@ -652,7 +652,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendPasswordResetToken(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
-		$this->getMailer($this->config('mailer'))->send('passwordResetToken', $user, $options);
+		$this->getMailer($this->config('mailer'))->send('passwordResetToken', [$user, $options]);
 	}
 
 	/**
@@ -664,7 +664,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendNewPasswordEmail(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendNewPasswordEmail'], $options);
-		$this->getMailer($this->config('mailer'))->send('verificationEmail', $user, $options);
+		$this->getMailer($this->config('mailer'))->send('verificationEmail', [$user, $options]);
 	}
 
 	/**
@@ -676,7 +676,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendVerificationEmail(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendVerificationEmail'], $options);
-		$this->getMailer($this->config('mailer'))->send('verificationEmail', $user, $options);
+		$this->getMailer($this->config('mailer'))->send('verificationEmail', [$user, $options]);
 	}
 
 }

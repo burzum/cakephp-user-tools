@@ -14,7 +14,7 @@ class UsersMailer extends Mailer {
 	 */
 	public function verificationEmail($user, array $options = []) {
 		$defaults = [
-			'to' => empty($user->email) ? '' : $user->email,
+			'to' => $user->email,
 			'subject' => __d('user_tools', 'Please verify your Email'),
 			'template' => 'Burzum/UserTools.Users/verification_email',
 		];
@@ -31,7 +31,7 @@ class UsersMailer extends Mailer {
 	 */
 	public function passwordResetToken($user, array $options = []) {
 		$defaults = [
-			'to' => empty($user->email) ? '' : $user->email,
+			'to' => $user->email,
 			'subject' => __d('user_tools', 'Your password reset'),
 			'template' => 'Burzum/UserTools.Users/password_reset'
 		];
@@ -48,7 +48,7 @@ class UsersMailer extends Mailer {
 	 */
 	public function sendNewPasswordEmail($user, array $options = []) {
 		$defaults = [
-			'to' => empty($user->email) ? '' : $user->email,
+			'to' => $user->email,
 			'subject' => __d('user_tools', 'Your new password'),
 			'template' => 'Burzum/UserTools.Users/new_password'
 		];
@@ -64,9 +64,7 @@ class UsersMailer extends Mailer {
 	 */
 	protected function _applyOptions($options) {
 		foreach ($options as $method => $value) {
-			if (method_exists($this, $method)) {
-				$this->{$method}($value);
-			}
+			$this->{$method}($value);
 		}
 	}
 
