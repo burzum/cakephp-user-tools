@@ -54,6 +54,7 @@ class UserBehavior extends Behavior {
 			'beforeRegister' => true,
 			'afterRegister' => true,
 			'tokenLength' => 32,
+			'saveOptions' => []
 		],
 		'loginFields' => [
 			'username' => 'email',
@@ -290,24 +291,25 @@ class UserBehavior extends Behavior {
 	/**
 	 * Registers a new user
 	 *
-	 * Flow:
-	 * - validates the passed $postData
-	 * - calls the behaviors _beforeRegister if not disabled
-	 * - calls Model::beforeRegister if implemented
-	 * - saves the user data
-	 * - calls Model::afterRegister if implemented
+	 * You can modify the registration process through implementing an event
+	 * listener for the User.beforeRegister and User.afterRegister events.
 	 *
-	 * @param \Cake\ORM\Entity $entity
+	 * If you stop the events the result of the event will be returned.
+	 *
+	 * Flow:
+	 * - calls the behaviors _beforeRegister method if not disabled via config
+	 * - Fires the User.beforeRegister event
+	 * - Attempt to save the user data
+	 * - calls the behaviors _afterRegister method if not disabled via config
+	 * - Fires the User.afterRegister event
+	 *
+	 * @param \Cake\Datasource\EntityInterface $entity
 	 * @param array $options
 	 * @throws \InvalidArgumentException
-	 * @return boolean
+	 * @return \Cake\Datasource\EntityInterface|bool Returns boolean false if the user could not be saved.
 	 */
-	public function register(Entity $entity, $options = []) {
+	public function register(EntityInterface $entity, $options = []) {
 		$options = array_merge($this->_config['register'], $options);
-		if ($entity->errors()) {
-			$this->_table->entity = $entity;
-			return false;
-		}
 
 		if ($options['beforeRegister'] === true) {
 			$entity = $this->_beforeRegister($entity, $options);
@@ -319,10 +321,14 @@ class UserBehavior extends Behavior {
 		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
-			return (bool) $event->result;
+			return (bool)$event->result;
 		}
 
-		$result = $this->_table->save($entity, array('validate' => false));
+		$result = $this->_table->save($entity, $options['saveOptions']);
+
+		if (!$result) {
+			return $result;
+		}
 
 		if ($options['afterRegister'] === true) {
 			$entity = $this->_afterRegister($result, $options);
