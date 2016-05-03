@@ -18,13 +18,17 @@ class ProfileFixture extends TestFixture {
  * @var array
  */
 	public $fields = [
-		'id' => ['type' => 'string', 'null' => false, 'length' => 36],
+		'id' => ['type' => 'uuid', 'length' => null, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null],
 		'user_id' => ['type' => 'string', 'null' => false, 'length' => 36],
 		'first_name' => ['type' => 'string', 'null' => false, 'default' => null],
 		'last_name' => ['type' => 'string', 'null' => false, 'default' => null],
 		'_constraints' => [
-			'primary' => ['type' => 'primary', 'columns' => ['id']],
-		]
+			'primary' => ['type' => 'primary', 'columns' => ['id'], 'length' => []],
+		],
+		'_options' => [
+			'engine' => 'InnoDB',
+			'collation' => 'utf8_general_ci'
+		],
 	];
 
 /**
