@@ -14,13 +14,26 @@ use Cake\TestSuite\TestCase;
  * ]@copyright 2013 - 2016 Florian Krämer
  * @license MIT
  */
-class UserToolUser extends Table {
-	public $name = 'User';
-	public $alias = 'User';
-	public $useTable = 'users';
-	public $actsAs = array(
-		'UserTools.User'
-	);
+class UsersTable extends Table {
+
+	public function initialize(array $config) {
+		$this->table('users');
+		$this->alias('Users');
+		$this->hasOne('Profile', [
+			'className' => 'Burzum\UserTools\Test\TestCase\Model\Behavior\ProfilesTable'
+		]);
+		$this->addBehavior('UserTools.User');
+	}
+}
+
+class ProfilesTable extends Table {
+	public function initialize(array $config) {
+		$this->table('profiles');
+		$this->alias('Profiles');
+		$this->belongsTo('Users', [
+			'className' => 'Burzum\UserTools\Test\TestCase\Model\Behavior\UsersTable'
+		]);
+	}
 }
 
 /**
@@ -34,7 +47,8 @@ class UserBehaviorTest extends TestCase {
 	 * @var array
 	 */
 	public $fixtures = array(
-		'plugin.Burzum\UserTools.User'
+		'plugin.Burzum\UserTools.User',
+		'plugin.Burzum\UserTools.Profile'
 	);
 
 	/**
@@ -45,18 +59,13 @@ class UserBehaviorTest extends TestCase {
 	public function setUp() {
 		parent::setUp();
 		$this->User = TableRegistry::get('Users');
-		$this->User->addBehavior('Burzum/UserTools.User');
-		$this->User->behaviors()->User->config('emailConfig', [
-			'transport' => 'default',
-			'from' => 'you@localhost',
-		]);
 
 		$this->UserBehavior = $this->getMockBuilder('\Burzum\UserTools\Model\Behavior\UserBehavior')
 			->setConstructorArgs([$this->User])
-			->setMethods(['getMailInstance'])
+			->setMethods(['getMailer'])
 			->getMock();
 
-		$this->MockEmail = $this->getMockBuilder('\Cake\Network\Email')
+		$this->MockMailer = $this->getMockBuilder('Burzum\UserTools\Mailer\UsersMailer')
 			->setMethods(['send'])
 			->getMock();
 	}
@@ -71,21 +80,33 @@ class UserBehaviorTest extends TestCase {
 	}
 
 	/**
-	 * testRegister
+	 * testSuccessfulRegistration
 	 *
-	 * @todo figure out why its not reading the default email config, better to mock it any way
 	 * @return void
 	 */
-	public function testRegister() {
-		$this->markTestSkipped('');
+	public function testSuccessfulRegistration() {
+		$this->UserBehavior->expects($this->once())
+			->method('getMailer')
+			->will($this->returnValue($this->MockMailer));
+
 		$data = new Entity([
 			'username' => 'foobar',
 			'email' => 'foobar@foobar.com',
 			'password' => 'password',
-			'confirm_password' => 'password'
+			'confirm_password' => 'password',
+			'user_profile' => [
+				'first_name' => 'New',
+				'last_name' => 'User'
+			]
 		]);
-		$result = $this->User->register($data);
-		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
+
+		$result = $this->UserBehavior->register($data);
+
+		$this->assertNotEmpty($result->id);
+		$this->assertNotEmpty($result->password);
+		$this->assertNotEquals($result->password, 'password');
+		$this->assertEquals($result->username, 'foobar');
+		$this->assertInstanceOf('\Cake\Datasource\EntityInterface', $result);
 	}
 
 	/**

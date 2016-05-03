@@ -64,6 +64,9 @@ class UsersMailer extends Mailer {
 	 */
 	protected function _applyOptions($options) {
 		foreach ($options as $method => $value) {
+			if ($method == 'From') {
+				die(debug($method));
+			}
 			$this->{$method}($value);
 		}
 	}

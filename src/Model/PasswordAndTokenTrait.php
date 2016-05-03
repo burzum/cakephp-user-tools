@@ -4,6 +4,9 @@ namespace Burzum\UserTools\Model;
 use Cake\Utility\Hash;
 use Cake\Validation\Validator;
 
+/**
+ * A trait to add methods to a class to generate a password and token.
+ */
 trait PasswordAndTokenTrait {
 
 	/**

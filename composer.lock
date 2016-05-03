@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "9ab489356266148f07c1a3c8cd74cb38",
+    "hash": "1687b716d044dd3c0c58992f2507219b",
     "content-hash": "b8f9e62d200efddc728b1cd83ac5b82e",
     "packages": [
         {
@@ -128,16 +128,16 @@
         },
         {
             "name": "cakephp/cakephp",
-            "version": "3.2.7",
+            "version": "3.2.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/cakephp.git",
-                "reference": "2d6e369b3cb216bc861453beb223f5b973d4a61d"
+                "reference": "c263b386982abd22d38d171ebdc56ab64881030a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/cakephp/zipball/2d6e369b3cb216bc861453beb223f5b973d4a61d",
-                "reference": "2d6e369b3cb216bc861453beb223f5b973d4a61d",
+                "url": "https://api.github.com/repos/cakephp/cakephp/zipball/c263b386982abd22d38d171ebdc56ab64881030a",
+                "reference": "c263b386982abd22d38d171ebdc56ab64881030a",
                 "shasum": ""
             },
             "require": {
@@ -196,20 +196,20 @@
             "keywords": [
                 "framework"
             ],
-            "time": "2016-04-11 01:25:26"
+            "time": "2016-04-25 01:54:25"
         },
         {
             "name": "cakephp/chronos",
-            "version": "0.4.8",
+            "version": "0.4.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/chronos.git",
-                "reference": "aef0ba4ffcd1d962dc66b4d51b0d111db089cfcf"
+                "reference": "b29a9b3cc8ae2f35d4ca9a32bc4bef001d6ee125"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/chronos/zipball/aef0ba4ffcd1d962dc66b4d51b0d111db089cfcf",
-                "reference": "aef0ba4ffcd1d962dc66b4d51b0d111db089cfcf",
+                "url": "https://api.github.com/repos/cakephp/chronos/zipball/b29a9b3cc8ae2f35d4ca9a32bc4bef001d6ee125",
+                "reference": "b29a9b3cc8ae2f35d4ca9a32bc4bef001d6ee125",
                 "shasum": ""
             },
             "require": {
@@ -251,20 +251,20 @@
                 "datetime",
                 "time"
             ],
-            "time": "2016-03-10 01:50:25"
+            "time": "2016-04-16 18:14:39"
         },
         {
             "name": "cakephp/plugin-installer",
-            "version": "0.0.12",
+            "version": "0.0.15",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/plugin-installer.git",
-                "reference": "8a71f10fcc455b8b9756529433d5f0fd818b0ce1"
+                "reference": "8e84898b44df50e88b5109bb7d4d28de845e9bf8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/plugin-installer/zipball/8a71f10fcc455b8b9756529433d5f0fd818b0ce1",
-                "reference": "8a71f10fcc455b8b9756529433d5f0fd818b0ce1",
+                "url": "https://api.github.com/repos/cakephp/plugin-installer/zipball/8e84898b44df50e88b5109bb7d4d28de845e9bf8",
+                "reference": "8e84898b44df50e88b5109bb7d4d28de845e9bf8",
                 "shasum": ""
             },
             "require-dev": {
@@ -291,7 +291,7 @@
                 }
             ],
             "description": "A composer installer for CakePHP 3.0+ plugins.",
-            "time": "2015-06-10 10:35:13"
+            "time": "2016-04-28 03:01:34"
         },
         {
             "name": "psr/log",
@@ -858,16 +858,16 @@
         },
         {
             "name": "phpunit/phpunit-mock-objects",
-            "version": "3.1.2",
+            "version": "3.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit-mock-objects.git",
-                "reference": "7c34c9bdde4131b824086457a3145e27dba10ca1"
+                "reference": "151c96874bff6fe61a25039df60e776613a61489"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit-mock-objects/zipball/7c34c9bdde4131b824086457a3145e27dba10ca1",
-                "reference": "7c34c9bdde4131b824086457a3145e27dba10ca1",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit-mock-objects/zipball/151c96874bff6fe61a25039df60e776613a61489",
+                "reference": "151c96874bff6fe61a25039df60e776613a61489",
                 "shasum": ""
             },
             "require": {
@@ -910,7 +910,7 @@
                 "mock",
                 "xunit"
             ],
-            "time": "2016-03-24 05:58:25"
+            "time": "2016-04-20 14:39:26"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",

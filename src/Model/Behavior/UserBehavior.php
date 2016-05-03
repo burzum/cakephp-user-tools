@@ -321,7 +321,7 @@ class UserBehavior extends Behavior {
 		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
-			return (bool)$event->result;
+			return $event->result;
 		}
 
 		$result = $this->_table->save($entity, $options['saveOptions']);
@@ -338,6 +338,7 @@ class UserBehavior extends Behavior {
 			'data' => $result,
 			'table' => $this->_table
 		]);
+
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
