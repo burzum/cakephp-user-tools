@@ -24,4 +24,4 @@ Tutorials
 
 * [Quick Start](Tutorials/Quick-Start.md)
 * [User Validation](Tutorials/User-Validation.md)
-* [Customizing the Registration](Customizing-the-Registration.md)
+* [Customizing the Registration](Tutorials/Customizing-the-Registration.md)

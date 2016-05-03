@@ -9,6 +9,8 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
+use Burzum\UserTools\Model\PasswordAndTokenTrait;
+use Burzum\UserTools\Model\UserValidationTrait;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
@@ -16,17 +18,19 @@ use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventDispatcherTrait ;
 use Cake\I18n\Time;
-use Cake\Mailer\Email;
+use Cake\Mailer\MailerAwareTrait;
 use Cake\ORM\Behavior;
 use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
 use Cake\Utility\Text;
-use Cake\Validation\Validator;
 
 class UserBehavior extends Behavior {
 
 	use EventDispatcherTrait;
+	use MailerAwareTrait;
+	use UserValidationTrait;
+	use PasswordAndTokenTrait;
 
 	/**
 	 * Default config
@@ -38,6 +42,8 @@ class UserBehavior extends Behavior {
 		'defaultValidation' => true,
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
+		'mailer' => 'Burzum\UserTools\Mailer\UsersMailer',
+		'passwordMinLength' => 6,
 		'register' => [
 			'defaultRole' => null,
 			'hashPassword' => true,
@@ -48,6 +54,7 @@ class UserBehavior extends Behavior {
 			'beforeRegister' => true,
 			'afterRegister' => true,
 			'tokenLength' => 32,
+			'saveOptions' => []
 		],
 		'loginFields' => [
 			'username' => 'email',
@@ -284,24 +291,25 @@ class UserBehavior extends Behavior {
 	/**
 	 * Registers a new user
 	 *
-	 * Flow:
-	 * - validates the passed $postData
-	 * - calls the behaviors _beforeRegister if not disabled
-	 * - calls Model::beforeRegister if implemented
-	 * - saves the user data
-	 * - calls Model::afterRegister if implemented
+	 * You can modify the registration process through implementing an event
+	 * listener for the User.beforeRegister and User.afterRegister events.
 	 *
-	 * @param \Cake\ORM\Entity $entity
+	 * If you stop the events the result of the event will be returned.
+	 *
+	 * Flow:
+	 * - calls the behaviors _beforeRegister method if not disabled via config
+	 * - Fires the User.beforeRegister event
+	 * - Attempt to save the user data
+	 * - calls the behaviors _afterRegister method if not disabled via config
+	 * - Fires the User.afterRegister event
+	 *
+	 * @param \Cake\Datasource\EntityInterface $entity
 	 * @param array $options
 	 * @throws \InvalidArgumentException
-	 * @return boolean
+	 * @return \Cake\Datasource\EntityInterface|bool Returns boolean false if the user could not be saved.
 	 */
-	public function register(Entity $entity, $options = []) {
+	public function register(EntityInterface $entity, $options = []) {
 		$options = array_merge($this->_config['register'], $options);
-		if ($entity->errors()) {
-			$this->_table->entity = $entity;
-			return false;
-		}
 
 		if ($options['beforeRegister'] === true) {
 			$entity = $this->_beforeRegister($entity, $options);
@@ -313,19 +321,24 @@ class UserBehavior extends Behavior {
 		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
-			return (bool) $event->result;
+			return $event->result;
 		}
 
-		$result = $this->_table->save($entity, array('validate' => false));
+		$result = $this->_table->save($entity, $options['saveOptions']);
+
+		if (!$result) {
+			return $result;
+		}
 
 		if ($options['afterRegister'] === true) {
-			$entity = $this->_afterRegister($result, $options);
+			$this->_afterRegister($result, $options);
 		}
 
 		$event = new Event('User.afterRegister', $this, [
 			'data' => $result,
 			'table' => $this->_table
 		]);
+
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
@@ -370,7 +383,7 @@ class UserBehavior extends Behavior {
 
 		$result = $this->_getUser($token, [
 			'field' => $options['tokenField'],
-			'notFoundErrorMessage' => __d('user_tools', 'Invalid token.')
+			'notFoundErrorMessage' => __d('burzum/user_tools', 'Invalid token!')
 		]);
 
 		$time = new Time();
@@ -462,73 +475,6 @@ class UserBehavior extends Behavior {
 	}
 
 	/**
-	 * Generates a random password that is more or less user friendly.
-	 *
-	 * @param int $length Password length, default is 8
-	 * @param array $options Options array.
-	 * @return string
-	 */
-	public function generatePassword($length = 8, $options = []) {
-		$options = $this->_passwordDictionary($options);
-		$password = '';
-
-		srand((double) microtime() * 1000000);
-		for ($i = 0; $i < $length; $i++) {
-			$password .=
-				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
-				$options['vowels'][mt_rand(0, count($options['vowels']) - 1)];
-		}
-
-		return substr($password, 0, $length);
-	}
-
-	/**
-	 * The dictionary of vowels and consonants for the password generation.
-	 *
-	 * @param array $options
-	 * @return array
-	 */
-	public function _passwordDictionary(array $options = []) {
-		$defaults = [
-			'vowels' => [
-				'a', 'e', 'i', 'o', 'u'
-			],
-			'cons' => [
-				'b', 'c', 'd', 'g', 'h', 'j', 'k', 'l', 'm', 'n',
-				'p', 'r', 's', 't', 'u', 'v', 'w', 'tr', 'cr', 'br', 'fr', 'th',
-				'dr', 'ch', 'ph', 'wr', 'st', 'sp', 'sw', 'pr', 'sl', 'cl'
-			]
-		];
-		if (isset($options['cons'])) {
-			unset($defaults['cons']);
-		}
-		if (isset($options['vowels'])) {
-			unset($defaults['vowels']);
-		}
-		return Hash::merge($defaults, $options);
-	}
-
-	/**
-	 * Generate token used by the user registration system
-	 *
-	 * @param integer $length Token Length
-	 * @param string $chars
-	 * @return string
-	 */
-	public function generateToken($length = 10, $chars = '0123456789abcdefghijklmnopqrstuvwxyz') {
-		$token = '';
-		$i = 0;
-		while ($i < $length) {
-			$char = substr($chars, mt_rand(0, strlen($chars) - 1), 1);
-			if (!stristr($token, $char)) {
-				$token .= $char;
-				$i++;
-			}
-		}
-		return $token;
-	}
-
-	/**
 	 * Removes all users from the user table that did not complete the registration
 	 *
 	 * @param array $conditions
@@ -555,10 +501,10 @@ class UserBehavior extends Behavior {
 	/**
 	 * Changes the password for an user.
 	 *
-	 * @param \Cake\ORM\Entity $entity User entity
+	 * @param \Cake\Datasource\EntityInterface $entity User entity
 	 * @return boolean
 	 */
-	public function changePassword(Entity $entity) {
+	public function changePassword(EntityInterface $entity) {
 		if ($entity->errors()) {
 			return false;
 		}
@@ -567,83 +513,6 @@ class UserBehavior extends Behavior {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * Configures the validator with rules for the password change
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationChangePassword($validator) {
-		$validator->provider('userBehavior', $this);
-		$validator = $this->validationPassword($validator);
-		$validator = $this->validationConfirmPassword($validator);
-		$validator = $this->validationOldPassword($validator);
-		return $validator;
-	}
-
-	/**
-	 * Configures the validator with rules to check the old password
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	protected function validationOldPassword($validator) {
-		$validator->provider('userBehavior', $this);
-
-		$validator->provider('userTable', $this->_table);
-		$validator->add('old_password', 'notBlank', [
-			'rule' => 'notBlank',
-			'message' => __d('user_tools', 'Enter your old password.')
-		]);
-		$validator->add('old_password', 'oldPassword', [
-			'rule' => ['validateOldPassword', 'password'],
-			'provider' => 'userBehavior',
-			'message' => __d('user_tools', 'Wrong password, please try again.')
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validation method for the old password.
-	 *
-	 * @param mixed $value
-	 * @param string $field
-	 * @param mixed $context
-	 * @return boolean
-	 */
-	public function validateOldPassword($value, $field, $context) {
-		if (Configure::read('debug') > 0 && empty($context['data'][$this->_table->primaryKey()])) {
-			throw new \RuntimeException('The user id is required as well to validate the old password!');
-		}
-
-		$result = $this->_table->find()
-			->select([
-				$this->_field('password')
-			])
-			->where([
-				$this->_table->primaryKey() => $context['data'][$this->_table->primaryKey()],
-			])
-			->first();
-
-		if (!$result) {
-			return false;
-		}
-		return $this->passwordHasher()->check($value, $result->password);
-	}
-
-	/**
-	 * Validation rules for the password reset request.
-	 *
-	 * @param \Cake\Validation\Validator $validator
-	 * @return \Cake\Validation\Validator
-	 * @see Burzum\UserTools\Controller\Component\UserToolComponent::requestPassword()
-	 */
-	public function validationRequestPassword(Validator $validator) {
-		$validator = $this->_table->validationDefault($validator);
-		$validator->remove($this->_field('email'), 'unique');
-		return $validator;
 	}
 
 	/**
@@ -665,7 +534,7 @@ class UserBehavior extends Behavior {
 		$result = $this->_getUser($value, $options);
 
 		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'User not found.'));
+			throw new RecordNotFoundException(__d('burzum/user_tools', 'User not found.'));
 		}
 
 		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
@@ -736,20 +605,26 @@ class UserBehavior extends Behavior {
 	 * more secure approach is to have the user manually enter a new password and
 	 * only send him an URL with a token.
 	 *
-	 * @param string $email
-	 * @param array $options
+	 * @param string|EntityInterface $email The user entity or the email
+	 * @param array $options Optional options array, use it to pass config options.
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
 	 * @return boolean
 	 */
 	public function sendNewPassword($email, $options = []) {
-		$result = $this->_table->find()
-			->where([
-				$this->_table->alias() . '.' . $this->_field('email') => $email
-			])
-			->first();
-		if (empty($result)) {
-			throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+		if ($email instanceof EntityInterface) {
+			$result = $email;
+			$email = $result->{$this->_field('email')};
+		} else {
+			$result = $this->_table->find()
+				->where([
+					$this->_table->alias() . '.' . $this->_field('email') => $email
+				])
+				->first();
+			if (empty($result)) {
+				throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
+			}
 		}
+
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
 		$this->_table->save($result, ['validate' => false]);
@@ -770,234 +645,39 @@ class UserBehavior extends Behavior {
 	}
 
 	/**
-	 * Returns an email instance
+	 * sendNewPasswordEmail
 	 *
-	 * @param array $config
-	 * @return \Cake\Mailer\Email;
-	 */
-	public function getMailInstance($config = null) {
-		if (empty($config)) {
-			$config = $this->_config['emailConfig'];
-		}
-		return new Email($config);
-	}
-
-	/**
-	 * sendEmail
-	 *
+	 * @param \Cake\Datasource\EntityInterface $user
 	 * @param array $options
 	 * @return array
 	 */
-	public function sendEmail($options = []) {
-		$Email = $this->getMailInstance();
-		foreach ($options as $option => $value) {
-			$Email->{$option}($value);
-		}
-		return $Email->send();
+	public function sendPasswordResetToken(EntityInterface $user, $options = []) {
+		$options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
+		$this->getMailer($this->config('mailer'))->send('passwordResetToken', [$user, $options]);
 	}
 
 	/**
 	 * sendNewPasswordEmail
 	 *
-	 * @param \Cake\ORM\Entity $user
-	 * @param array $options
-	 * @return array
-	 */
-	public function sendPasswordResetToken(Entity $user, $options = []) {
-		$defaults = [
-			'subject' => __d('user_tools', 'Your password reset'),
-			'viewVars' => [
-				'user' => $user
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendPasswordResetToken'], $options));
-	}
-
-	/**
-	 * sendNewPasswordEmail
-	 *
-	 * @param \Cake\ORM\Entity $user
+	 * @param \Cake\Datasource\EntityInterface $user
 	 * @param array $options
 	 * @return bool
 	 */
-	public function sendNewPasswordEmail(Entity $user, $options = []) {
-		$defaults = [
-			'subject' => __d('user_tools', 'Your new password'),
-			'viewVars' => [
-				'user' => $user
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendNewPasswordEmail'], $options));
+	public function sendNewPasswordEmail(EntityInterface $user, $options = []) {
+		$options = Hash::merge($this->_config['sendNewPasswordEmail'], $options);
+		$this->getMailer($this->config('mailer'))->send('verificationEmail', [$user, $options]);
 	}
 
 	/**
 	 * sendVerificationEmail
 	 *
-	 * @param \Cake\ORM\Entity $data
+	 * @param \Cake\Datasource\EntityInterface $user
 	 * @param array $options
 	 * @return array
 	 */
-	public function sendVerificationEmail(Entity $data, $options = []) {
-		$defaults = [
-			'subject' => __d('user_tools', 'Please verify your Email'),
-			'viewVars' => [
-				'user' => $data
-			]
-		];
-		return $this->sendEmail(Hash::merge($defaults, $this->_config['sendVerificationEmail'], $options));
+	public function sendVerificationEmail(EntityInterface $user, $options = []) {
+		$options = Hash::merge($this->_config['sendVerificationEmail'], $options);
+		$this->getMailer($this->config('mailer'))->send('verificationEmail', [$user, $options]);
 	}
 
-	/**
-	 * Validates the password reset.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationPasswordReset(Validator $validator) {
-		return $this->validateOldPassword($validator)
-			->validatePassword($validator)
-			->validateConfirmPassword($validator);
-	}
-
-	/**
-	 * Validates the username field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationUserName(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
-
-		$validator->add($this->_field('username'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'An username is required.')
-			],
-			'length' => [
-				'rule' => ['lengthBetween', 3, 32],
-				'message' => __d('user_tools', 'The username must be between 3 and 32 characters.')
-			],
-			'unique' => [
-				'rule' => ['validateUnique', ['scope' => 'username']],
-				'provider' => 'userTable',
-				'message' => __d('user_tools', 'The username is already in use.')
-			],
-			'alphaNumeric' => [
-				'rule' => 'alphaNumeric',
-				'message' => __d('user_tools', 'The username must be alpha numeric.')
-			]
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validates the email field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationEmail(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
-
-		$validator->add($this->_field('email'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'An email is required.')
-			],
-			'unique' => [
-				'rule' => ['validateUnique', [
-					'scope' => $this->_field('email')
-				]],
-				'provider' => 'table',
-				'message' => __d('user_tools', 'The email is already in use.')
-			],
-			'validEmail' => [
-				'rule' => 'email',
-				'message' => __d('user_tools', 'Must be a valid email address.')
-			]
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validates the password field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationPassword(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
-
-		$validator->add($this->_field('password'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'A password is required.')
-			],
-			'minLength' => [
-				'rule' => ['minLength', 6],
-				'message' => __d('user_tools', 'The password must have at least 6 characters.')
-			],
-			'confirmPassword' => [
-				'rule' => ['compareFields', 'confirm_password'],
-				'message' => __d('user_tools', 'The passwords don\'t match!'),
-				'provider' => 'userTable',
-			]
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Validates the confirm_password field.
-	 *
-	 * Override it as needed to change the rules for only that field.
-	 *
-	 * @param \Cake\Validation\Validator
-	 * @return \Cake\Validation\Validator
-	 */
-	public function validationConfirmPassword(Validator $validator) {
-		$validator->provider('userBehavior', $this);
-
-		$validator->add($this->_field('passwordCheck'), [
-			'notBlank' => [
-				'rule' => 'notBlank',
-				'message' => __d('user_tools', 'A password is required.')
-			],
-			'minLength' => [
-				'rule' => ['minLength', 6],
-				'message' => __d('user_tools', 'The password must have at least 6 characters.')
-			],
-			'confirmPassword' => [
-				'rule' => ['compareFields', 'password'],
-				'message' => __d('user_tools', 'The passwords don\'t match!'),
-				'provider' => 'userBehavior',
-			]
-		]);
-		return $validator;
-	}
-
-	/**
-	 * Compares the value of two fields.
-	 *
-	 * @param mixed $value
-	 * @param string $field
-	 * @param Entity $context
-	 * @return boolean
-	 */
-	public function compareFields($value, $field, $context) {
-		if (!isset($context['data'][$field])) {
-			return true;
-		}
-		if ($value === $context['data'][$field]) {
-			return true;
-		}
-		return false;
-	}
 }

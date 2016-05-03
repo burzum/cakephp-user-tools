@@ -234,36 +234,36 @@ class UserToolComponent extends Component {
 	protected function _translateConfigMessages() {
 		return [
 			'requestPassword' => [
-				'successMessage' => __d('user_tools', 'An email was send to your address, please check your inbox.'),
-				'errorMessage' => __d('user_tools', 'Invalid user.'),
+				'successMessage' => __d('burzum/user_tools', 'An email was send to your address, please check your inbox.'),
+				'errorMessage' => __d('burzum/user_tools', 'Invalid user.'),
 			],
 			'resetPassword' => [
-				'successMessage' => __d('user_tools', 'Your password has been reset, you can now login.'),
-				'errorMessage' => __d('user_tools', 'Please check your inputs.'),
-				'invalidErrorMessage' => __d('user_tools', 'Invalid token!'),
-				'expiredErrorMessage' => __d('user_tools', 'The token has expired!')
+				'successMessage' => __d('burzum/user_tools', 'Your password has been reset, you can now login.'),
+				'errorMessage' => __d('burzum/user_tools', 'Please check your inputs.'),
+				'invalidErrorMessage' => __d('burzum/user_tools', 'Invalid token!'),
+				'expiredErrorMessage' => __d('burzum/user_tools', 'The token has expired!')
 			],
 			'changePassword' => [
-				'successMessage' => __d('user_tools', 'Your password has been updated.'),
-				'errorMessage' => __d('user_tools', 'Could not update your password, please check for errors and try again.'),
+				'successMessage' => __d('burzum/user_tools', 'Your password has been updated.'),
+				'errorMessage' => __d('burzum/user_tools', 'Could not update your password, please check for errors and try again.'),
 			],
 			'registration' => [
-				'successMessage' => __d('user_tools', 'Thank you for signing up!'),
-				'errorMessage' => __d('user_tools', 'Please check your inputs'),
+				'successMessage' => __d('burzum/user_tools', 'Thank you for signing up!'),
+				'errorMessage' => __d('burzum/user_tools', 'Please check your inputs'),
 			],
 			'login' => [
-				'successMessage' => __d('user_tools', 'You are logged in!'),
-				'errorMessage' => __d('user_tools', 'Invalid login credentials.'),
+				'successMessage' => __d('burzum/user_tools', 'You are logged in!'),
+				'errorMessage' => __d('burzum/user_tools', 'Invalid login credentials.'),
 			],
 			'logout' => [
-				'successMessage' => __d('user_tools', 'You are logged out!'),
+				'successMessage' => __d('burzum/user_tools', 'You are logged out!'),
 			],
 			'verifyEmailToken' => [
-				'successMessage' => __d('user_tools', 'Email verified, you can now login!'),
-				'errorMessage' => __d('user_tools', 'Invalid email token!'),
+				'successMessage' => __d('burzum/user_tools', 'Email verified, you can now login!'),
+				'errorMessage' => __d('burzum/user_tools', 'Invalid email token!'),
 			],
 			'verifyToken' => [
-				'successMessage' => __d('user_tools', 'Token verified!'),
+				'successMessage' => __d('burzum/user_tools', 'Token verified!'),
 			]
 		];
 	}
@@ -661,7 +661,7 @@ class UserToolComponent extends Component {
 	 * @param array $options Options array
 	 * @return bool
 	 */
-	protected function _initPasswordReset(Entity $entity, $options) {
+	protected function _initPasswordReset(EntityInterface $entity, $options) {
 		try {
 			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
 			$this->handleFlashAndRedirect('success', $options);
@@ -766,7 +766,7 @@ class UserToolComponent extends Component {
 		$options = Hash::merge($this->_defaultConfig['verifyToken'], $options);
 
 		if (!isset($this->request->query[$options['queryParam']])) {
-			throw new NotFoundException(__d('user_tools', 'No token present!'));
+			throw new NotFoundException(__d('burzum/user_tools', 'No token present!'));
 		}
 
 		$methodName = 'verify' . $options['type'] . 'Token';

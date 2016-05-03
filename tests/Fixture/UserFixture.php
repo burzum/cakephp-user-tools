@@ -12,13 +12,13 @@ use Cake\TestSuite\Fixture\TestFixture;
  */
 class UserFixture extends TestFixture {
 
-/**
- * Fields
- *
- * @var array
- */
+	/**
+	 * Fields
+	 *
+	 * @var array
+	 */
 	public $fields = [
-		'id' => ['type' => 'string', 'null' => false, 'length' => 36],
+		'id' => ['type' => 'uuid', 'length' => null, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null],
 		'username' => ['type' => 'string', 'null' => false, 'default' => null],
 		'slug' => ['type' => 'string', 'null' => true, 'default' => null],
 		'password' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 128],
@@ -37,17 +37,21 @@ class UserFixture extends TestFixture {
 		'created' => ['type' => 'datetime', 'null' => true, 'default' => null],
 		'modified' => ['type' => 'datetime', 'null' => true, 'default' => null],
 		'_constraints' => [
-			'primary' => ['type' => 'primary', 'columns' => ['id']],
+			'primary' => ['type' => 'primary', 'columns' => ['id'], 'length' => []],
 			'unique_username' => ['type' => 'unique', 'columns' => ['username']],
 			'unique_email' => ['type' => 'unique', 'columns' => ['email']]
-		]
+		],
+		'_options' => [
+			'engine' => 'InnoDB',
+			'collation' => 'utf8_general_ci'
+		],
 	];
 
-/**
- * Records
- *
- * @var array
- */
+	/**
+	 * Records
+	 *
+	 * @var array
+	 */
 	public $records = [
 		[
 			'id' => '1',

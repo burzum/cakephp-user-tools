@@ -15,6 +15,15 @@ Requirements
 * CakePHP 3.0+
 * PHP 5.4.19
 
+Complementary plugins
+---------------------
+
+The following plugins are not required but are a suggestions if you're looking for additional user related things.
+
+ * [Cookie Auth](https://github.com/Xety/Cake3-CookieAuth) - A cookie Auth adapter
+ * [JWT Auth](https://github.com/ADmad/cakephp-jwt-auth) - A JWT Auth adapter
+ * [Simple RBAC](https://github.com/burzum/cakephp-simple-rbac) - An easy to use role based authorization adapter
+
 Documentation
 -------------
 
