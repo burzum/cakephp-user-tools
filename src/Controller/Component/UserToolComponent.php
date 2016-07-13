@@ -663,7 +663,7 @@ class UserToolComponent extends Component {
 	 */
 	protected function _initPasswordReset(EntityInterface $entity, $options) {
 		try {
-			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
+			$this->UserTable->initPasswordReset($this->request->data[$options['field']], $options);
 			$this->handleFlashAndRedirect('success', $options);
 			if ($options['setEntity']) {
 				$this->_setViewVar('userEntity', $entity);

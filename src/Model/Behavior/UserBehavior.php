@@ -574,6 +574,9 @@ class UserBehavior extends Behavior {
 			'notFoundErrorMessage' => __d('user_tools', 'User not found.'),
 			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
 		];
+		if (isset($options['field'])) {
+			$defaults['field'] = $options['field'];
+		}
 		$options = Hash::merge($defaults, $options);
 
 		$query = $this->_table->find();
