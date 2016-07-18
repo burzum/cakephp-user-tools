@@ -443,7 +443,10 @@ class UserToolComponent extends Component {
 	 * @return mixed
 	 */
 	protected function _afterLogin($user, array $options) {
-		$event = new Event('User.afterLogin', $this, ['options' => $options]);
+		$event = new Event('User.afterLogin', $this, [
+			'user' => $user,
+			'options' => $options
+		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
