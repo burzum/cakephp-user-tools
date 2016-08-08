@@ -678,8 +678,8 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendPasswordResetToken(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
-		die(debug($this->getMailer($this->config('mailer'))
-			->send('passwordResetToken', [$user, $options])));
+		$this->getMailer($this->config('mailer'))
+			->send('passwordResetToken', [$user, $options]);
 	}
 
 	/**
