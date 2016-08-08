@@ -44,6 +44,7 @@ class UserBehavior extends Behavior {
 		'passwordHasher' => 'Default',
 		'mailer' => 'Burzum\UserTools\Mailer\UsersMailer',
 		'passwordMinLength' => 6,
+		'getUser' => [],
 		'register' => [
 			'defaultRole' => null,
 			'hashPassword' => true,
@@ -541,7 +542,7 @@ class UserBehavior extends Behavior {
 		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
 
 		$this->_table->save($result, ['checkRules' => false]);
-		return $this->sendPasswordResetToken($result, [
+		$this->sendPasswordResetToken($result, [
 			'to' => $result->{$this->_field('email')}
 		]);
 	}
@@ -574,20 +575,14 @@ class UserBehavior extends Behavior {
 			'notFoundErrorMessage' => __d('user_tools', 'User not found.'),
 			'field' => $this->_table->alias() . '.' . $this->_table->primaryKey()
 		];
+		$defaults = Hash::merge($defaults, $this->config('getUser'));
+
 		if (isset($options['field'])) {
 			$defaults['field'] = $options['field'];
 		}
 		$options = Hash::merge($defaults, $options);
 
-		$query = $this->_table->find();
-
-		if (is_array($options['field'])) {
-			foreach ($options['field'] as $field) {
-				$query->orWhere([$field => $value]);
-			}
-		} else {
-			$query->where([$options['field'] => $value]);
-		}
+		$query = $this->_getFindUserQuery($value, $options);
 
 		if (isset($options['queryCallback']) && is_callable($options['queryCallback'])) {
 			$query = $options['queryCallback']($query, $options);
@@ -598,7 +593,33 @@ class UserBehavior extends Behavior {
 		if (empty($result)) {
 			throw new RecordNotFoundException($options['notFoundErrorMessage']);
 		}
+
 		return $result;
+	}
+
+	/**
+	 * Sets the query object for the _getUser() method up.
+	 *
+	 * @param array|string $value
+	 * @param array $options Options.
+	 * @return \Cake\ORM\Query
+	 */
+	protected function _getFindUserQuery($value, $options) {
+		if (is_string($value) && $this->_table->hasFinder($value, ['getUserOptions' => $options])) {
+			$query = $this->_table->find($value);
+		} else {
+			$query = $this->_table->find();
+		}
+
+		if (is_array($options['field'])) {
+			foreach ($options['field'] as $field) {
+				$query->orWhere([$field => $value]);
+			}
+		} else {
+			$query->where([$options['field'] => $value]);
+		}
+
+		return $query;
 	}
 
 	/**
@@ -631,6 +652,7 @@ class UserBehavior extends Behavior {
 		$result->password = $result->clear_password = $this->generatePassword();
 		$result->password = $this->hashPassword($result->password);
 		$this->_table->save($result, ['validate' => false]);
+
 		return $this->sendNewPasswordEmail($result, ['to' => $result->{$this->_field('email')}]);
 	}
 
@@ -656,7 +678,8 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendPasswordResetToken(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
-		$this->getMailer($this->config('mailer'))->send('passwordResetToken', [$user, $options]);
+		die(debug($this->getMailer($this->config('mailer'))
+			->send('passwordResetToken', [$user, $options])));
 	}
 
 	/**
@@ -668,7 +691,8 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendNewPasswordEmail(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendNewPasswordEmail'], $options);
-		$this->getMailer($this->config('mailer'))->send('verificationEmail', [$user, $options]);
+		$this->getMailer($this->config('mailer'))
+			->send('verificationEmail', [$user, $options]);
 	}
 
 	/**
@@ -680,7 +704,8 @@ class UserBehavior extends Behavior {
 	 */
 	public function sendVerificationEmail(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendVerificationEmail'], $options);
-		$this->getMailer($this->config('mailer'))->send('verificationEmail', [$user, $options]);
+		$this->getMailer($this->config('mailer'))
+			->send('verificationEmail', [$user, $options]);
 	}
 
 }
