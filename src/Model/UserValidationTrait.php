@@ -1,8 +1,9 @@
 <?php
 namespace Burzum\UserTools\Model;
 
-use RuntimeException;
+use Cake\Core\Configure;
 use Cake\Validation\Validator;
+use RuntimeException;
 
 trait UserValidationTrait {
 
