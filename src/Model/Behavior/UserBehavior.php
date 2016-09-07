@@ -233,7 +233,10 @@ class UserBehavior extends Behavior {
 	protected function _beforeRegister(Entity $entity, $options = []) {
 		$options = Hash::merge($this->_config['register'], $options);
 
-		if ($this->_config['useUuid'] === true) {
+		$schema = $this->_table->schema();
+		$columnType = $schema->columnType($this->_table->primaryKey());
+
+		if ($this->_config['useUuid'] === true && $columnType !== 'integer') {
 			$primaryKey = $this->_table->primaryKey();
 			$entity->{$primaryKey} = Text::uuid();
 		}
