@@ -443,7 +443,10 @@ class UserToolComponent extends Component {
 	 * @return mixed
 	 */
 	protected function _afterLogin($user, array $options) {
-		$event = new Event('User.afterLogin', $this, ['options' => $options]);
+		$event = new Event('User.afterLogin', $this, [
+			'user' => $user,
+			'options' => $options
+		]);
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
@@ -663,7 +666,7 @@ class UserToolComponent extends Component {
 	 */
 	protected function _initPasswordReset(EntityInterface $entity, $options) {
 		try {
-			$this->UserTable->initPasswordReset($this->request->data[$options['field']]);
+			$this->UserTable->initPasswordReset($this->request->data[$options['field']], $options);
 			$this->handleFlashAndRedirect('success', $options);
 			if ($options['setEntity']) {
 				$this->_setViewVar('userEntity', $entity);
