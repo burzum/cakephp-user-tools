@@ -734,7 +734,7 @@ class UserToolComponent extends Component {
 		$entity->accessible([
 			'id',
 			'old_password',
-			'new_password',
+			'password',
 			'confirm_password'
 		], true);
 
