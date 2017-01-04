@@ -621,7 +621,13 @@ class UserToolComponent extends Component {
 	 * @return mixed
 	 */
 	public function verifyEmailToken($options = []) {
-		return $this->verifyToken(Hash::merge($this->_defaultConfig['verifyEmailToken'], $options, ['type' => 'Email']));
+		$options = Hash::merge(
+			$this->config('verifyEmailToken'),
+			$options,
+			['type' => 'Email']
+		);
+
+		return $this->verifyToken($options);
 	}
 
 	/**
@@ -773,6 +779,7 @@ class UserToolComponent extends Component {
 		}
 
 		$methodName = 'verify' . $options['type'] . 'Token';
+
 		try {
 			$result = $this->UserTable->$methodName($this->request->query[$options['queryParam']]);
 			$this->handleFlashAndRedirect('success', $options);
@@ -803,6 +810,7 @@ class UserToolComponent extends Component {
 			$Auth = $this->_registry->load('Auth', $this->config('auth'));
 			$Auth->request = $this->request;
 			$Auth->response = $this->response;
+
 			return $Auth;
 		} else {
 			return $this->_registry->Auth;
@@ -820,6 +828,7 @@ class UserToolComponent extends Component {
 		if ($viewVar === false) {
 			return;
 		}
+
 		$this->_controller->set($viewVar, $entity);
 	}
 }

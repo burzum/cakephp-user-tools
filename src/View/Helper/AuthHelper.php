@@ -70,7 +70,7 @@ class AuthHelper extends Helper {
 	}
 
 /**
- * Convinience method to the the user data in any case as array.
+ * Convenience method to the the user data in any case as array.
  *
  * This is mostly done because accessing the Entity object via Hash() caused an error when passing an object.
  *
