@@ -7,7 +7,17 @@ User Tools Plugin for CakePHP 3.0
 
 The **UserTools** plugin provides you the building blocks for everything around users. It comes with a CRUD kick start through the [UserToolComponent](src/Controller/Component/UserToolComponent.php) and the [UserBehavior](src/Model/Behavior/UserBehavior.php). Just load the component and you have a working login and registration. Customize it as you like through configuration or use only what you really need.
 
-The plugin is built in a way that you can only use what you really need from it and helps you to avoid to repeat the registration process in each app for example. The plugin should be flexible enough to adapt to almost every use case through configuration options.
+The plugin is built in a way that you can only use what you really need from it and helps you to avoid to repeat the registration process in each app for example. The plugin should be flexible enough to adapt to almost every use case through configuration options and can be used in tiny pieces.
+
+Features
+------------
+* User Validation Trait for common user related validation (password, change password...)
+* Password Hasher Trait to get the password hashing functionality in one line for saving new or updated passwords
+* Password and Token Trait to generate passwords and tokens
+* A UserTools behavior that adds a lot of common user related methods
+* A UserTool component to get a quick start for login and registration
+
+If you miss something please create a ticket on Github!
 
 Requirements
 ------------
