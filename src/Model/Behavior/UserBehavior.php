@@ -10,6 +10,7 @@
 namespace Burzum\UserTools\Model\Behavior;
 
 use Burzum\UserTools\Model\PasswordAndTokenTrait;
+use Burzum\UserTools\Model\PasswordHasherTrait;
 use Burzum\UserTools\Model\UserValidationTrait;
 use Cake\Auth\AbstractPasswordHasher;
 use Cake\Auth\PasswordHasherFactory;
@@ -33,6 +34,7 @@ class UserBehavior extends Behavior {
 	use MailerAwareTrait;
 	use UserValidationTrait;
 	use PasswordAndTokenTrait;
+	use PasswordHasherTrait;
 
 	/**
 	 * Default config
@@ -114,13 +116,6 @@ class UserBehavior extends Behavior {
 	protected $_table;
 
 	/**
-	 * AbstractPasswordHasher instance.
-	 *
-	 * @var AbstractPasswordHasher
-	 */
-	protected $_passwordHasher;
-
-	/**
 	 * Constructor
 	 *
 	 * @param \Cake\ORM\Table $table The table this behavior is attached to.
@@ -129,6 +124,8 @@ class UserBehavior extends Behavior {
 	public function __construct(Table $table, array $config = []) {
 		$this->_defaultConfig = Hash::merge($this->_defaultConfig, (array) Configure::read('UserTools.Behavior'));
 		parent::__construct($table, $config);
+
+		$this->_defaultPasswordHasher = $this->config('passwordHasher');
 		$this->_table = $table;
 
 		if ($this->_config['defaultValidation'] === true) {
@@ -195,16 +192,6 @@ class UserBehavior extends Behavior {
 			);
 		}
 		return false;
-	}
-
-	/**
-	 * Hashes a password
-	 *
-	 * @param $password
-	 * @return string Hash
-	 */
-	public function hashPassword($password) {
-		return $this->getPasswordHasher()->hash($password);
 	}
 
 	/**
@@ -676,41 +663,6 @@ class UserBehavior extends Behavior {
 		$this->_table->save($result, ['validate' => false]);
 
 		return $this->sendNewPasswordEmail($result, ['to' => $result->get($this->_field('email'))]);
-	}
-
-	/**
-	 * Return password hasher object
-	 *
-	 * @return \Cake\Auth\AbstractPasswordHasher Password hasher instance
-	 * @throws \RuntimeException If password hasher class not found or it does not extend AbstractPasswordHasher
-	 * @deprecated Use getPasswordHasher() instead
-	 */
-	public function passwordHasher() {
-		return $this->getPasswordHasher();
-	}
-
-	/**
-	 * Sets a password hasher object
-	 *
-	 * @param \Cake\Auth\AbstractPasswordHasher $passwordHasher
-	 * @return void
-	 */
-	public function setPasswordHasher(AbstractPasswordHasher $passwordHasher) {
-		$this->_passwordHasher = $passwordHasher;
-	}
-
-	/**
-	 * Return password hasher object
-	 *
-	 * @return \Cake\Auth\AbstractPasswordHasher Password hasher instance
-	 * @throws \RuntimeException If password hasher class not found or it does not extend AbstractPasswordHasher
-	 */
-	public function getPasswordHasher() {
-		if ($this->_passwordHasher) {
-			return $this->_passwordHasher;
-		}
-
-		return $this->_passwordHasher = PasswordHasherFactory::build($this->_config['passwordHasher']);
 	}
 
 	public function beforeSave(Event $event, EntityInterface $entity) {
