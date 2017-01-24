@@ -12,8 +12,6 @@ namespace Burzum\UserTools\Model\Behavior;
 use Burzum\UserTools\Model\PasswordAndTokenTrait;
 use Burzum\UserTools\Model\PasswordHasherTrait;
 use Burzum\UserTools\Model\UserValidationTrait;
-use Cake\Auth\AbstractPasswordHasher;
-use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
