@@ -10,8 +10,8 @@
 namespace Burzum\UserTools\Model\Behavior;
 
 use Burzum\UserTools\Model\PasswordAndTokenTrait;
+use Burzum\UserTools\Model\PasswordHasherTrait;
 use Burzum\UserTools\Model\UserValidationTrait;
-use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
@@ -24,6 +24,7 @@ use Cake\ORM\Table;
 use Cake\ORM\Entity;
 use Cake\Utility\Hash;
 use Cake\Utility\Text;
+use RuntimeException;
 
 class UserBehavior extends Behavior {
 
@@ -31,6 +32,7 @@ class UserBehavior extends Behavior {
 	use MailerAwareTrait;
 	use UserValidationTrait;
 	use PasswordAndTokenTrait;
+	use PasswordHasherTrait;
 
 	/**
 	 * Default config
@@ -66,6 +68,7 @@ class UserBehavior extends Behavior {
 			'password' => 'password',
 			'email' => 'email',
 			'passwordCheck' => 'confirm_password',
+			'oldPassword' => 'old_password',
 			'lastAction' => 'last_action',
 			'lastLogin' => 'last_login',
 			'role' => 'role',
@@ -76,6 +79,9 @@ class UserBehavior extends Behavior {
 			'passwordTokenExpires' => 'password_token_expires',
 			'active' => 'active',
 			'slug' => 'slug',
+		],
+		'beforeSave' => [
+			'handleNewPasswordByOldPassword' => false
 		],
 		'updateLastActivity' => [
 			'dateFormat' => 'Y-m-d H:i:s',
@@ -108,13 +114,6 @@ class UserBehavior extends Behavior {
 	protected $_table;
 
 	/**
-	 * AbstractPasswordHasher instance.
-	 *
-	 * @var AbstractPasswordHasher
-	 */
-	protected $_passwordHasher;
-
-	/**
 	 * Constructor
 	 *
 	 * @param \Cake\ORM\Table $table The table this behavior is attached to.
@@ -123,6 +122,8 @@ class UserBehavior extends Behavior {
 	public function __construct(Table $table, array $config = []) {
 		$this->_defaultConfig = Hash::merge($this->_defaultConfig, (array) Configure::read('UserTools.Behavior'));
 		parent::__construct($table, $config);
+
+		$this->_defaultPasswordHasher = $this->config('passwordHasher');
 		$this->_table = $table;
 
 		if ($this->_config['defaultValidation'] === true) {
@@ -141,7 +142,7 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _field($field) {
 		if (!isset($this->_config['fieldMap'][$field])) {
-			throw new \RuntimeException(__d('user_tools', 'Invalid field "%s"!', $field));
+			throw new RuntimeException(__d('user_tools', 'Invalid field "%s"!', $field));
 		}
 		return $this->_config['fieldMap'][$field];
 	}
@@ -181,7 +182,7 @@ class UserBehavior extends Behavior {
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
 		$options = Hash::merge($this->_config['updateLastActivity'], $options);
 		if ($this->_table->exists([
-			$this->_table->alias() . '.' . $this->_table->primaryKey() => $userId
+			$this->_table->aliasField($this->_table->primaryKey()) => $userId
 		])) {
 			return $this->_table->updateAll(
 				[$field => date($options['dateFormat'])],
@@ -189,16 +190,6 @@ class UserBehavior extends Behavior {
 			);
 		}
 		return false;
-	}
-
-	/**
-	 * Hashes a password
-	 *
-	 * @param $password
-	 * @return string Hash
-	 */
-	public function hashPassword($password) {
-		return $this->passwordHasher()->hash($password);
 	}
 
 	/**
@@ -210,13 +201,13 @@ class UserBehavior extends Behavior {
 	 */
 	protected function _emailVerification(EntityInterface &$entity, $options) {
 		if ($options['emailVerification'] === true) {
-			$entity->{$this->_field('emailToken')} = $this->generateToken($options['tokenLength']);
+			$entity->set($this->_field('emailToken'), $this->generateToken($options['tokenLength']));
 			if ($options['verificationExpirationTime'] !== false) {
-				$entity->{$this->_field('emailTokenExpires')} = $this->expirationTime($options['verificationExpirationTime']);
+				$entity->set($this->_field('emailTokenExpires'), $this->expirationTime($options['verificationExpirationTime']));
 			}
-			$entity->{$this->_field('emailVerified')} = false;
+			$entity->set($this->_field('emailVerified'), false);
 		} else {
-			$entity->{$this->_field('emailVerified')} = true;
+			$entity->set($this->_field('emailVerified'), true);
 		}
 	}
 
@@ -238,27 +229,27 @@ class UserBehavior extends Behavior {
 
 		if ($this->_config['useUuid'] === true && $columnType !== 'integer') {
 			$primaryKey = $this->_table->primaryKey();
-			$entity->{$primaryKey} = Text::uuid();
+			$entity->set($primaryKey, Text::uuid());
 		}
 
 		if ($options['userActive'] === true) {
-			$entity->{$this->_field('active')} = true;
+			$entity->set($this->_field('active'), true);
 		}
 
 		$this->_emailVerification($entity, $options);
 
 		if (!isset($entity->{$this->_field('role')})) {
-			$entity->{$this->_field('role')} = $options['defaultRole'];
+			$entity->set($this->_field('role'), $options['defaultRole']);
 		}
 
 		if ($options['generatePassword'] === true) {
 			$password = $this->generatePassword();
-			$entity->{$this->_field('password')} = $password;
-			$entity->clear_password = $password;
+			$entity->set($this->_field('password'), $password);
+			$entity->set('clear_password', $password);
 		}
 
 		if ($options['hashPassword'] === true) {
-			$entity->{$this->_field('password')} = $this->hashPassword($entity->{$this->_field('password')});
+			$entity->set($this->_field('password'), $this->hashPassword($entity->get($this->_field('password'))));
 		}
 
 		return $entity;
@@ -362,10 +353,11 @@ class UserBehavior extends Behavior {
 		if ($entity) {
 			if ($options['emailVerification'] === true) {
 				$this->sendVerificationEmail($entity, array(
-					'to' => $entity->{$this->_field('email')}
+					'to' => $entity->get($this->_field('email'))
 				));
 			}
 		}
+
 		return $entity;
 	}
 
@@ -407,6 +399,7 @@ class UserBehavior extends Behavior {
 		if ($options['returnData'] === true) {
 			return $result;
 		}
+
 		return $result->token_is_expired;
 	}
 
@@ -442,6 +435,7 @@ class UserBehavior extends Behavior {
 			'tokenField' => $this->_field('emailToken'),
 			'expirationField' => $this->_field('emailTokenExpires'),
 		];
+
 		return $this->verifyToken($token, Hash::merge($defaults, $options));
 	}
 
@@ -459,6 +453,7 @@ class UserBehavior extends Behavior {
 			'expirationField' => $this->_field('passwordTokenExpires'),
 			'returnData' => true,
 		);
+
 		return $this->verifyToken($token, Hash::merge($defaults, $options));
 	}
 
@@ -512,10 +507,14 @@ class UserBehavior extends Behavior {
 		if ($entity->errors()) {
 			return false;
 		}
-		$entity->password = $this->hashPassword($entity->password);
+
+		$field = $this->_field('password');
+		$entity->set($field, $this->hashPassword($entity->get($field)));
+
 		if ($this->_table->save($entity)) {
 			return true;
 		}
+
 		return false;
 	}
 
@@ -529,8 +528,8 @@ class UserBehavior extends Behavior {
 	public function initPasswordReset($value, $options = []) {
 		$defaults = [
 			'field' => [
-				$this->_table->alias() . '.' . $this->_field('email'),
-				$this->_table->alias() . '.' . $this->_field('username')
+				$this->_table->aliasField($this->_field('email')),
+				$this->_table->aliasField($this->_field('username'))
 			]
 		];
 
@@ -541,12 +540,15 @@ class UserBehavior extends Behavior {
 			throw new RecordNotFoundException(__d('burzum/user_tools', 'User not found.'));
 		}
 
-		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
-		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
+		$result->set($this->_field('passwordToken'), $this->generateToken($options['tokenLength']));
+		$result->set($this->_field('passwordTokenExpires'), $this->expirationTime($options['expires']));
 
-		$this->_table->save($result, ['checkRules' => false]);
+		if (!$this->_table->save($result, ['checkRules' => false])) {
+			new RuntimeException('Could not initialize password reset. Data could not be saved.');
+		}
+
 		$this->sendPasswordResetToken($result, [
-			'to' => $result->{$this->_field('email')}
+			'to' => $result->get($this->_field('email'))
 		]);
 	}
 
@@ -640,11 +642,11 @@ class UserBehavior extends Behavior {
 	public function sendNewPassword($email, $options = []) {
 		if ($email instanceof EntityInterface) {
 			$result = $email;
-			$email = $result->{$this->_field('email')};
+			$email = $result->get($this->_field('email'));
 		} else {
 			$result = $this->_table->find()
 				->where([
-					$this->_table->alias() . '.' . $this->_field('email') => $email
+					$this->_table->aliasField($this->_field('email')) => $email
 				])
 				->first();
 			if (empty($result)) {
@@ -652,24 +654,47 @@ class UserBehavior extends Behavior {
 			}
 		}
 
-		$result->password = $result->clear_password = $this->generatePassword();
-		$result->password = $this->hashPassword($result->password);
+		$password = $this->generatePassword();
+		$result->set('clear_password', $password);
+		$result->set($this->_field('password'), $this->hashPassword($password));
+
 		$this->_table->save($result, ['validate' => false]);
 
-		return $this->sendNewPasswordEmail($result, ['to' => $result->{$this->_field('email')}]);
+		return $this->sendNewPasswordEmail($result, ['to' => $result->get($this->_field('email'))]);
+	}
+
+	public function beforeSave(Event $event, EntityInterface $entity) {
+		$config = (array)$this->config('beforeSave');
+		if ($config['handleNewPasswordByOldPassword'] === true) {
+			$this->handleNewPasswordByOldPassword($entity);
+		}
 	}
 
 	/**
-	 * Return password hasher object
+	 * Handles the hashing of the password after the old password of the user
+	 * was verified and the new password was validated as well.
 	 *
-	 * @return \Cake\Auth\AbstractPasswordHasher Password hasher instance
-	 * @throws \RuntimeException If password hasher class not found or it does not extend AbstractPasswordHasher
+	 * Call this in your models beforeSave() or wherever else you want.
+	 *
+	 * This method will unset by default the `password` and `confirm_password`
+	 * fields if no `old_password` was provided or the entity has validation
+	 * errors.
+	 *
+	 * @param \Cake\Datasource\EntityInterface $user
+	 * @return void
 	 */
-	public function passwordHasher() {
-		if ($this->_passwordHasher) {
-			return $this->_passwordHasher;
+	public function handleNewPasswordByOldPassword(EntityInterface $user) {
+		$oldPassword = $user->get('old_password');
+
+		if (empty($oldPassword) || $user->errors()) {
+			$user->unsetProperty($this->_field('password'));
+			$user->unsetProperty($this->_field('passwordCheck'));
+
+			return;
 		}
-		return $this->_passwordHasher = PasswordHasherFactory::build($this->_config['passwordHasher']);
+
+		$newPassword = $this->hashPassword($user->get($this->_field('password')));
+		$user->set($this->_field('password'), $newPassword);
 	}
 
 	/**

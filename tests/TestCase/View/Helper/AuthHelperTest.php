@@ -1,6 +1,8 @@
 <?php
 namespace Burzum\UserTools\Test\TestCase\View\Helper;
 
+use Cake\Network\Request;
+use Cake\Network\Session;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
 use Cake\ORM\Entity;
@@ -23,7 +25,11 @@ class AuthHelperTestCase extends TestCase {
 	public function setUp() {
 		parent::setUp();
 		$this->View = new View(null);
-		$this->View->request = $this->getMock('\Cake\Network\Request', ['session']);
+
+		$this->View->request = $this->getMockBuilder(Request::class)
+			->setMethods(['session'])
+			->getMock();
+
 		$this->View->viewVars = array(
 			'userData' => new Entity([
 				'id' => 'user-1',
@@ -139,7 +145,7 @@ class AuthHelperTestCase extends TestCase {
 	 * @return void
 	 */
 	public function testSetupUserData() {
-		$session = $this->getMock('\Cake\Network\Session');
+		$session = $this->getMockBuilder(Session::class)->getMock();
 		$session->expects($this->at(0))
 			->method('read')
 			->with('SomeUserData')
