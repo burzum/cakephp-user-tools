@@ -542,7 +542,7 @@ class UserBehavior extends Behavior {
 		$defaults = [
 			'field' => [
 				$this->_table->aliasField($this->_field('email')),
-				$this->_table->alias($this->_field('username'))
+				$this->_table->aliasField($this->_field('username'))
 			]
 		];
 
@@ -553,12 +553,15 @@ class UserBehavior extends Behavior {
 			throw new RecordNotFoundException(__d('burzum/user_tools', 'User not found.'));
 		}
 
-		$result->{$this->_field('passwordToken')} = $this->generateToken($options['tokenLength']);
-		$result->{$this->_field('passwordTokenExpires')} = $this->expirationTime($options['expires']);
+		$result->set($this->_field('passwordToken'), $this->generateToken($options['tokenLength']));
+		$result->set($this->_field('passwordTokenExpires'), $this->expirationTime($options['expires']));
 
-		$this->_table->save($result, ['checkRules' => false]);
+		if (!$this->_table->save($result, ['checkRules' => false])) {
+			new RuntimeException('Could not initialize password reset. Data could not be saved.');
+		}
+
 		$this->sendPasswordResetToken($result, [
-			'to' => $result->{$this->_field('email')}
+			'to' => $result->get($this->_field('email'))
 		]);
 	}
 
