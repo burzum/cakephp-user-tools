@@ -148,7 +148,7 @@ trait UserValidationTrait {
 	 *
 	 * @param \Cake\Validation\Validator $validator
 	 * @return \Cake\Validation\Validator
-	 * @see Burzum\UserTools\Controller\Component\UserToolComponent::requestPassword()
+	 * @see \Burzum\UserTools\Controller\Component\UserToolComponent::requestPassword()
 	 */
 	public function validationRequestPassword(Validator $validator) {
 		$validator = $this->_table->validationDefault($validator);
@@ -195,6 +195,9 @@ trait UserValidationTrait {
 	/**
 	 * Validation method for the old password.
 	 *
+	 * This method will hash the old password and compare it to the stored hash
+	 * in the database. You don't have to hash it manually before validating.
+	 *
 	 * @param mixed $value
 	 * @param string $field
 	 * @param mixed $context
@@ -207,7 +210,7 @@ trait UserValidationTrait {
 
 		$result = $this->_table->find()
 			->select([
-				$this->_field('password')
+				$this->_table->aliasField($field)
 			])
 			->where([
 				$this->_table->primaryKey() => $context['data'][$this->_table->primaryKey()],
@@ -217,7 +220,8 @@ trait UserValidationTrait {
 		if (!$result) {
 			return false;
 		}
-		return $this->passwordHasher()->check($value, $result->password);
+
+		return $this->getPasswordHasher()->check($value, $result->get($field));
 	}
 
 	/**

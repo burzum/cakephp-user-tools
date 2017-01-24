@@ -11,6 +11,7 @@ namespace Burzum\UserTools\Model\Behavior;
 
 use Burzum\UserTools\Model\PasswordAndTokenTrait;
 use Burzum\UserTools\Model\UserValidationTrait;
+use Cake\Auth\AbstractPasswordHasher;
 use Cake\Auth\PasswordHasherFactory;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
@@ -67,6 +68,7 @@ class UserBehavior extends Behavior {
 			'password' => 'password',
 			'email' => 'email',
 			'passwordCheck' => 'confirm_password',
+			'oldPassword' => 'old_password',
 			'lastAction' => 'last_action',
 			'lastLogin' => 'last_login',
 			'role' => 'role',
@@ -202,7 +204,7 @@ class UserBehavior extends Behavior {
 	 * @return string Hash
 	 */
 	public function hashPassword($password) {
-		return $this->passwordHasher()->hash($password);
+		return $this->getPasswordHasher()->hash($password);
 	}
 
 	/**
@@ -681,8 +683,29 @@ class UserBehavior extends Behavior {
 	 *
 	 * @return \Cake\Auth\AbstractPasswordHasher Password hasher instance
 	 * @throws \RuntimeException If password hasher class not found or it does not extend AbstractPasswordHasher
+	 * @deprecated Use getPasswordHasher() instead
 	 */
 	public function passwordHasher() {
+		return $this->getPasswordHasher();
+	}
+
+	/**
+	 * Sets a password hasher object
+	 *
+	 * @param \Cake\Auth\AbstractPasswordHasher $passwordHasher
+	 * @return void
+	 */
+	public function setPasswordHasher(AbstractPasswordHasher $passwordHasher) {
+		$this->_passwordHasher = $passwordHasher;
+	}
+
+	/**
+	 * Return password hasher object
+	 *
+	 * @return \Cake\Auth\AbstractPasswordHasher Password hasher instance
+	 * @throws \RuntimeException If password hasher class not found or it does not extend AbstractPasswordHasher
+	 */
+	public function getPasswordHasher() {
 		if ($this->_passwordHasher) {
 			return $this->_passwordHasher;
 		}
