@@ -684,7 +684,12 @@ class UserBehavior extends Behavior {
 	 * @return void
 	 */
 	public function handleNewPasswordByOldPassword(EntityInterface $user) {
-		$oldPassword = $user->get('old_password');
+		// Don't do it for new users or the password will end up empty
+		if ($user->isNew()) {
+			return;
+		}
+
+		$oldPassword = $user->get($this->_field('oldPassword'));
 
 		if (empty($oldPassword) || $user->errors()) {
 			$user->unsetProperty($this->_field('password'));
