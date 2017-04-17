@@ -35,7 +35,7 @@ Configure::write('UserTools.Behavior', [/* Config goes here */]);
 * **defaultRole**: Used for a role, default is null, enter a string if you want a default role
 * **hashPassword**: Hash the password or not, default is true
 * **userActive**: Use the `active` field or not. By default users are set to active.
-* **generatePassword**: Generate and send the password instead of using token verification, default is false
+* **generatePassword**: Generate and send the password instead of using token verification, default is false. Applies to password reset only.
 * **emailVerification**: Email verification process via token, default is true
 * **verificationExpirationTime:** Email token expiration time, strtotime() compatible string, default is +1 day
 
