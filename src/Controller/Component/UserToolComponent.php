@@ -734,11 +734,10 @@ class UserToolComponent extends Component {
 	 * @return void
 	 */
 	public function changePassword($options = []) {
-		$options = (Hash::merge($this->config('changePassword'), $options));
+		$options = Hash::merge($this->config('changePassword'), $options);
 
 		$entity = $this->UserTable->newEntity();
 		$entity->accessible([
-			'id',
 			'old_password',
 			'password',
 			'new_password',
@@ -746,22 +745,20 @@ class UserToolComponent extends Component {
 		], true);
 
 		if ($this->request->is(['post', 'put'])) {
-			$this->request->data['id'] = $this->_getAuthObject()->user('id');
+			$entity = $this->UserTable->get($this->_getAuthObject()->user('id'));
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
 				'validate' => 'changePassword'
 			]);
-			$entity->id = $this->_controller->Auth->user('id');
-			$entity->isNew(false);
+
 			if ($this->UserTable->changePassword($entity)) {
 				$this->request->data = [];
 				$entity = $this->UserTable->newEntity();
-				$entity->id = $this->_controller->Auth->user('id');
-				$entity->isNew(false);
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
+
 		$this->_setViewVar('entity', $entity);
 	}
 

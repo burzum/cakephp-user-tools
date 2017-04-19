@@ -26,6 +26,9 @@ use Cake\Utility\Hash;
 use Cake\Utility\Text;
 use RuntimeException;
 
+/**
+ * User Behavior
+ */
 class UserBehavior extends Behavior {
 
 	use EventDispatcherTrait;
@@ -81,7 +84,12 @@ class UserBehavior extends Behavior {
 			'slug' => 'slug',
 		],
 		'beforeSave' => [
+			// Enable this only if you're not using the built in password change
+			// and want the password hash to be updated automatically
 			'handleNewPasswordByOldPassword' => false
+		],
+		'changePassword' => [
+			'hashPassword' => true
 		],
 		'updateLastActivity' => [
 			'dateFormat' => 'Y-m-d H:i:s',
@@ -501,21 +509,22 @@ class UserBehavior extends Behavior {
 	 * Changes the password for an user.
 	 *
 	 * @param \Cake\Datasource\EntityInterface $entity User entity
+	 * @param array $options Options
 	 * @return boolean
 	 */
-	public function changePassword(EntityInterface $entity) {
+	public function changePassword(EntityInterface $entity, array $options = []) {
+		$options = Hash::merge($this->_config['changePassword'], $options);
+
 		if ($entity->errors()) {
 			return false;
 		}
 
-		$field = $this->_field('password');
-		$entity->set($field, $this->hashPassword($entity->get($field)));
-
-		if ($this->_table->save($entity)) {
-			return true;
+		if ($options['hashPassword'] === true) {
+			$field = $this->_field('password');
+			$entity->set($field, $this->hashPassword($entity->get($field)));
 		}
 
-		return false;
+		return (bool)$this->_table->save($entity);
 	}
 
 	/**
@@ -663,6 +672,13 @@ class UserBehavior extends Behavior {
 		return $this->sendNewPasswordEmail($result, ['to' => $result->get($this->_field('email'))]);
 	}
 
+	/**
+	 * beforeSave callback
+	 *
+	 * @param \Cake\Event\Event $event
+	 * @param \Cake\Datasource\EntityInterface
+	 * @return void
+	 */
 	public function beforeSave(Event $event, EntityInterface $entity) {
 		$config = (array)$this->config('beforeSave');
 		if ($config['handleNewPasswordByOldPassword'] === true) {
