@@ -15,8 +15,8 @@ use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\EventManagerTrait;
 use Cake\Event\Event;
+use Cake\Http\Response;
 use Cake\Network\Exception\NotFoundException;
-use Cake\Network\Response;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
 
@@ -101,16 +101,24 @@ class UserToolComponent extends Component {
 			'setEntity' => true,
 		],
 		'resetPassword' => [
-			'successFlashOptions' => [],
-			'successRedirectUrl' => '/',
-			'errorFlashOptions' => [],
-			'errorRedirectUrl' => false,
-			'invalidErrorFlashOptions' => [],
-			'invalidErrorRedirectUrl' => '/',
-			'expiredErrorFlashOptions' => [],
-			'expiredErrorRedirectUrl' => '/',
 			'queryParam' => 'token',
 			'tokenOptions' => [],
+			// Success
+			'successFlashOptions' => [],
+			'successRedirectUrl' => '/',
+			// Normal error
+			'errorFlashOptions' => [],
+			'errorRedirectUrl' => false,
+			// Invalid Token error
+			'invalidErrorFlashOptions' => [
+				'element' => 'Flash/error'
+			],
+			'invalidErrorRedirectUrl' => '/',
+			// Token expired error
+			'expiredErrorFlashOptions' => [
+				'element' => 'Flash/error'
+			],
+			'expiredErrorRedirectUrl' => '/'
 		],
 		'changePassword' => [
 			'successFlashOptions' => [],
@@ -697,33 +705,48 @@ class UserToolComponent extends Component {
 		if (!empty($this->request->query[$options['queryParam']])) {
 			$token = $this->request->query[$options['queryParam']];
 		}
+
+		// Check of the token exists
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
 		} catch (RecordNotFoundException $e) {
-			if (empty($options['invalidErrorMessage'])) {
-				$options['invalidErrorMessage'] = $e->getMessage();
+			if (empty($options['errorMessage']) && $options['errorMessage'] !== false) {
+				$options['errorMessage'] = $e->getMessage();
 			}
-			$this->handleFlashAndRedirect('invalidError', $options);
+
+			$redirect = $this->handleFlashAndRedirect('invalidError', $options);
+			if ($redirect instanceof Response) {
+				return $redirect;
+			}
 			$entity = $this->UserTable->newEntity();
 		}
 
-		if (isset($entity->token_is_expired) && $entity->token_is_expired === true) {
+		// Check if the token has expired
+		if ($entity->get('token_is_expired') === true) {
 			if (empty($options['invalidErrorMessage'])) {
 				$options['invalidErrorMessage'] = $e->getMessage();
 			}
 			$this->handleFlashAndRedirect('expiredError', $options);
+			if ($redirect instanceof Response) {
+				return $redirect;
+			}
 		}
 
+		// Handle the POST
 		if ($this->request->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
 			if ($this->UserTable->resetPassword($entity)) {
-				$this->handleFlashAndRedirect('success', $options);
+				$redirect = $this->handleFlashAndRedirect('success', $options);
 			} else {
-				$this->handleFlashAndRedirect('error', $options);
+				$redirect = $this->handleFlashAndRedirect('error', $options);
+			}
+			if ($redirect instanceof Response) {
+				return $redirect;
 			}
 		} else {
 			$entity = $this->UserTable->newEntity();
 		}
+
 		$this->_setViewVar('entity', $entity);
 	}
 

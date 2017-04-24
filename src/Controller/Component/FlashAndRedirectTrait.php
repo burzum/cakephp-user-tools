@@ -44,6 +44,8 @@ trait FlashAndRedirectTrait {
 			$this->_redirectResponse = $result;
 			return $result;
 		}
+
+		$this->_redirectResponse = false;
 		return false;
 	}
 
@@ -61,7 +63,13 @@ trait FlashAndRedirectTrait {
 				if (isset($options[$type . 'FlashOptions'])) {
 					$flashOptions = $options[$type . 'FlashOptions'];
 				}
-				$this->Flash->$type($options[$type . 'Message'], $flashOptions);
+
+				if (method_exists($this->Flash, $type)) {
+					$this->Flash->$type($options[$type . 'Message'], $flashOptions);
+				} else {
+					$this->Flash->set($options[$type . 'Message'], $flashOptions);
+				}
+
 				return true;
 			}
 		}
