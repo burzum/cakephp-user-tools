@@ -391,7 +391,7 @@ class UserBehavior extends Behavior {
 		]);
 
 		$time = new Time();
-		$result->token_is_expired = $result->{$options['expirationField']} <= $time;
+		$result->set('token_is_expired', $result->get($options['expirationField']) <= $time);
 
 		$this->afterTokenVerification($result, $options);
 
@@ -399,6 +399,7 @@ class UserBehavior extends Behavior {
 			'data' => $result,
 			'options' => $options
 		]);
+
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return (bool) $event->result;

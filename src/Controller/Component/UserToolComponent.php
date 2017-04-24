@@ -726,7 +726,7 @@ class UserToolComponent extends Component {
 			if (empty($options['invalidErrorMessage'])) {
 				$options['invalidErrorMessage'] = $e->getMessage();
 			}
-			$this->handleFlashAndRedirect('expiredError', $options);
+			$redirect = $this->handleFlashAndRedirect('expiredError', $options);
 			if ($redirect instanceof Response) {
 				return $redirect;
 			}
