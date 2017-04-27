@@ -373,7 +373,8 @@ class UserToolComponent extends Component {
 		if (!method_exists($this, $action)) {
 			return false;
 		}
-		$result = $this->{$action}();
+		$pass = (array)$this->request->getParam('pass');
+		$result = call_user_func_array([$this, $action], $pass);
 		if ($result instanceof Response) {
 			return $result;
 		}
@@ -389,7 +390,8 @@ class UserToolComponent extends Component {
 	protected function _mapAction($action) {
 		$actionMap = $this->config('actionMap');
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
-			$this->{$actionMap[$action]['method']}();
+			$pass = (array)$this->request->getParam('pass');
+			call_user_func_array([$this, $actionMap[$action]['method']], $pass);
 			if ($this->_redirectResponse instanceof Response) {
 				return $this->_redirectResponse;
 			}
@@ -700,7 +702,7 @@ class UserToolComponent extends Component {
 	 * @return void
 	 */
 	public function resetPassword($token = null, $options = []) {
-		$options = (Hash::merge($this->config('resetPassword'), $options));
+		$options = Hash::merge($this->config('resetPassword'), $options);
 
 		if (!empty($this->request->query[$options['queryParam']])) {
 			$token = $this->request->query[$options['queryParam']];
