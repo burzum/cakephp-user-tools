@@ -23,7 +23,6 @@ Requirements
 ------------
 
 * CakePHP 3.0+
-* PHP 5.4.19
 
 Complementary plugins
 ---------------------
