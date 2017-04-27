@@ -409,7 +409,7 @@ class UserBehavior extends Behavior {
 			return $result;
 		}
 
-		return $result->token_is_expired;
+		return $result->get('token_is_expired');
 	}
 
 	/**
@@ -420,14 +420,19 @@ class UserBehavior extends Behavior {
 	 * @return mixed
 	 */
 	public function afterTokenVerification(Entity $user, $options = []) {
-		if ($user->token_is_expired === true) {
+		if ($user->get('token_is_expired') === true) {
 			return false;
 		}
 		if ($options['tokenField'] === $this->_field('emailToken')) {
-			$user->{$this->_field('emailVerified')} = 1;
-			$user->{$this->_field('emailToken')} = null;
-			$user->{$this->_field('emailTokenExpires')} = null;
+			$user->set([
+				$user->{$this->_field('emailVerified')} => true,
+				$user->{$this->_field('emailToken')} => null,
+				$user->{$this->_field('emailTokenExpires')} => null
+			], [
+				'guard' => false
+			]);
 		}
+
 		return $this->_table->save($user, ['validate' => false]);
 	}
 
