@@ -13,7 +13,7 @@ use Cake\Controller\Component;
 use Cake\Controller\ComponentRegistry;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
-use Cake\Event\EventManagerTrait;
+use Cake\Event\EventDispatcherTrait;
 use Cake\Event\Event;
 use Cake\Http\Response;
 use Cake\Network\Exception\NotFoundException;
@@ -22,7 +22,7 @@ use Cake\Utility\Hash;
 
 class UserToolComponent extends Component {
 
-	use EventManagerTrait;
+	use EventDispatcherTrait;
 	use FlashAndRedirectTrait;
 
 	/**
@@ -206,7 +206,7 @@ class UserToolComponent extends Component {
 	/**
 	 * Response object
 	 *
-	 * @var \Cake\Network\Response
+	 * @var \Cake\Http\Response
 	 */
 	public $response = null;
 
@@ -367,17 +367,20 @@ class UserToolComponent extends Component {
 
 	/**
 	 * @param string $action
-	 * @return \Cake\Network\Response A response object containing the rendered view.
+	 * @return \Cake\Http\Response|bool A response object containing the rendered view.
 	 */
 	protected function _directMapping($action) {
 		if (!method_exists($this, $action)) {
 			return false;
 		}
+
 		$pass = (array)$this->request->getParam('pass');
 		$result = call_user_func_array([$this, $action], $pass);
+
 		if ($result instanceof Response) {
 			return $result;
 		}
+
 		return $this->_controller->render($action);
 	}
 
