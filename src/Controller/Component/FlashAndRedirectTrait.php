@@ -14,7 +14,7 @@ trait FlashAndRedirectTrait {
 	 * Helper property to detect a redirect
 	 *
 	 * @see UserToolComponent::handleFlashAndRedirect();
-	 * @var \Cake\Network\Response
+	 * @var \Cake\Http\Response|null
 	 */
 	protected $_redirectResponse = null;
 
@@ -45,7 +45,8 @@ trait FlashAndRedirectTrait {
 			return $result;
 		}
 
-		$this->_redirectResponse = false;
+		$this->_redirectResponse = null;
+
 		return false;
 	}
 

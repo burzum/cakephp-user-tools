@@ -117,7 +117,7 @@ class UserBehavior extends Behavior {
 	 * Keeping a reference to the table in order to be able to retrieve associations
 	 * and fetch records for counting.
 	 *
-	 * @var array
+	 * @var \Cake\ORM\Table
 	 */
 	protected $_table;
 
