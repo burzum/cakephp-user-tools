@@ -649,10 +649,14 @@ class UserToolComponent extends Component {
 	 */
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->config('requestPassword'), $options);
-		$entity = $this->UserTable->newEntity(null, ['validate' => 'requestPassword']);
+		$entity = $this->UserTable->newEntity(null, [
+			'validate' => 'requestPassword'
+		]);
 
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'requestPassword']);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
+				'validate' => 'requestPassword'
+			]);
 
 			if (!$entity->errors($options['field']) && $this->_initPasswordReset($entity, $options)) {
 				return true;
@@ -687,10 +691,12 @@ class UserToolComponent extends Component {
 			if ($options['setEntity']) {
 				$this->_setViewVar('userEntity', $entity);
 			}
+
 			return true;
 		} catch (RecordNotFoundException $e) {
 			$this->handleFlashAndRedirect('error', $options);
 		}
+
 		return false;
 	}
 
