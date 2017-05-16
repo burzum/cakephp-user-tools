@@ -423,11 +423,12 @@ class UserBehavior extends Behavior {
 		if ($user->get('token_is_expired') === true) {
 			return false;
 		}
+
 		if ($options['tokenField'] === $this->_field('emailToken')) {
 			$user->set([
-				$user->{$this->_field('emailVerified')} => true,
-				$user->{$this->_field('emailToken')} => null,
-				$user->{$this->_field('emailTokenExpires')} => null
+				$this->_field('emailVerified') => true,
+				$this->_field('emailToken') => null,
+				$this->_field('emailTokenExpires') => null
 			], [
 				'guard' => false
 			]);
