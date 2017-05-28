@@ -395,15 +395,24 @@ class UserToolComponent extends Component {
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
 			$pass = (array)$this->request->getParam('pass');
 			call_user_func_array([$this, $actionMap[$action]['method']], $pass);
+
 			if ($this->_redirectResponse instanceof Response) {
 				return $this->_redirectResponse;
 			}
+
 			if (is_string($actionMap[$action]['view'])) {
-				return $this->_controller->render($actionMap[$action]['view']);
+				try {
+					return $this->_controller->render($this->_controller->request->getParam('action'));
+				} catch (MissingTemplateException $e) {
+					return $this->_controller->render($actionMap[$action]['view']);
+				}
+
+				return true;
 			} else {
 				return $this->response;
 			}
 		}
+
 		return false;
 	}
 
