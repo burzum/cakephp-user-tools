@@ -3,7 +3,7 @@
  * UserToolComponent
  *
  * @author Florian Krämer
- * @copyright 2013 - 2016 Florian Krämer
+ * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Controller\Component;
@@ -19,6 +19,7 @@ use Cake\Http\Response;
 use Cake\Network\Exception\NotFoundException;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
+use Cake\View\Exception\MissingTemplateException;
 
 class UserToolComponent extends Component {
 

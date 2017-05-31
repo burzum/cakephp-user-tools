@@ -3,7 +3,7 @@
  * FlashAndRedirectTrait
  *
  * @author Florian Krämer
- * @copyright 2013 - 2016 Florian Krämer
+ * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Controller\Component;
@@ -65,15 +65,15 @@ trait FlashAndRedirectTrait {
 					$flashOptions = $options[$type . 'FlashOptions'];
 				}
 
-				if (method_exists($this->Flash, $type)) {
-					$this->Flash->$type($options[$type . 'Message'], $flashOptions);
-				} else {
+				if (!isset($flashOptions['element'])) {
+					$flashOptions['element'] = $type;
 					$this->Flash->set($options[$type . 'Message'], $flashOptions);
 				}
 
 				return true;
 			}
 		}
+
 		return false;
 	}
 }
