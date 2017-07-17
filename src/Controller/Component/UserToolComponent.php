@@ -3,7 +3,7 @@
  * UserToolComponent
  *
  * @author Florian Krämer
- * @copyright 2013 - 2016 Florian Krämer
+ * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Controller\Component;
@@ -13,16 +13,17 @@ use Cake\Controller\Component;
 use Cake\Controller\ComponentRegistry;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
-use Cake\Event\EventManagerTrait;
+use Cake\Event\EventDispatcherTrait;
 use Cake\Event\Event;
+use Cake\Http\Response;
 use Cake\Network\Exception\NotFoundException;
-use Cake\Network\Response;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
+use Cake\View\Exception\MissingTemplateException;
 
 class UserToolComponent extends Component {
 
-	use EventManagerTrait;
+	use EventDispatcherTrait;
 	use FlashAndRedirectTrait;
 
 	/**
@@ -101,16 +102,24 @@ class UserToolComponent extends Component {
 			'setEntity' => true,
 		],
 		'resetPassword' => [
-			'successFlashOptions' => [],
-			'successRedirectUrl' => '/',
-			'errorFlashOptions' => [],
-			'errorRedirectUrl' => false,
-			'invalidErrorFlashOptions' => [],
-			'invalidErrorRedirectUrl' => '/',
-			'expiredErrorFlashOptions' => [],
-			'expiredErrorRedirectUrl' => '/',
 			'queryParam' => 'token',
 			'tokenOptions' => [],
+			// Success
+			'successFlashOptions' => [],
+			'successRedirectUrl' => '/',
+			// Normal error
+			'errorFlashOptions' => [],
+			'errorRedirectUrl' => false,
+			// Invalid Token error
+			'invalidErrorFlashOptions' => [
+				'element' => 'Flash/error'
+			],
+			'invalidErrorRedirectUrl' => '/',
+			// Token expired error
+			'expiredErrorFlashOptions' => [
+				'element' => 'Flash/error'
+			],
+			'expiredErrorRedirectUrl' => '/'
 		],
 		'changePassword' => [
 			'successFlashOptions' => [],
@@ -198,7 +207,7 @@ class UserToolComponent extends Component {
 	/**
 	 * Response object
 	 *
-	 * @var \Cake\Network\Response
+	 * @var \Cake\Http\Response
 	 */
 	public $response = null;
 
@@ -359,16 +368,20 @@ class UserToolComponent extends Component {
 
 	/**
 	 * @param string $action
-	 * @return \Cake\Network\Response A response object containing the rendered view.
+	 * @return \Cake\Http\Response|bool A response object containing the rendered view.
 	 */
 	protected function _directMapping($action) {
 		if (!method_exists($this, $action)) {
 			return false;
 		}
-		$result = $this->{$action}();
+
+		$pass = (array)$this->request->getParam('pass');
+		$result = call_user_func_array([$this, $action], $pass);
+
 		if ($result instanceof Response) {
 			return $result;
 		}
+
 		return $this->_controller->render($action);
 	}
 
@@ -381,16 +394,26 @@ class UserToolComponent extends Component {
 	protected function _mapAction($action) {
 		$actionMap = $this->config('actionMap');
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
-			$this->{$actionMap[$action]['method']}();
+			$pass = (array)$this->request->getParam('pass');
+			call_user_func_array([$this, $actionMap[$action]['method']], $pass);
+
 			if ($this->_redirectResponse instanceof Response) {
 				return $this->_redirectResponse;
 			}
+
 			if (is_string($actionMap[$action]['view'])) {
-				return $this->_controller->render($actionMap[$action]['view']);
+				try {
+					return $this->_controller->render($this->_controller->request->getParam('action'));
+				} catch (MissingTemplateException $e) {
+					return $this->_controller->render($actionMap[$action]['view']);
+				}
+
+				return true;
 			} else {
 				return $this->response;
 			}
 		}
+
 		return false;
 	}
 
@@ -639,10 +662,14 @@ class UserToolComponent extends Component {
 	 */
 	public function requestPassword($options = []) {
 		$options = Hash::merge($this->config('requestPassword'), $options);
-		$entity = $this->UserTable->newEntity(null, ['validate' => 'requestPassword']);
+		$entity = $this->UserTable->newEntity(null, [
+			'validate' => 'requestPassword'
+		]);
 
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => 'requestPassword']);
+			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
+				'validate' => 'requestPassword'
+			]);
 
 			if (!$entity->errors($options['field']) && $this->_initPasswordReset($entity, $options)) {
 				return true;
@@ -677,10 +704,12 @@ class UserToolComponent extends Component {
 			if ($options['setEntity']) {
 				$this->_setViewVar('userEntity', $entity);
 			}
+
 			return true;
 		} catch (RecordNotFoundException $e) {
 			$this->handleFlashAndRedirect('error', $options);
 		}
+
 		return false;
 	}
 
@@ -692,38 +721,53 @@ class UserToolComponent extends Component {
 	 * @return void
 	 */
 	public function resetPassword($token = null, $options = []) {
-		$options = (Hash::merge($this->config('resetPassword'), $options));
+		$options = Hash::merge($this->config('resetPassword'), $options);
 
 		if (!empty($this->request->query[$options['queryParam']])) {
 			$token = $this->request->query[$options['queryParam']];
 		}
+
+		// Check of the token exists
 		try {
 			$entity = $this->UserTable->verifyPasswordResetToken($token, $options['tokenOptions']);
 		} catch (RecordNotFoundException $e) {
-			if (empty($options['invalidErrorMessage'])) {
-				$options['invalidErrorMessage'] = $e->getMessage();
+			if (empty($options['errorMessage']) && $options['errorMessage'] !== false) {
+				$options['errorMessage'] = $e->getMessage();
 			}
-			$this->handleFlashAndRedirect('invalidError', $options);
+
+			$redirect = $this->handleFlashAndRedirect('invalidError', $options);
+			if ($redirect instanceof Response) {
+				return $redirect;
+			}
 			$entity = $this->UserTable->newEntity();
 		}
 
-		if (isset($entity->token_is_expired) && $entity->token_is_expired === true) {
+		// Check if the token has expired
+		if ($entity->get('token_is_expired') === true) {
 			if (empty($options['invalidErrorMessage'])) {
 				$options['invalidErrorMessage'] = $e->getMessage();
 			}
-			$this->handleFlashAndRedirect('expiredError', $options);
+			$redirect = $this->handleFlashAndRedirect('expiredError', $options);
+			if ($redirect instanceof Response) {
+				return $redirect;
+			}
 		}
 
+		// Handle the POST
 		if ($this->request->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
 			if ($this->UserTable->resetPassword($entity)) {
-				$this->handleFlashAndRedirect('success', $options);
+				$redirect = $this->handleFlashAndRedirect('success', $options);
 			} else {
-				$this->handleFlashAndRedirect('error', $options);
+				$redirect = $this->handleFlashAndRedirect('error', $options);
+			}
+			if ($redirect instanceof Response) {
+				return $redirect;
 			}
 		} else {
 			$entity = $this->UserTable->newEntity();
 		}
+
 		$this->_setViewVar('entity', $entity);
 	}
 
@@ -734,11 +778,10 @@ class UserToolComponent extends Component {
 	 * @return void
 	 */
 	public function changePassword($options = []) {
-		$options = (Hash::merge($this->config('changePassword'), $options));
+		$options = Hash::merge($this->config('changePassword'), $options);
 
 		$entity = $this->UserTable->newEntity();
 		$entity->accessible([
-			'id',
 			'old_password',
 			'password',
 			'new_password',
@@ -746,22 +789,20 @@ class UserToolComponent extends Component {
 		], true);
 
 		if ($this->request->is(['post', 'put'])) {
-			$this->request->data['id'] = $this->_getAuthObject()->user('id');
+			$entity = $this->UserTable->get($this->_getAuthObject()->user('id'));
 			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
 				'validate' => 'changePassword'
 			]);
-			$entity->id = $this->_controller->Auth->user('id');
-			$entity->isNew(false);
+
 			if ($this->UserTable->changePassword($entity)) {
 				$this->request->data = [];
 				$entity = $this->UserTable->newEntity();
-				$entity->id = $this->_controller->Auth->user('id');
-				$entity->isNew(false);
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
+
 		$this->_setViewVar('entity', $entity);
 	}
 

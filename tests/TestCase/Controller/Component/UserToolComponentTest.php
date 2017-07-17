@@ -16,7 +16,7 @@ class UsersController extends Controller {
  * UserToolComponent
  *
  * @author Florian Krämer
- * ]@copyright 2013 - 2016 Florian Krämer
+ * ]@copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
 class UserToolComponentTest extends TestCase {

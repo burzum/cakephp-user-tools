@@ -3,7 +3,7 @@
  * FlashAndRedirectTrait
  *
  * @author Florian Krämer
- * @copyright 2013 - 2016 Florian Krämer
+ * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Controller\Component;
@@ -14,7 +14,7 @@ trait FlashAndRedirectTrait {
 	 * Helper property to detect a redirect
 	 *
 	 * @see UserToolComponent::handleFlashAndRedirect();
-	 * @var \Cake\Network\Response
+	 * @var \Cake\Http\Response|null
 	 */
 	protected $_redirectResponse = null;
 
@@ -44,6 +44,9 @@ trait FlashAndRedirectTrait {
 			$this->_redirectResponse = $result;
 			return $result;
 		}
+
+		$this->_redirectResponse = null;
+
 		return false;
 	}
 
@@ -61,10 +64,16 @@ trait FlashAndRedirectTrait {
 				if (isset($options[$type . 'FlashOptions'])) {
 					$flashOptions = $options[$type . 'FlashOptions'];
 				}
-				$this->Flash->$type($options[$type . 'Message'], $flashOptions);
+
+				if (!isset($flashOptions['element'])) {
+					$flashOptions['element'] = $type;
+					$this->Flash->set($options[$type . 'Message'], $flashOptions);
+				}
+
 				return true;
 			}
 		}
+
 		return false;
 	}
 }

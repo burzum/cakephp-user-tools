@@ -3,7 +3,7 @@
  * UserBehavior
  *
  * @author Florian Krämer
- * @copyright 2013 - 2016 Florian Krämer
+ * @copyright 2013 - 2017 Florian Krämer
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
@@ -26,6 +26,9 @@ use Cake\Utility\Hash;
 use Cake\Utility\Text;
 use RuntimeException;
 
+/**
+ * User Behavior
+ */
 class UserBehavior extends Behavior {
 
 	use EventDispatcherTrait;
@@ -81,7 +84,12 @@ class UserBehavior extends Behavior {
 			'slug' => 'slug',
 		],
 		'beforeSave' => [
+			// Enable this only if you're not using the built in password change
+			// and want the password hash to be updated automatically
 			'handleNewPasswordByOldPassword' => false
+		],
+		'changePassword' => [
+			'hashPassword' => true
 		],
 		'updateLastActivity' => [
 			'dateFormat' => 'Y-m-d H:i:s',
@@ -109,7 +117,7 @@ class UserBehavior extends Behavior {
 	 * Keeping a reference to the table in order to be able to retrieve associations
 	 * and fetch records for counting.
 	 *
-	 * @var array
+	 * @var \Cake\ORM\Table
 	 */
 	protected $_table;
 
@@ -383,7 +391,7 @@ class UserBehavior extends Behavior {
 		]);
 
 		$time = new Time();
-		$result->token_is_expired = $result->{$options['expirationField']} <= $time;
+		$result->set('token_is_expired', $result->get($options['expirationField']) <= $time);
 
 		$this->afterTokenVerification($result, $options);
 
@@ -391,6 +399,7 @@ class UserBehavior extends Behavior {
 			'data' => $result,
 			'options' => $options
 		]);
+
 		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return (bool) $event->result;
@@ -400,7 +409,7 @@ class UserBehavior extends Behavior {
 			return $result;
 		}
 
-		return $result->token_is_expired;
+		return $result->get('token_is_expired');
 	}
 
 	/**
@@ -411,14 +420,20 @@ class UserBehavior extends Behavior {
 	 * @return mixed
 	 */
 	public function afterTokenVerification(Entity $user, $options = []) {
-		if ($user->token_is_expired === true) {
+		if ($user->get('token_is_expired') === true) {
 			return false;
 		}
+
 		if ($options['tokenField'] === $this->_field('emailToken')) {
-			$user->{$this->_field('emailVerified')} = 1;
-			$user->{$this->_field('emailToken')} = null;
-			$user->{$this->_field('emailTokenExpires')} = null;
+			$user->set([
+				$this->_field('emailVerified') => true,
+				$this->_field('emailToken') => null,
+				$this->_field('emailTokenExpires') => null
+			], [
+				'guard' => false
+			]);
 		}
+
 		return $this->_table->save($user, ['validate' => false]);
 	}
 
@@ -501,21 +516,22 @@ class UserBehavior extends Behavior {
 	 * Changes the password for an user.
 	 *
 	 * @param \Cake\Datasource\EntityInterface $entity User entity
+	 * @param array $options Options
 	 * @return boolean
 	 */
-	public function changePassword(EntityInterface $entity) {
+	public function changePassword(EntityInterface $entity, array $options = []) {
+		$options = Hash::merge($this->_config['changePassword'], $options);
+
 		if ($entity->errors()) {
 			return false;
 		}
 
-		$field = $this->_field('password');
-		$entity->set($field, $this->hashPassword($entity->get($field)));
-
-		if ($this->_table->save($entity)) {
-			return true;
+		if ($options['hashPassword'] === true) {
+			$field = $this->_field('password');
+			$entity->set($field, $this->hashPassword($entity->get($field)));
 		}
 
-		return false;
+		return (bool)$this->_table->save($entity);
 	}
 
 	/**
@@ -540,8 +556,12 @@ class UserBehavior extends Behavior {
 			throw new RecordNotFoundException(__d('burzum/user_tools', 'User not found.'));
 		}
 
-		$result->set($this->_field('passwordToken'), $this->generateToken($options['tokenLength']));
-		$result->set($this->_field('passwordTokenExpires'), $this->expirationTime($options['expires']));
+		$result->set([
+			$this->_field('passwordToken') => $this->generateToken($options['tokenLength']),
+			$this->_field('passwordTokenExpires') => $this->expirationTime($options['expires'])
+		], [
+			'guard' => false
+		]);
 
 		if (!$this->_table->save($result, ['checkRules' => false])) {
 			new RuntimeException('Could not initialize password reset. Data could not be saved.');
@@ -649,20 +669,32 @@ class UserBehavior extends Behavior {
 					$this->_table->aliasField($this->_field('email')) => $email
 				])
 				->first();
+
 			if (empty($result)) {
 				throw new RecordNotFoundException(__d('user_tools', 'Invalid user'));
 			}
 		}
 
 		$password = $this->generatePassword();
-		$result->set('clear_password', $password);
-		$result->set($this->_field('password'), $this->hashPassword($password));
+		$result->set([
+			$this->_field('password') => $this->hashPassword($password),
+			'clear_password' => $password
+		], [
+			'guard' => false
+		]);
 
 		$this->_table->save($result, ['validate' => false]);
 
 		return $this->sendNewPasswordEmail($result, ['to' => $result->get($this->_field('email'))]);
 	}
 
+	/**
+	 * beforeSave callback
+	 *
+	 * @param \Cake\Event\Event $event
+	 * @param \Cake\Datasource\EntityInterface
+	 * @return void
+	 */
 	public function beforeSave(Event $event, EntityInterface $entity) {
 		$config = (array)$this->config('beforeSave');
 		if ($config['handleNewPasswordByOldPassword'] === true) {
@@ -699,7 +731,7 @@ class UserBehavior extends Behavior {
 		}
 
 		$newPassword = $this->hashPassword($user->get($this->_field('password')));
-		$user->set($this->_field('password'), $newPassword);
+		$user->set($this->_field('password'), $newPassword, ['guard' => false]);
 	}
 
 	/**

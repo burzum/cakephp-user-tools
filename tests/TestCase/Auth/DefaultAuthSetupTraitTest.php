@@ -17,7 +17,7 @@ class DefaultAuthSetupTraitController extends Controller {
  * DefaultAuthSetupTraitTest
  *
  * @author Florian Kr�mer
- * @copyright 2013 - 2016 Florian Kr�mer
+ * @copyright 2013 - 2017 Florian Kr�mer
  * @license MIT
  */
 class DefaultAuthSetupTraitTest extends TestCase {
