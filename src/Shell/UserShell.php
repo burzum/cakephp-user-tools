@@ -13,7 +13,8 @@ use Cake\Console\Shell;
 use Cake\ORM\TableRegistry;
 use Cake\Datasource\ConnectionManager;
 
-class UserShell extends Shell {
+class UserShell extends Shell
+{
 
 	/**
 	 * Assign $this->connection to the active task if a connection param is set.

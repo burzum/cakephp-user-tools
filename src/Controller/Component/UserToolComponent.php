@@ -17,11 +17,15 @@ use Cake\Event\EventDispatcherTrait;
 use Cake\Event\Event;
 use Cake\Http\Response;
 use Cake\Network\Exception\NotFoundException;
+use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
 use Cake\View\Exception\MissingTemplateException;
 use RuntimeException;
 
+/**
+ * UserToolComponent
+ */
 class UserToolComponent extends Component {
 
 	use EventDispatcherTrait;
@@ -32,10 +36,10 @@ class UserToolComponent extends Component {
 	 *
 	 * @var array
 	 */
-	public $components = array(
+	public $components = [
 		'Session',
 		'Flash',
-	);
+	];
 
 	/**
 	 * Default config
@@ -78,7 +82,6 @@ class UserToolComponent extends Component {
 			'alreadyLoggedInRedirectUrl' => null,
 			'successRedirectUrl' => null,
 			'successFlashOptions' => [],
-			'successRedirectUrl' => null,
 			'errorFlashOptions' => [],
 			'errorRedirectUrl' => false,
 			'setEntity' => true,
@@ -206,20 +209,6 @@ class UserToolComponent extends Component {
 	public $UserTable = null;
 
 	/**
-	 * Response object
-	 *
-	 * @var \Cake\Http\Response
-	 */
-	public $response = null;
-
-	/**
-	 * Convenience property to avoid the need to go through the registry all time.
-	 *
-	 * @var \Cake\Controller\Controller;
-	 */
-	protected $_controller = null;
-
-	/**
 	 * Constructor. Parses the accepted content types accepted by the client using HTTP_ACCEPT
 	 *
 	 * @param ComponentRegistry $registry ComponentRegistry object.
@@ -231,9 +220,16 @@ class UserToolComponent extends Component {
 			$this->_translateConfigMessages(),
 			(array)Configure::read('UserTools.Component')
 		);
-		$this->_controller = $registry->getController();
-		$this->response = $this->_controller->response;
+
 		parent::__construct($registry, $config);
+	}
+
+	protected function _getRequest() {
+		return $this->getController()->request;
+	}
+
+	protected function _getResponse() {
+		return $this->getController()->response;
 	}
 
 	/**
@@ -281,10 +277,11 @@ class UserToolComponent extends Component {
 	/**
 	 * Initializes the component.
 	 *
+	 * @param array $config Config array
 	 * @return void
 	 */
 	public function initialize(array $config) {
-		$this->setUserTable($this->config('userModel'));
+		$this->setUserTable($this->getConfig('userModel'));
 		$this->loadUserBehaviour();
 	}
 
@@ -295,8 +292,8 @@ class UserToolComponent extends Component {
 	 * @return \Cake\ORM\Query
 	 */
 	public function listing($options = []) {
-		$this->_controller->set('users', $this->_controller->paginate($this->UserTable, $options));
-		$this->_controller->set('_serialize', ['users']);
+		$this->getController()->set('users', $this->getController()->paginate($this->UserTable, $options));
+		$this->getController()->set('_serialize', ['users']);
 	}
 
 	/**
@@ -305,9 +302,9 @@ class UserToolComponent extends Component {
 	 * @return void
 	 */
 	public function loadUserBehaviour() {
-		if ($this->config('autoloadBehavior') && !$this->UserTable->hasBehavior('UserTools.User')) {
-			if (is_array($this->config('autoloadBehavior'))) {
-				$this->UserTable->addBehavior('Burzum/UserTools.User', $this->config('autoloadBehavior'));
+		if ($this->getConfig('autoloadBehavior') && !$this->UserTable->hasBehavior('UserTools.User')) {
+			if (is_array($this->getConfig('autoloadBehavior'))) {
+				$this->UserTable->addBehavior('Burzum/UserTools.User', $this->getConfig('autoloadBehavior'));
 			} else {
 				$this->UserTable->addBehavior('Burzum/UserTools.User');
 			}
@@ -323,10 +320,10 @@ class UserToolComponent extends Component {
 	 */
 	public function setUserTable($table = null) {
 		if ($table === null) {
-			$this->UserTable = $this->_controller->{$this->_controller->modelClass};
+			$this->UserTable = $this->getController()->{$this->getController()->modelClass};
 		} else {
 			if (is_object($table)) {
-				if (!is_a($table, '\Cake\ORM\Table')) {
+				if (!is_a($table, Table::class)) {
 					throw new RuntimeException('Passed object is not of type \Cake\ORM\Table!');
 				}
 				$this->UserTable = $table->alias();
@@ -335,7 +332,7 @@ class UserToolComponent extends Component {
 				$this->UserTable = TableRegistry::get($table);
 			}
 		}
-		$this->_controller->set('userTable', $this->UserTable->alias());
+		$this->getController()->set('userTable', $this->UserTable->alias());
 	}
 
 	/**
@@ -346,7 +343,7 @@ class UserToolComponent extends Component {
 	 * @return Response|null
 	 */
 	public function startup(Event $Event) {
-		if ($this->config('actionMapping') === true) {
+		if ($this->getConfig('actionMapping') === true) {
 			$result = $this->mapAction();
 			if ($result instanceof Response) {
 				return $result;
@@ -360,10 +357,11 @@ class UserToolComponent extends Component {
 	 * @return bool|\Cake\Network\Response
 	 */
 	public function mapAction() {
-		$action = $this->request->params['action'];
-		if ($this->config('directMapping') === true) {
+		$action = $this->_getRequest()->params['action'];
+		if ($this->getConfig('directMapping') === true) {
 			$this->_directMapping($action);
 		}
+
 		return $this->_mapAction($action);
 	}
 
@@ -376,14 +374,14 @@ class UserToolComponent extends Component {
 			return false;
 		}
 
-		$pass = (array)$this->request->getParam('pass');
+		$pass = (array)$this->_getRequest()->getParam('pass');
 		$result = call_user_func_array([$this, $action], $pass);
 
 		if ($result instanceof Response) {
 			return $result;
 		}
 
-		return $this->_controller->render($action);
+		return $this->getController()->render($action);
 	}
 
 	/**
@@ -393,9 +391,9 @@ class UserToolComponent extends Component {
 	 * @return bool|\Cake\Network\Response
 	 */
 	protected function _mapAction($action) {
-		$actionMap = $this->config('actionMap');
+		$actionMap = $this->getConfig('actionMap');
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
-			$pass = (array)$this->request->getParam('pass');
+			$pass = (array)$this->_getRequest()->getParam('pass');
 			call_user_func_array([$this, $actionMap[$action]['method']], $pass);
 
 			if ($this->_redirectResponse instanceof Response) {
@@ -404,14 +402,14 @@ class UserToolComponent extends Component {
 
 			if (is_string($actionMap[$action]['view'])) {
 				try {
-					return $this->_controller->render($this->_controller->request->getParam('action'));
+					return $this->getController()->render($this->getController()->request->getParam('action'));
 				} catch (MissingTemplateException $e) {
-					return $this->_controller->render($actionMap[$action]['view']);
+					return $this->getController()->render($actionMap[$action]['view']);
 				}
 
 				return true;
 			} else {
-				return $this->response;
+				return $this->_getResponse();
 			}
 		}
 
@@ -430,7 +428,7 @@ class UserToolComponent extends Component {
 		$Auth = $this->_getAuthObject();
 		if ((bool)$Auth->user()) {
 			if ($options['alreadyLoggedInRedirectUrl'] === null) {
-				$options['alreadyLoggedInRedirectUrl'] = $this->request->referer();
+				$options['alreadyLoggedInRedirectUrl'] = $this->_getRequest()->referer();
 			}
 			$this->handleFlashAndRedirect('alreadyLoggedIn', $options);
 		}
@@ -444,7 +442,7 @@ class UserToolComponent extends Component {
 	 * @return mixed
 	 */
 	protected function _beforeLogin(EntityInterface $entity, array $options) {
-		$entity = $this->UserTable->patchEntity($entity, $this->request->getData(), ['validate' => false]);
+		$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->getData(), ['validate' => false]);
 
 		$event = $this->dispatchEvent('User.beforeLogin', [
 			'options' => $options,
@@ -493,11 +491,11 @@ class UserToolComponent extends Component {
 	 * @return bool
 	 */
 	public function login($options = []) {
-		$options = Hash::merge($this->config('login'), $options);
+		$options = Hash::merge($this->getConfig('login'), $options);
 		$this->_handleUserBeingAlreadyLoggedIn($options);
 		$entity = $this->UserTable->newEntity(null, ['validate' => false]);
 
-		if ($this->request->is('post')) {
+		if ($this->_getRequest()->is('post')) {
 			$user = $this->_beforeLogin($entity, $options);
 			if ($user) {
 				return $this->_afterLogin($user, $options);
@@ -524,17 +522,17 @@ class UserToolComponent extends Component {
 	 * @return mixed
 	 */
 	public function getUser($userId = null, $options = []) {
-		$options = Hash::merge($this->config('getUser'), $options);
+		$options = Hash::merge($this->getConfig('getUser'), $options);
 		if (is_null($userId)) {
-			if (isset($this->request->params['pass'][0])) {
-				$userId = $this->request->params['pass'][0];
+			if (isset($this->_getRequest()->params['pass'][0])) {
+				$userId = $this->_getRequest()->params['pass'][0];
 			}
 		}
 
 		$entity = $this->UserTable->getUser($userId);
 		if ($options['viewVar'] !== false) {
-			$this->_controller->set($options['viewVar'], $entity);
-			$this->_controller->set('_serialize', [$options['viewVar']]);
+			$this->getController()->set($options['viewVar'], $entity);
+			$this->getController()->set('_serialize', [$options['viewVar']]);
 		}
 
 		return $entity;
@@ -551,9 +549,11 @@ class UserToolComponent extends Component {
 		$entity = $this->_getUserEntity($userId);
 		if ($this->UserTable->delete($entity)) {
 			$this->handleFlashAndRedirect('success', $options);
+
 			return true;
 		} else {
 			$this->handleFlashAndRedirect('error', $options);
+
 			return false;
 		}
 	}
@@ -585,12 +585,12 @@ class UserToolComponent extends Component {
 	 * @return \Cake\Network\Response
 	 */
 	public function logout($options = []) {
-		$options = Hash::merge($this->config('logout'), $options);
+		$options = Hash::merge($this->getConfig('logout'), $options);
 		$Auth = $this->_getAuthObject();
 		$user = $Auth->user();
 
 		if (empty($user)) {
-			return $this->_controller->redirect($this->_controller->referer());
+			return $this->getController()->redirect($this->getController()->referer());
 		}
 
 		$logoutRedirect = $Auth->logout();
@@ -618,7 +618,7 @@ class UserToolComponent extends Component {
 	 * @return boolean|null
 	 */
 	public function register($options = []) {
-		$options = Hash::merge($this->config('registration'), $options);
+		$options = Hash::merge($this->getConfig('registration'), $options);
 		if ($options['enabled'] === false) {
 			throw new NotFoundException();
 		}
@@ -626,8 +626,8 @@ class UserToolComponent extends Component {
 		$entity = $this->UserTable->newEntity();
 		// Make the field accessible in the case the default entity class is used.
 		$entity->accessible('confirm_password', true);
-		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->getData(), [
+		if ($this->_getRequest()->is('post')) {
+			$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->getData(), [
 				'validate' => $options['validation']
 			]);
 			if ($this->UserTable->register($entity)) {
@@ -642,6 +642,7 @@ class UserToolComponent extends Component {
 			// For backward compatibility
 			$this->_setViewVar('usersEntity', $entity);
 		}
+
 		return $return;
 	}
 
@@ -653,7 +654,7 @@ class UserToolComponent extends Component {
 	 */
 	public function verifyEmailToken($options = []) {
 		$options = Hash::merge(
-			$this->config('verifyEmailToken'),
+			$this->getConfig('verifyEmailToken'),
 			$options,
 			['type' => 'Email']
 		);
@@ -669,13 +670,13 @@ class UserToolComponent extends Component {
 	 * @return boolean|null
 	 */
 	public function requestPassword($options = []) {
-		$options = Hash::merge($this->config('requestPassword'), $options);
+		$options = Hash::merge($this->getConfig('requestPassword'), $options);
 		$entity = $this->UserTable->newEntity(null, [
 			'validate' => 'requestPassword'
 		]);
 
-		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->getData(), [
+		if ($this->_getRequest()->is('post')) {
+			$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->getData(), [
 				'validate' => 'requestPassword'
 			]);
 
@@ -689,12 +690,13 @@ class UserToolComponent extends Component {
 				}
 				$this->_setViewVar('userEntity', $entity);
 			}
-			unset($this->request->data[$options['field']]);
+			unset($this->_getRequest()->data[$options['field']]);
+
 			return false;
 		}
 
 		if ($options['setEntity']) {
-			$this->_controller->set('userEntity', $entity);
+			$this->getController()->set('userEntity', $entity);
 		}
 	}
 
@@ -707,7 +709,7 @@ class UserToolComponent extends Component {
 	 */
 	protected function _initPasswordReset(EntityInterface $entity, $options) {
 		try {
-			$this->UserTable->initPasswordReset($this->request->getData($options['field']), $options);
+			$this->UserTable->initPasswordReset($this->_getRequest()->getData($options['field']), $options);
 			$this->handleFlashAndRedirect('success', $options);
 			if ($options['setEntity']) {
 				$this->_setViewVar('userEntity', $entity);
@@ -729,10 +731,11 @@ class UserToolComponent extends Component {
 	 * @return void
 	 */
 	public function resetPassword($token = null, $options = []) {
-		$options = Hash::merge($this->config('resetPassword'), $options);
+		$options = Hash::merge($this->getConfig('resetPassword'), $options);
 
-		if (!empty($this->request->query[$options['queryParam']])) {
-			$token = $this->request->query[$options['queryParam']];
+		$tokenParam = $this->_getRequest()->getQuery($options['queryParam']);
+		if (!empty($tokenParam)) {
+			$token = $tokenParam;
 		}
 
 		// Check of the token exists
@@ -762,8 +765,8 @@ class UserToolComponent extends Component {
 		}
 
 		// Handle the POST
-		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data);
+		if ($this->_getRequest()->is('post')) {
+			$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->getData());
 			if ($this->UserTable->resetPassword($entity)) {
 				$redirect = $this->handleFlashAndRedirect('success', $options);
 			} else {
@@ -786,7 +789,7 @@ class UserToolComponent extends Component {
 	 * @return void
 	 */
 	public function changePassword($options = []) {
-		$options = Hash::merge($this->config('changePassword'), $options);
+		$options = Hash::merge($this->getConfig('changePassword'), $options);
 
 		$entity = $this->UserTable->newEntity();
 		$entity->accessible([
@@ -796,14 +799,14 @@ class UserToolComponent extends Component {
 			'confirm_password'
 		], true);
 
-		if ($this->request->is(['post', 'put'])) {
+		if ($this->_getRequest()->is(['post', 'put'])) {
 			$entity = $this->UserTable->get($this->_getAuthObject()->user('id'));
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
+			$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->data, [
 				'validate' => 'changePassword'
 			]);
 
 			if ($this->UserTable->changePassword($entity)) {
-				$this->request->data = [];
+				$this->_getRequest()->data = [];
 				$entity = $this->UserTable->newEntity();
 				$this->handleFlashAndRedirect('success', $options);
 			} else {
@@ -824,14 +827,15 @@ class UserToolComponent extends Component {
 	public function verifyToken($options = []) {
 		$options = Hash::merge($this->_defaultConfig['verifyToken'], $options);
 
-		if (!isset($this->request->query[$options['queryParam']])) {
+		$token = $this->_getRequest()->getQuery($options['queryParam']);
+		if (empty($token)) {
 			throw new NotFoundException(__d('burzum/user_tools', 'No token present!'));
 		}
 
 		$methodName = 'verify' . $options['type'] . 'Token';
 
 		try {
-			$result = $this->UserTable->$methodName($this->request->query[$options['queryParam']]);
+			$result = $this->UserTable->$methodName($token);
 			$this->handleFlashAndRedirect('success', $options);
 		} catch (RecordNotFoundException $e) {
 			if (is_null($options['errorMessage'])) {
@@ -857,9 +861,9 @@ class UserToolComponent extends Component {
 	 */
 	protected function _getAuthObject() {
 		if (!$this->_registry->has('Auth')) {
-			$Auth = $this->_registry->load('Auth', $this->config('auth'));
-			$Auth->request = $this->request;
-			$Auth->response = $this->response;
+			$Auth = $this->_registry->load('Auth', $this->getConfig('auth'));
+			$Auth->request = $this->_getRequest();
+			$Auth->response = $this->_getResponse();
 
 			return $Auth;
 		} else {
@@ -870,7 +874,7 @@ class UserToolComponent extends Component {
 	/**
 	 * Handles the optional setting of view vars within the component.
 	 *
-	 * @param boolean|string $viewVar
+	 * @param bool $viewVar
 	 * @param \Cake\Datesource\EntityInterface
 	 * @return void
 	 */
@@ -879,6 +883,6 @@ class UserToolComponent extends Component {
 			return;
 		}
 
-		$this->_controller->set($viewVar, $entity);
+		$this->getController()->set($viewVar, $entity);
 	}
 }

@@ -5,7 +5,8 @@ use Cake\Core\Configure;
 use Cake\Validation\Validator;
 use RuntimeException;
 
-trait UserValidationTrait {
+trait UserValidationTrait
+{
 
 	/**
 	 * Validates the password reset.
@@ -51,6 +52,7 @@ trait UserValidationTrait {
 				'message' => __d('user_tools', 'The username must be alpha numeric.')
 			]
 		]);
+
 		return $validator;
 	}
 
@@ -82,6 +84,7 @@ trait UserValidationTrait {
 				'message' => __d('user_tools', 'Must be a valid email address.')
 			]
 		]);
+
 		return $validator;
 	}
 
@@ -111,6 +114,7 @@ trait UserValidationTrait {
 				'provider' => 'userTable',
 			]
 		]);
+
 		return $validator;
 	}
 
@@ -140,6 +144,7 @@ trait UserValidationTrait {
 				'provider' => 'userBehavior',
 			]
 		]);
+
 		return $validator;
 	}
 
@@ -153,6 +158,7 @@ trait UserValidationTrait {
 	public function validationRequestPassword(Validator $validator) {
 		$validator = $this->_table->validationDefault($validator);
 		$validator->remove($this->_field('email'), 'unique');
+
 		return $validator;
 	}
 
@@ -167,6 +173,7 @@ trait UserValidationTrait {
 		$validator = $this->validationPassword($validator);
 		$validator = $this->validationConfirmPassword($validator);
 		$validator = $this->validationOldPassword($validator);
+
 		return $validator;
 	}
 
@@ -189,6 +196,7 @@ trait UserValidationTrait {
 			'provider' => 'userBehavior',
 			'message' => __d('user_tools', 'Wrong password, please try again.')
 		]);
+
 		return $validator;
 	}
 
@@ -239,7 +247,7 @@ trait UserValidationTrait {
 		if ($value === $context['data'][$field]) {
 			return true;
 		}
+
 		return false;
 	}
-
 }

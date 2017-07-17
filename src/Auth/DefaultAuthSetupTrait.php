@@ -8,7 +8,8 @@
  */
 namespace Burzum\UserTools\Auth;
 
-trait DefaultAuthSetupTrait {
+trait DefaultAuthSetupTrait
+{
 
 /**
  * Sets the default authentication settings up.

@@ -10,7 +10,8 @@ namespace Burzum\UserTools\Validation;
 
 use Cake\Validation\Validator;
 
-class UsersValidator extends Validator {
+class UsersValidator extends Validator
+{
 
 	/**
 	 * Constructor
@@ -142,6 +143,7 @@ class UsersValidator extends Validator {
 		if ($value === $context['data'][$field]) {
 			return true;
 		}
+
 		return false;
 	}
 }

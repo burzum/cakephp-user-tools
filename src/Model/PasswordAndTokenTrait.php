@@ -6,7 +6,8 @@ use Cake\Utility\Hash;
 /**
  * A trait to add methods to a class to generate a password and token.
  */
-trait PasswordAndTokenTrait {
+trait PasswordAndTokenTrait
+{
 
 	/**
 	 * Generates a random password that is more or less user friendly.
@@ -19,7 +20,7 @@ trait PasswordAndTokenTrait {
 		$options = $this->_passwordDictionary($options);
 		$password = '';
 
-		srand((double) microtime() * 1000000);
+		srand((double)microtime() * 1000000);
 		for ($i = 0; $i < $length; $i++) {
 			$password .=
 				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
@@ -52,13 +53,14 @@ trait PasswordAndTokenTrait {
 		if (isset($options['vowels'])) {
 			unset($defaults['vowels']);
 		}
+
 		return Hash::merge($defaults, $options);
 	}
 
 	/**
 	 * Generate token used by the user registration system
 	 *
-	 * @param integer $length Token Length
+	 * @param int $length Token Length
 	 * @param string $chars
 	 * @return string
 	 */
@@ -72,7 +74,7 @@ trait PasswordAndTokenTrait {
 				$i++;
 			}
 		}
+
 		return $token;
 	}
-
 }

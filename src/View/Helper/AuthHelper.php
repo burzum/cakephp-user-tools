@@ -13,7 +13,8 @@ use Cake\View\Helper;
 use Cake\View\View;
 use InvalidArgumentException;
 
-class AuthHelper extends Helper {
+class AuthHelper extends Helper
+{
 
 /**
  * Default settings
@@ -83,6 +84,7 @@ class AuthHelper extends Helper {
 				$this->_userData = $this->_userData->toArray();
 			}
 		}
+
 		return $this->_userData;
 	}
 
@@ -99,7 +101,7 @@ class AuthHelper extends Helper {
  * This check can be used to tell if a record that belongs to some user is the
  * current logged in user
  *
- * @param string|integer $userId
+ * @param int $userId
  * @param string $field Name of the field in the user record to check against, id by default
  * @return boolean
  */
@@ -117,6 +119,7 @@ class AuthHelper extends Helper {
 		if ($key === null) {
 			return $this->_userData;
 		}
+
 		return Hash::get((array)$this->_userData(true), $key);
 	}
 
@@ -131,6 +134,7 @@ class AuthHelper extends Helper {
 		if (is_null($roles)) {
 			return false;
 		}
+
 		return $this->_checkRoles($requestedRole, $roles);
 	}
 
@@ -152,6 +156,7 @@ class AuthHelper extends Helper {
 			throw new InvalidArgumentException('The requested role is not a string or an array!');
 		}
 		$result = array_intersect($roles, $requestedRole);
+
 		return (count($result) > 0);
 	}
 }
