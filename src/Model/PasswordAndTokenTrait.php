@@ -6,8 +6,7 @@ use Cake\Utility\Hash;
 /**
  * A trait to add methods to a class to generate a password and token.
  */
-trait PasswordAndTokenTrait
-{
+trait PasswordAndTokenTrait {
 
 	/**
 	 * Generates a random password that is more or less user friendly.

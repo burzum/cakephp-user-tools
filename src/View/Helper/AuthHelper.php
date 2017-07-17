@@ -10,17 +10,15 @@ namespace Burzum\UserTools\View\Helper;
 
 use Cake\Utility\Hash;
 use Cake\View\Helper;
-use Cake\View\View;
 use InvalidArgumentException;
 
-class AuthHelper extends Helper
-{
+class AuthHelper extends Helper {
 
-/**
- * Default settings
- *
- * @var array
- */
+	/**
+	 * Default settings
+	 *
+	 * @var array
+	 */
 	protected $_defaultConfig = [
 		'session' => false,
 		'viewVar' => 'userData',
@@ -28,32 +26,32 @@ class AuthHelper extends Helper
 		'roleField' => 'role'
 	];
 
-/**
- * User data
- *
- * @array
- */
+	/**
+	 * User data
+	 *
+	 * @array
+	 */
 	protected $_userData = [];
 
-/**
- * Constructor
- *
- * @param \Cake\View\View $View
- * @param array $settings
- * @throws RuntimeException
- * @return AuthHelper
- */
+	/**
+	 * Constructor
+	 *
+	 * @param \Cake\View\View $View View object
+	 * @param array $settings Settings
+	 * @throws RuntimeException
+	 */
 	public function __construct(\Cake\View\View $View, $settings = []) {
 		parent::__construct($View, $settings);
+
 		$this->_setupUserData();
 	}
 
-/**
- * Sets up the user data from session or view var
- *
- * @throws \RuntimeException
- * @return void
- */
+	/**
+	 * Sets up the user data from session or view var
+	 *
+	 * @throws \RuntimeException
+	 * @return void
+	 */
 	protected function _setupUserData() {
 		if (is_string($this->_config['session'])) {
 			$this->_userData = $this->_View->request->session()->read($this->_config['session']);
@@ -70,14 +68,13 @@ class AuthHelper extends Helper
 		}
 	}
 
-/**
- * Convenience method to the the user data in any case as array.
- *
- * This is mostly done because accessing the Entity object via Hash() caused an error when passing an object.
- *
- * @param bool $asArray Return as array, default true.
- * @return array
- */
+	/**
+	 * Convenience method to the the user data in any case as array.
+	 * This is mostly done because accessing the Entity object via Hash() caused an error when passing an object.
+	 *
+	 * @param bool $asArray Return as array, default true.
+	 * @return array
+	 */
 	protected function _userData($asArray = true) {
 		if ($asArray === true) {
 			if (is_a($this->_userData, '\Cake\ORM\Entity')) {
@@ -88,33 +85,33 @@ class AuthHelper extends Helper
 		return $this->_userData;
 	}
 
-/**
- * Checks if a user is logged in
- *
- * @return boolean
- */
+	/**
+	 * Checks if a user is logged in
+	 *
+	 * @return bool
+	 */
 	public function isLoggedIn() {
 		return (!empty($this->_userData));
 	}
 
-/**
- * This check can be used to tell if a record that belongs to some user is the
- * current logged in user
- *
- * @param int $userId
- * @param string $field Name of the field in the user record to check against, id by default
- * @return boolean
- */
+	/**
+	 * This check can be used to tell if a record that belongs to some user is the
+	 * current logged in user
+	 *
+	 * @param int $userId User Id
+	 * @param string $field Name of the field in the user record to check against, id by default
+	 * @return bool
+	 */
 	public function isMe($userId, $field = 'id') {
 		return ($userId === $this->user($field));
 	}
 
-/**
- * Method equal to the AuthComponent::user()
- *
- * @param string $key
- * @return mixed
- */
+	/**
+	 * Method equal to the AuthComponent::user()
+	 *
+	 * @param string $key Key to read from the user object
+	 * @return mixed
+	 */
 	public function user($key = null) {
 		if ($key === null) {
 			return $this->_userData;
@@ -123,12 +120,12 @@ class AuthHelper extends Helper
 		return Hash::get((array)$this->_userData(true), $key);
 	}
 
-/**
- * Role check.
- *
- * @param array|string Role string or set of role identifiers.
- * @return boolean|null True if the role is in the set of roles for the active user data.
- */
+	/**
+	 * Role check.
+	 *
+	 * @param array|string $requestedRole Role string or set of role identifiers.
+	 * @return bool|null True if the role is in the set of roles for the active user data.
+	 */
 	public function hasRole($requestedRole) {
 		$roles = $this->user($this->config('roleField'));
 		if (is_null($roles)) {
@@ -138,13 +135,13 @@ class AuthHelper extends Helper
 		return $this->_checkRoles($requestedRole, $roles);
 	}
 
-/**
- * Checks the roles.
- *
- * @param string|array $requestedRole
- * @param string|array $roles
- * @return boolean
- */
+	/**
+	 * Checks the roles.
+	 *
+	 * @param string|array $requestedRole Requested role
+	 * @param string|array $roles List of roles
+	 * @return bool
+	 */
 	protected function _checkRoles($requestedRole, $roles) {
 		if (is_string($roles)) {
 			$roles = [$roles];

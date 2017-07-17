@@ -13,8 +13,7 @@ use Cake\Console\Shell;
 use Cake\ORM\TableRegistry;
 use Cake\Datasource\ConnectionManager;
 
-class UserShell extends Shell
-{
+class UserShell extends Shell {
 
 	/**
 	 * Assign $this->connection to the active task if a connection param is set.
@@ -63,12 +62,14 @@ class UserShell extends Shell
 	 */
 	public function setPassword() {
 		if (count($this->args) < 2) {
-			$this->error(__d('burzum/user_tools', 'You need to call this command with at least tow arguments.'));
+			$this->abort(__d('burzum/user_tools', 'You need to call this command with at least tow arguments.'));
 		}
+
 		$field = 'username';
 		if (count($this->args) >= 3) {
 			$field = $this->args[2];
 		}
+
 		$user = $this->UserTable->find()->where([$field => $this->args[0]])->first();
 		$user->password = $this->UserTable->hashPassword($this->args[1]);
 		if ($this->UserTable->save($user, ['validate' => false])) {
@@ -84,7 +85,7 @@ class UserShell extends Shell
 	public function getOptionParser() {
 		$parser = parent::getOptionParser();
 
-		$parser->description(
+		$parser->setDescription(
 			'Users utility shell'
 		)
 		->addOption('model', [

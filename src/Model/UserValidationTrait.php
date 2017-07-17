@@ -5,8 +5,7 @@ use Cake\Core\Configure;
 use Cake\Validation\Validator;
 use RuntimeException;
 
-trait UserValidationTrait
-{
+trait UserValidationTrait {
 
 	/**
 	 * Validates the password reset.
@@ -31,7 +30,7 @@ trait UserValidationTrait
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationUserName(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
+		$validator->setProvider('userTable', $this->_table);
 
 		$validator->add($this->_field('username'), [
 			'notBlank' => [
@@ -65,7 +64,7 @@ trait UserValidationTrait
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationEmail(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
+		$validator->setProvider('userTable', $this->_table);
 
 		$validator->add($this->_field('email'), [
 			'notBlank' => [
@@ -97,7 +96,7 @@ trait UserValidationTrait
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationPassword(Validator $validator) {
-		$validator->provider('userTable', $this->_table);
+		$validator->setProvider('userTable', $this->_table);
 
 		$validator->add($this->_field('password'), [
 			'notBlank' => [
@@ -127,7 +126,7 @@ trait UserValidationTrait
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationConfirmPassword(Validator $validator) {
-		$validator->provider('userBehavior', $this);
+		$validator->setProvider('userBehavior', $this);
 
 		$validator->add($this->_field('passwordCheck'), [
 			'notBlank' => [

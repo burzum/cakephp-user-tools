@@ -9,7 +9,8 @@
  */
 use Phinx\Migration\AbstractMigration;
 
-class Initial extends AbstractMigration {
+class Initial extends AbstractMigration
+{
 
 /**
  * Migrate Up.

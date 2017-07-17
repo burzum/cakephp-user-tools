@@ -29,8 +29,7 @@ use RuntimeException;
 /**
  * User Behavior
  */
-class UserBehavior extends Behavior
-{
+class UserBehavior extends Behavior {
 
 	use EventDispatcherTrait;
 	use MailerAwareTrait;

@@ -8,8 +8,10 @@
  */
 namespace Burzum\UserTools\Controller\Component;
 
-trait FlashAndRedirectTrait
-{
+/**
+ * FlashAndRedirectTrait
+ */
+trait FlashAndRedirectTrait {
 
 	/**
 	 * Helper property to detect a redirect
@@ -41,7 +43,7 @@ trait FlashAndRedirectTrait
 	 */
 	protected function _handleRedirect($type, $options) {
 		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
-			$controller = $this->_registry->getController();
+			$controller = $this->getController();
 			$result = $controller->redirect($options[$type . 'RedirectUrl']);
 			$this->_redirectResponse = $result;
 

@@ -11,8 +11,7 @@ use Cake\Auth\PasswordHasherFactory;
  * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
-trait PasswordHasherTrait
-{
+trait PasswordHasherTrait {
 
 	/**
 	 * AbstractPasswordHasher instance.

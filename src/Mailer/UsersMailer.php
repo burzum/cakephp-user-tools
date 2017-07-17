@@ -3,8 +3,10 @@ namespace Burzum\UserTools\Mailer;
 
 use Cake\Mailer\Mailer;
 
-class UsersMailer extends Mailer
-{
+/**
+ * Users Mailer
+ */
+class UsersMailer extends Mailer {
 
 	/**
 	 * Sends the verification email to an user.

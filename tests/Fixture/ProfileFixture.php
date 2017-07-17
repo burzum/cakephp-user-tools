@@ -10,7 +10,8 @@ use Cake\TestSuite\Fixture\TestFixture;
  * ]@copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
-class ProfileFixture extends TestFixture {
+class ProfileFixture extends TestFixture
+{
 
 /**
  * Fields
