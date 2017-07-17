@@ -42,6 +42,7 @@ trait FlashAndRedirectTrait {
 			$controller = $this->_registry->getController();
 			$result = $controller->redirect($options[$type . 'RedirectUrl']);
 			$this->_redirectResponse = $result;
+
 			return $result;
 		}
 

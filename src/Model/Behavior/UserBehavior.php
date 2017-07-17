@@ -138,7 +138,7 @@ class UserBehavior extends Behavior {
 			$this->setupDefaultValidation($this->_table);
 		}
 
-		$this->eventManager()->attach($this->_table);
+		$this->eventManager()->on($this->_table);
 	}
 
 	/**
@@ -318,11 +318,11 @@ class UserBehavior extends Behavior {
 			$entity = $this->_beforeRegister($entity, $options);
 		}
 
-		$event = new Event('User.beforeRegister', $this, [
+		$event = $this->dispatchEvent('User.beforeRegister', [
 			'data' => $entity,
 			'table' => $this->_table
 		]);
-		$this->eventManager()->dispatch($event);
+
 		if ($event->isStopped()) {
 			return $event->result;
 		}
@@ -337,12 +337,11 @@ class UserBehavior extends Behavior {
 			$this->_afterRegister($result, $options);
 		}
 
-		$event = new Event('User.afterRegister', $this, [
+		$event = $this->dispatchEvent('user.afterRegister', [
 			'data' => $result,
 			'table' => $this->_table
 		]);
 
-		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
 		}
@@ -483,8 +482,10 @@ class UserBehavior extends Behavior {
 			$user->{$this->_field('password')} = $this->hashPassword($user->{$this->_field('password')});
 			$user->{$this->_field('passwordToken')} = null;
 			$user->{$this->_field('passwordTokenExpires')} = null;
+
 			return $this->_table->save($user, ['checkRules' => false]);
 		}
+
 		return false;
 	}
 
@@ -509,6 +510,7 @@ class UserBehavior extends Behavior {
 		if ($count > 0) {
 			$this->_table->deleteAll($conditions);
 		}
+
 		return $count;
 	}
 

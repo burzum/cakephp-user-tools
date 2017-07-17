@@ -20,6 +20,7 @@ use Cake\Network\Exception\NotFoundException;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
 use Cake\View\Exception\MissingTemplateException;
+use RuntimeException;
 
 class UserToolComponent extends Component {
 
@@ -326,7 +327,7 @@ class UserToolComponent extends Component {
 		} else {
 			if (is_object($table)) {
 				if (!is_a($table, '\Cake\ORM\Table')) {
-					throw new \RuntimeException('Passed object is not of type \Cake\ORM\Table!');
+					throw new RuntimeException('Passed object is not of type \Cake\ORM\Table!');
 				}
 				$this->UserTable = $table->alias();
 			}
@@ -443,14 +444,13 @@ class UserToolComponent extends Component {
 	 * @return mixed
 	 */
 	protected function _beforeLogin(EntityInterface $entity, array $options) {
-		$entity = $this->UserTable->patchEntity($entity, $this->request->data, ['validate' => false]);
+		$entity = $this->UserTable->patchEntity($entity, $this->request->getData(), ['validate' => false]);
 
-		$event = new Event('User.beforeLogin', $this, [
+		$event = $this->dispatchEvent('User.beforeLogin', [
 			'options' => $options,
 			'entity' => $entity
 		]);
 
-		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
 		}
@@ -466,20 +466,23 @@ class UserToolComponent extends Component {
 	 * @return mixed
 	 */
 	protected function _afterLogin($user, array $options) {
-		$event = new Event('User.afterLogin', $this, [
+		$event = $this->dispatchEvent('User.afterLogin', [
 			'user' => $user,
 			'options' => $options
 		]);
-		$this->eventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return $event->result;
 		}
+
 		$Auth = $this->_getAuthObject();
 		$Auth->setUser($user);
+
 		if ($options['successRedirectUrl'] === null) {
 			$options['successRedirectUrl'] = $Auth->redirectUrl();
 		}
+
 		$this->handleFlashAndRedirect('success', $options);
+
 		return true;
 	}
 
@@ -493,6 +496,7 @@ class UserToolComponent extends Component {
 		$options = Hash::merge($this->config('login'), $options);
 		$this->_handleUserBeingAlreadyLoggedIn($options);
 		$entity = $this->UserTable->newEntity(null, ['validate' => false]);
+
 		if ($this->request->is('post')) {
 			$user = $this->_beforeLogin($entity, $options);
 			if ($user) {
@@ -501,9 +505,11 @@ class UserToolComponent extends Component {
 				$this->handleFlashAndRedirect('error', $options);
 			}
 		}
+
 		if ($options['setEntity']) {
 			$this->_setViewVar('userEntity', $entity);
 		}
+
 		return false;
 	}
 
@@ -524,11 +530,13 @@ class UserToolComponent extends Component {
 				$userId = $this->request->params['pass'][0];
 			}
 		}
+
 		$entity = $this->UserTable->getUser($userId);
 		if ($options['viewVar'] !== false) {
 			$this->_controller->set($options['viewVar'], $entity);
 			$this->_controller->set('_serialize', [$options['viewVar']]);
 		}
+
 		return $entity;
 	}
 
@@ -619,7 +627,7 @@ class UserToolComponent extends Component {
 		// Make the field accessible in the case the default entity class is used.
 		$entity->accessible('confirm_password', true);
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data(), [
+			$entity = $this->UserTable->patchEntity($entity, $this->request->getData(), [
 				'validate' => $options['validation']
 			]);
 			if ($this->UserTable->register($entity)) {
@@ -667,7 +675,7 @@ class UserToolComponent extends Component {
 		]);
 
 		if ($this->request->is('post')) {
-			$entity = $this->UserTable->patchEntity($entity, $this->request->data, [
+			$entity = $this->UserTable->patchEntity($entity, $this->request->getData(), [
 				'validate' => 'requestPassword'
 			]);
 
@@ -699,7 +707,7 @@ class UserToolComponent extends Component {
 	 */
 	protected function _initPasswordReset(EntityInterface $entity, $options) {
 		try {
-			$this->UserTable->initPasswordReset($this->request->data[$options['field']], $options);
+			$this->UserTable->initPasswordReset($this->request->getData($options['field']), $options);
 			$this->handleFlashAndRedirect('success', $options);
 			if ($options['setEntity']) {
 				$this->_setViewVar('userEntity', $entity);

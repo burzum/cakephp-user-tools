@@ -14,13 +14,15 @@
 	],
 	"require": {
 		"cakephp/plugin-installer": "*",
-		"cakephp/cakephp": "3.*"
+		"cakephp/cakephp": "~3.4"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "5.6.*"
+		"phpunit/phpunit": "5.7.*",
+		"cakephp/cakephp-codesniffer": "^3.0"
 	},
 	"suggested": {
-		"cakephp/migration": "*",
+		"cakephp/migration": "Required if you want to use the migration included in this plugin.",
+		"cakephp/authentication": "The new CakePHP authentication system",
 		"friendsofcake/authenticate": "Authentication adapter collection",
 		"admad/cakephp-jwt-auth": "JWT Auth adapter",
 		"burzum/cakephp-simple-rbac": "An easy to use role based authorization adapter"
