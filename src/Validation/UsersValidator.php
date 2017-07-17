@@ -130,10 +130,10 @@ class UsersValidator extends Validator {
 	/**
 	 * Compares the value of two fields.
 	 *
-	 * @param mixed $value
-	 * @param string $field
-	 * @param Entity $context
-	 * @return boolean
+	 * @param mixed $value Value
+	 * @param string $field Field
+	 * @param Entity $context Context
+	 * @return bool
 	 */
 	public function compareFields($value, $field, $context) {
 		if (!isset($context['data'][$field])) {

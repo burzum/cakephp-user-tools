@@ -30,7 +30,7 @@ trait PasswordHasherTrait {
 	/**
 	 * Hashes a password
 	 *
-	 * @param $password
+	 * @param string $password Password to hash
 	 * @return string Hash
 	 */
 	public function hashPassword($password) {
@@ -51,7 +51,7 @@ trait PasswordHasherTrait {
 	/**
 	 * Sets a password hasher object
 	 *
-	 * @param \Cake\Auth\AbstractPasswordHasher $passwordHasher
+	 * @param \Cake\Auth\AbstractPasswordHasher $passwordHasher Password Hasher object
 	 * @return void
 	 */
 	public function setPasswordHasher(AbstractPasswordHasher $passwordHasher) {

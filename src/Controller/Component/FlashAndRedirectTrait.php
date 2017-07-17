@@ -60,7 +60,7 @@ trait FlashAndRedirectTrait {
 	 *
 	 * @param string $type Prefix for the array key, mostly "success" or "error"
 	 * @param array $options Options
-	 * @return boolean
+	 * @return bool
 	 */
 	protected function _handleFlash($type, $options) {
 		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {

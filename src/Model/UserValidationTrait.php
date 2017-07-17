@@ -12,7 +12,7 @@ trait UserValidationTrait {
 	 *
 	 * Override it as needed to change the rules for only that field.
 	 *
-	 * @param \Cake\Validation\Validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationPasswordReset(Validator $validator) {
@@ -26,7 +26,7 @@ trait UserValidationTrait {
 	 *
 	 * Override it as needed to change the rules for only that field.
 	 *
-	 * @param \Cake\Validation\Validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationUserName(Validator $validator) {
@@ -60,7 +60,7 @@ trait UserValidationTrait {
 	 *
 	 * Override it as needed to change the rules for only that field.
 	 *
-	 * @param \Cake\Validation\Validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationEmail(Validator $validator) {
@@ -92,7 +92,7 @@ trait UserValidationTrait {
 	 *
 	 * Override it as needed to change the rules for only that field.
 	 *
-	 * @param \Cake\Validation\Validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationPassword(Validator $validator) {
@@ -122,7 +122,7 @@ trait UserValidationTrait {
 	 *
 	 * Override it as needed to change the rules for only that field.
 	 *
-	 * @param \Cake\Validation\Validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationConfirmPassword(Validator $validator) {
@@ -150,7 +150,7 @@ trait UserValidationTrait {
 	/**
 	 * Validation rules for the password reset request.
 	 *
-	 * @param \Cake\Validation\Validator $validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 * @see \Burzum\UserTools\Controller\Component\UserToolComponent::requestPassword()
 	 */
@@ -164,7 +164,7 @@ trait UserValidationTrait {
 	/**
 	 * Configures the validator with rules for the password change
 	 *
-	 * @param \Cake\Validation\Validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationChangePassword($validator) {
@@ -179,7 +179,7 @@ trait UserValidationTrait {
 	/**
 	 * Configures the validator with rules to check the old password
 	 *
-	 * @param \Cake\Validation\Validator
+	 * @param \Cake\Validation\Validator $validator Validator
 	 * @return \Cake\Validation\Validator
 	 */
 	protected function validationOldPassword($validator) {
@@ -205,10 +205,10 @@ trait UserValidationTrait {
 	 * This method will hash the old password and compare it to the stored hash
 	 * in the database. You don't have to hash it manually before validating.
 	 *
-	 * @param mixed $value
-	 * @param string $field
-	 * @param mixed $context
-	 * @return boolean
+	 * @param mixed $value Value
+	 * @param string $field Field
+	 * @param mixed $context Context
+	 * @return bool
 	 */
 	public function validateOldPassword($value, $field, $context) {
 		if (Configure::read('debug') > 0 && empty($context['data'][$this->_table->primaryKey()])) {
@@ -234,10 +234,10 @@ trait UserValidationTrait {
 	/**
 	 * Compares the value of two fields.
 	 *
-	 * @param mixed $value
-	 * @param string $field
-	 * @param Entity $context
-	 * @return boolean
+	 * @param mixed $value Value
+	 * @param string $field Field
+	 * @param Entity $context Context
+	 * @return bool
 	 */
 	public function compareFields($value, $field, $context) {
 		if (!isset($context['data'][$field])) {

@@ -20,8 +20,8 @@ use Cake\Event\EventDispatcherTrait;
 use Cake\I18n\Time;
 use Cake\Mailer\MailerAwareTrait;
 use Cake\ORM\Behavior;
-use Cake\ORM\Table;
 use Cake\ORM\Entity;
+use Cake\ORM\Table;
 use Cake\Utility\Hash;
 use Cake\Utility\Text;
 use RuntimeException;
@@ -186,7 +186,7 @@ class UserBehavior extends Behavior {
 	 * @param string $userId User id
 	 * @param string $field Default is "last_action", changing it allows you to use this method also for "last_login" for example
 	 * @param array $options
-	 * @return boolean True on success
+	 * @return bool True on success
 	 */
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
 		$options = Hash::merge($this->_config['updateLastActivity'], $options);
@@ -313,7 +313,7 @@ class UserBehavior extends Behavior {
 	 * @param \Cake\Datasource\EntityInterface $entity
 	 * @param array $options
 	 * @throws \InvalidArgumentException
-	 * @return \Cake\Datasource\EntityInterface|bool Returns boolean false if the user could not be saved.
+	 * @return \Cake\Datasource\EntityInterface|bool Returns bool false if the user could not be saved.
 	 */
 	public function register(EntityInterface $entity, $options = []) {
 		$options = array_merge($this->_config['register'], $options);
@@ -378,7 +378,7 @@ class UserBehavior extends Behavior {
 	 * @param string $token The token to check.
 	 * @param array $options Options array.
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
-	 * @return boolean|\Cake\ORM\Entity Returns false if the token has expired
+	 * @return bool|\Cake\ORM\Entity Returns false if the token has expired
 	 */
 	public function verifyToken($token, $options = []) {
 		$defaults = [
@@ -449,7 +449,7 @@ class UserBehavior extends Behavior {
 	 * @param string $token Token string to check.
 	 * @param array $options Options array.
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
-	 * @return boolean Returns false if the token has expired
+	 * @return bool Returns false if the token has expired
 	 */
 	public function verifyEmailToken($token, $options = []) {
 		$defaults = [
@@ -466,7 +466,7 @@ class UserBehavior extends Behavior {
 	 * @param string $token
 	 * @param array $options
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
-	 * @return boolean Returns false if the token has expired
+	 * @return bool Returns false if the token has expired
 	 */
 	public function verifyPasswordResetToken($token, $options = []) {
 		$defaults = [
@@ -499,8 +499,8 @@ class UserBehavior extends Behavior {
 	/**
 	 * Removes all users from the user table that did not complete the registration
 	 *
-	 * @param array $conditions
-	 * @return integer Number of removed records
+	 * @param array $conditions Find conditions passed to where()
+	 * @return int Number of removed records
 	 */
 	public function removeExpiredRegistrations($conditions = []) {
 		$defaults = [
@@ -526,7 +526,7 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param \Cake\Datasource\EntityInterface $entity User entity
 	 * @param array $options Options
-	 * @return boolean
+	 * @return bool
 	 */
 	public function changePassword(EntityInterface $entity, array $options = []) {
 		$options = Hash::merge($this->_config['changePassword'], $options);
@@ -548,7 +548,7 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param mixed $value
 	 * @param array $options
-	 * @return array
+	 * @return void
 	 */
 	public function initPasswordReset($value, $options = []) {
 		$defaults = [
@@ -666,7 +666,7 @@ class UserBehavior extends Behavior {
 	 * @param string|EntityInterface $email The user entity or the email
 	 * @param array $options Optional options array, use it to pass config options.
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
-	 * @return boolean
+	 * @return bool
 	 */
 	public function sendNewPassword($email, $options = []) {
 		if ($email instanceof EntityInterface) {
@@ -700,12 +700,12 @@ class UserBehavior extends Behavior {
 	/**
 	 * beforeSave callback
 	 *
-	 * @param \Cake\Event\Event $event
-	 * @param \Cake\Datasource\EntityInterface
+	 * @param \Cake\Event\Event $event Event object
+	 * @param \Cake\Datasource\EntityInterface $entity Entity
 	 * @return void
 	 */
 	public function beforeSave(Event $event, EntityInterface $entity) {
-		$config = (array)$this->config('beforeSave');
+		$config = (array)$this->getConfig('beforeSave');
 		if ($config['handleNewPasswordByOldPassword'] === true) {
 			$this->handleNewPasswordByOldPassword($entity);
 		}
@@ -721,7 +721,7 @@ class UserBehavior extends Behavior {
 	 * fields if no `old_password` was provided or the entity has validation
 	 * errors.
 	 *
-	 * @param \Cake\Datasource\EntityInterface $user
+	 * @param \Cake\Datasource\EntityInterface $user User Entity
 	 * @return void
 	 */
 	public function handleNewPasswordByOldPassword(EntityInterface $user) {
@@ -746,39 +746,39 @@ class UserBehavior extends Behavior {
 	/**
 	 * sendNewPasswordEmail
 	 *
-	 * @param \Cake\Datasource\EntityInterface $user
-	 * @param array $options
-	 * @return array
+	 * @param \Cake\Datasource\EntityInterface $user User entity
+	 * @param array $options Options
+	 * @return void
 	 */
 	public function sendPasswordResetToken(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
-		$this->getMailer($this->config('mailer'))
+		$this->getMailer($this->getConfig('mailer'))
 			->send('passwordResetToken', [$user, $options]);
 	}
 
 	/**
 	 * sendNewPasswordEmail
 	 *
-	 * @param \Cake\Datasource\EntityInterface $user
-	 * @param array $options
-	 * @return bool
+	 * @param \Cake\Datasource\EntityInterface $user User entity
+	 * @param array $options Options
+	 * @return void
 	 */
 	public function sendNewPasswordEmail(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendNewPasswordEmail'], $options);
-		$this->getMailer($this->config('mailer'))
+		$this->getMailer($this->getConfig('mailer'))
 			->send('verificationEmail', [$user, $options]);
 	}
 
 	/**
 	 * sendVerificationEmail
 	 *
-	 * @param \Cake\Datasource\EntityInterface $user
-	 * @param array $options
-	 * @return array
+	 * @param \Cake\Datasource\EntityInterface $user User entity
+	 * @param array $options Options
+	 * @return void
 	 */
 	public function sendVerificationEmail(EntityInterface $user, $options = []) {
 		$options = Hash::merge($this->_config['sendVerificationEmail'], $options);
-		$this->getMailer($this->config('mailer'))
+		$this->getMailer($this->getConfig('mailer'))
 			->send('verificationEmail', [$user, $options]);
 	}
 }

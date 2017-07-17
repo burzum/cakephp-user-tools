@@ -1,8 +1,8 @@
 <?php
 namespace Burzum\UserTools\Test\TestCase\Controller\Component;
 
-use Cake\Controller\Controller;
 use Cake\Controller\ComponentRegistry;
+use Cake\Controller\Controller;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Cake\ORM\TableRegistry;

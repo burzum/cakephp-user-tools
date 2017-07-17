@@ -8,20 +8,20 @@
  */
 namespace Burzum\UserTools\Auth;
 
-trait DefaultAuthSetupTrait
-{
+trait DefaultAuthSetupTrait {
 
-/**
- * Sets the default authentication settings up.
- *
- * Call this in your beforeFilter().
- *
- * @return void
- */
+	/**
+	 * Sets the default authentication settings up.
+	 *
+	 * Call this in your beforeFilter().
+	 *
+	 * @return void
+	 */
 	public function setupAuthentication() {
 		if (!in_array('Auth', $this->components()->loaded())) {
 			$this->components()->load('Auth');
 		}
+
 		$this->components()->Auth->config('authenticate', [
 			'Form' => [
 				'userModel' => 'Users',

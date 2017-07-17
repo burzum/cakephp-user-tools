@@ -10,14 +10,13 @@ use Cake\TestSuite\Fixture\TestFixture;
  * ]@copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
-class ProfileFixture extends TestFixture
-{
+class ProfileFixture extends TestFixture {
 
-/**
- * Fields
- *
- * @var array
- */
+	/**
+	 * Fields
+	 *
+	 * @var array
+	 */
 	public $fields = [
 		'id' => ['type' => 'uuid', 'length' => null, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null],
 		'user_id' => ['type' => 'string', 'null' => false, 'length' => 36],
@@ -32,11 +31,11 @@ class ProfileFixture extends TestFixture
 		],
 	];
 
-/**
- * Records
- *
- * @var array
- */
+	/**
+	 * Records
+	 *
+	 * @var array
+	 */
 	public $records = [
 		[
 			'id' => '1',
