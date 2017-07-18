@@ -9,14 +9,13 @@
  */
 use Phinx\Migration\AbstractMigration;
 
-class Initial extends AbstractMigration
-{
+class Initial extends AbstractMigration {
 
-/**
- * Migrate Up.
- *
- * @return void
- */
+	/**
+	 * Migrate Up.
+	 *
+	 * @return void
+	 */
 	public function up() {
 		$this->table('users', ['id' => false, 'primary_key' => 'id'])
 			->addColumn('id', 'char', ['limit' => 36])
@@ -37,11 +36,11 @@ class Initial extends AbstractMigration
 			->create();
 	}
 
-/**
- * Migrate Down.
- *
- * @return void
- */
+	/**
+	 * Migrate Down.
+	 *
+	 * @return void
+	 */
 	public function down() {
 		$this->table('users')
 			->drop();

@@ -33,9 +33,9 @@ class UserBehavior extends Behavior {
 
 	use EventDispatcherTrait;
 	use MailerAwareTrait;
-	use UserValidationTrait;
 	use PasswordAndTokenTrait;
 	use PasswordHasherTrait;
+	use UserValidationTrait;
 
 	/**
 	 * Default config
@@ -144,7 +144,7 @@ class UserBehavior extends Behavior {
 	/**
 	 * Gets the mapped field name of the table
 	 *
-	 * @param string $field
+	 * @param string $field Field name to get the mapped field for
 	 * @throws \RuntimeException
 	 * @return string field name of the table
 	 */
@@ -185,7 +185,7 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param string $userId User id
 	 * @param string $field Default is "last_action", changing it allows you to use this method also for "last_login" for example
-	 * @param array $options
+	 * @param array $options Options array
 	 * @return bool True on success
 	 */
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
@@ -203,10 +203,10 @@ class UserBehavior extends Behavior {
 	}
 
 	/**
-	 * _emailVerification
+	 * Handles the email verification if required
 	 *
-	 * @param \Cake\Datasource\EntityInterface $entity
-	 * @param array $options
+	 * @param \Cake\Datasource\EntityInterface $entity User entity
+	 * @param array $options Options array
 	 * @return void
 	 */
 	protected function _emailVerification(EntityInterface &$entity, $options) {
@@ -227,8 +227,8 @@ class UserBehavior extends Behavior {
 	 * This method deals with most of the settings for the registration that can be
 	 * applied before the actual user record is saved.
 	 *
-	 * @param \Cake\Datasource\EntityInterface $entity
-	 * @param array $options
+	 * @param \Cake\Datasource\EntityInterface $entity Users entity
+	 * @param array $options Options
 	 * @return Entity
 	 */
 	protected function _beforeRegister(Entity $entity, $options = []) {
@@ -268,8 +268,8 @@ class UserBehavior extends Behavior {
 	/**
 	 * Find users with verified emails.
 	 *
-	 * @param \Cake\ORM\Query $query
-	 * @param array $options
+	 * @param \Cake\ORM\Query $query Query object
+	 * @param array $options Options
 	 * @return Query
 	 */
 	public function findEmailVerified(Query $query, array $options) {
@@ -283,8 +283,8 @@ class UserBehavior extends Behavior {
 	/**
 	 * Find Active Users.
 	 *
-	 * @param \Cake\ORM\Query $query
-	 * @param array $options
+	 * @param \Cake\ORM\Query $query Query object
+	 * @param array $options Options
 	 * @return Query
 	 */
 	public function findActive(Query $query, array $options) {
@@ -310,8 +310,8 @@ class UserBehavior extends Behavior {
 	 * - calls the behaviors _afterRegister method if not disabled via config
 	 * - Fires the User.afterRegister event
 	 *
-	 * @param \Cake\Datasource\EntityInterface $entity
-	 * @param array $options
+	 * @param \Cake\Datasource\EntityInterface $entity User Entity
+	 * @param array $options Options
 	 * @throws \InvalidArgumentException
 	 * @return \Cake\Datasource\EntityInterface|bool Returns bool false if the user could not be saved.
 	 */
@@ -356,11 +356,11 @@ class UserBehavior extends Behavior {
 	/**
 	 * _afterRegister
 	 *
-	 * @param \Cake\ORM\Entity $entity
-	 * @param array $options
+	 * @param \Cake\Datasource\EntityInterface $entity User entity
+	 * @param array $options Options
 	 * @return \Cake\ORM\Entity
 	 */
-	protected function _afterRegister($entity, $options) {
+	protected function _afterRegister(EntityInterface $entity, $options) {
 		if ($entity) {
 			if ($options['emailVerification'] === true) {
 				$this->sendVerificationEmail($entity, [
@@ -463,8 +463,11 @@ class UserBehavior extends Behavior {
 	/**
 	 * Verify the password reset token
 	 *
-	 * @param string $token
-	 * @param array $options
+	 * - `tokenField` - The field to check for the token
+	 * - `expirationField` - The field to check for the token expiration date
+	 *
+	 * @param string $token Token string
+	 * @param array $options Options
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
 	 * @return bool Returns false if the token has expired
 	 */
@@ -546,8 +549,8 @@ class UserBehavior extends Behavior {
 	/**
 	 * Initializes a password reset process.
 	 *
-	 * @param mixed $value
-	 * @param array $options
+	 * @param mixed $value User id or other value to look the user up
+	 * @param array $options Options
 	 * @return void
 	 */
 	public function initPasswordReset($value, $options = []) {
@@ -584,8 +587,8 @@ class UserBehavior extends Behavior {
 	/**
 	 * Finds a single user, convenience method.
 	 *
-	 * @param mixed $value
-	 * @param array $options
+	 * @param mixed $value User ID or other value to look the user up
+	 * @param array $options Options
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException;
 	 * @return \Cake\ORM\Entity
 	 */
@@ -599,8 +602,8 @@ class UserBehavior extends Behavior {
 	 * Extend the behavior and override this method if the configuration options
 	 * are not sufficient.
 	 *
-	 * @param mixed $value
-	 * @param array $options
+	 * @param mixed $value User lookup value
+	 * @param array $options Options
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
 	 * @return \Cake\ORM\Entity
 	 */
@@ -634,7 +637,7 @@ class UserBehavior extends Behavior {
 	/**
 	 * Sets the query object for the _getUser() method up.
 	 *
-	 * @param array|string $value
+	 * @param array|string $value Value
 	 * @param array $options Options.
 	 * @return \Cake\ORM\Query
 	 */
