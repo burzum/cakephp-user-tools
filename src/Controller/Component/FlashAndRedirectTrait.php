@@ -10,6 +10,8 @@ namespace Burzum\UserTools\Controller\Component;
 
 /**
  * FlashAndRedirectTrait
+ *
+ * @property \Cake\Controller\ComponentRegistry $_registry
  */
 trait FlashAndRedirectTrait {
 
@@ -71,8 +73,12 @@ trait FlashAndRedirectTrait {
 				}
 
 				if (!isset($flashOptions['element'])) {
+					if (!$this->_registry->has('Flash')) {
+						$this->_registry->load('Flash');
+					}
+
 					$flashOptions['element'] = $type;
-					$this->Flash->set($options[$type . 'Message'], $flashOptions);
+					$this->_registry->get('Flash')->set($options[$type . 'Message'], $flashOptions);
 				}
 
 				return true;
