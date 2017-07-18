@@ -22,7 +22,8 @@ If you miss something please create a ticket on Github!
 Requirements
 ------------
 
-* CakePHP 3.0+
+* CakePHP 3.0+ (Plugin Version 1.0)
+* CakePHP 3.4+ (Plugin Version 1.1)
 
 Complementary plugins
 ---------------------

@@ -9,6 +9,7 @@
  */
 namespace Burzum\UserTools\Model\Behavior;
 
+use Burzum\UserTools\Mailer\UsersMailer;
 use Burzum\UserTools\Model\PasswordAndTokenTrait;
 use Burzum\UserTools\Model\PasswordHasherTrait;
 use Burzum\UserTools\Model\UserValidationTrait;
@@ -28,6 +29,29 @@ use RuntimeException;
 
 /**
  * User Behavior
+ *
+ * Options:
+ * - `emailConfig` - Email configuration to use, default is `default`
+ * - `defaultValidation` - Set up the default validation rules of the plugin.
+ *    Default is true.
+ * - `useUuid` - If your app is using ints instead of UUIDs set this to false.
+ * - `passwordHasher` - Password hasher to use, default is `Default`
+ * - `mailer` - Mailer class to use, default is
+ *   `Burzum\UserTools\Mailer\UsersMailer`
+ * - `passwordMinLength` - Minimum password length for validation, default is 6
+ * - `getUser` - An array of options, please see UserBehavior::getUser()
+ * - `register` - An array of options, please see UserBehavior::register()
+ * - `loginFields` -
+ * - `fieldMap` -
+ * - `beforeSave` -
+ * - `changePassword` -
+ * - `updateLastActivity` -
+ * - `initPasswordReset` -
+ * - `sendVerificationEmail` -
+ * - `sendNewPasswordEmail` -
+ * - `sendPasswordResetToken` -
+ * - `implementedFinders` - List of implemented finders, `active`
+ *    and `emailVerified`
  */
 class UserBehavior extends Behavior {
 
@@ -47,7 +71,7 @@ class UserBehavior extends Behavior {
 		'defaultValidation' => true,
 		'useUuid' => true,
 		'passwordHasher' => 'Default',
-		'mailer' => 'Burzum\UserTools\Mailer\UsersMailer',
+		'mailer' => UsersMailer::class,
 		'passwordMinLength' => 6,
 		'getUser' => [],
 		'register' => [
@@ -309,6 +333,21 @@ class UserBehavior extends Behavior {
 	 * - Attempt to save the user data
 	 * - calls the behaviors _afterRegister method if not disabled via config
 	 * - Fires the User.afterRegister event
+	 *
+	 * Options:
+	 * - `beforeRegister` - Bool to call the internal _beforeRegister() method.
+	 *    Default is true
+	 * - `afterRegister` - Bool to call the internal _beforeRegister() method.
+	 *    Default is true
+	 * - `tokenLength` - Length of the verification token, default is 32
+	 * - `saveOptions` Optional save options to be passed to the save() call.
+	 * - `verificationExpirationTime` - Default is `+1 day`
+	 * - `emailVerification` - Use email verification or not, default is true.
+	 * - `defaultRole` - Default role to set in the mapped `role` field.
+	 * - `userActive` - Set the user to active by default on registration.
+	 *    Default is true
+	 * - `generatePassword` - To generate a password or not. Default is false.
+	 * - `hashPassword` - To has the password or not, default is true.
 	 *
 	 * @param \Cake\Datasource\EntityInterface $entity User Entity
 	 * @param array $options Options
