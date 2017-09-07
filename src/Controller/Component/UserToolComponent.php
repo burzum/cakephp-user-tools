@@ -349,8 +349,8 @@ class UserToolComponent extends Component {
 	 * Start up
 	 *
 	 * @link https://github.com/cakephp/cakephp/issues/4530
-	 * @param Event $Event Event object
-	 * @return null|\Cake\Http\Response
+	 * @param \Cake\Event\Event $Event Event object
+	 * @return void|\Cake\Http\Response
 	 */
 	public function startup(Event $Event) {
 		if ($this->getConfig('actionMapping') === true) {
@@ -364,7 +364,7 @@ class UserToolComponent extends Component {
 	/**
 	 * Maps a called controller action to a component method
 	 *
-	 * @return bool|\Cake\Network\Response
+	 * @return bool|\Cake\Http\Response
 	 */
 	public function mapAction() {
 		$action = $this->_getRequest()->params['action'];
@@ -386,7 +386,7 @@ class UserToolComponent extends Component {
 			return false;
 		}
 
-		$pass = (array)$this->_getRequest()->getParam('pass');
+		$pass = (array)$this->_getRequest()->param('pass');
 		$result = call_user_func_array([$this, $action], $pass);
 
 		if ($result instanceof Response) {
@@ -400,12 +400,12 @@ class UserToolComponent extends Component {
 	 * Maps an action of the controller to the component
 	 *
 	 * @param string $action Action name
-	 * @return bool|\Cake\Network\Response
+	 * @return bool|\Cake\Http\Response
 	 */
 	protected function _mapAction($action) {
 		$actionMap = $this->getConfig('actionMap');
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
-			$pass = (array)$this->_getRequest()->getParam('pass');
+			$pass = (array)$this->_getRequest()->param('pass');
 			call_user_func_array([$this, $actionMap[$action]['method']], $pass);
 
 			if ($this->_redirectResponse instanceof Response) {
@@ -414,15 +414,13 @@ class UserToolComponent extends Component {
 
 			if (is_string($actionMap[$action]['view'])) {
 				try {
-					return $this->getController()->render($this->getController()->request->getParam('action'));
+					return $this->getController()->render($this->getController()->request->param('action'));
 				} catch (MissingTemplateException $e) {
 					return $this->getController()->render($actionMap[$action]['view']);
 				}
-
-				return true;
-			} else {
-				return $this->_getResponse();
 			}
+
+			return $this->_getResponse();
 		}
 
 		return false;
@@ -577,16 +575,28 @@ class UserToolComponent extends Component {
 	 * @return \Cake\Datasource\EntityInterface
 	 */
 	protected function _getUserEntity($userId) {
-		if (is_a($userId, 'Cake\Datasource\EntityInterface')) {
+		if (is_a($userId, EntityInterface::class)) {
 			return $userId;
 		}
+
 		if (is_string($userId) || is_integer($userId)) {
-			return $this->UserTable->newEntity([
-				$this->UserTable->primaryKey() => $userId
-			]);
+			$entity = $this->UserTable->newEntity();
+
+			return $this->UserTable->patchEntity(
+				$entity,
+				[$this->UserTable->primaryKey() => $userId],
+				['guard' => false]
+			);
 		}
+
 		if (is_array($userId)) {
-			return $this->UserTable->newEntity($userId);
+			$entity = $this->UserTable->newEntity();
+
+			return $this->UserTable->patchEntity(
+				$entity,
+				$userId,
+				['guard' => false]
+			);
 		}
 	}
 
@@ -594,7 +604,7 @@ class UserToolComponent extends Component {
 	 * Logout
 	 *
 	 * @param array $options Options array.
-	 * @return \Cake\Network\Response
+	 * @return \Cake\Http\Response
 	 */
 	public function logout($options = []) {
 		$options = Hash::merge($this->getConfig('logout'), $options);
@@ -634,6 +644,7 @@ class UserToolComponent extends Component {
 		if ($options['enabled'] === false) {
 			throw new NotFoundException();
 		}
+
 		$return = false;
 		$entity = $this->UserTable->newEntity();
 		// Make the field accessible in the case the default entity class is used.
@@ -869,7 +880,7 @@ class UserToolComponent extends Component {
 	 * in a real world scenario the app should have set auth set up in it's
 	 * AppController.
 	 *
-	 * @return AuthComponent
+	 * @return \Cake\Controller\Component\AuthComponent
 	 */
 	protected function _getAuthObject() {
 		if (!$this->_registry->has('Auth')) {
@@ -878,9 +889,9 @@ class UserToolComponent extends Component {
 			$Auth->response = $this->_getResponse();
 
 			return $Auth;
-		} else {
-			return $this->_registry->Auth;
 		}
+
+		return $this->_registry->Auth;
 	}
 
 	/**

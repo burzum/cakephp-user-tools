@@ -22,6 +22,7 @@ use Cake\I18n\Time;
 use Cake\Mailer\MailerAwareTrait;
 use Cake\ORM\Behavior;
 use Cake\ORM\Entity;
+use Cake\ORM\Query;
 use Cake\ORM\Table;
 use Cake\Utility\Hash;
 use Cake\Utility\Text;
@@ -253,9 +254,9 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param \Cake\Datasource\EntityInterface $entity Users entity
 	 * @param array $options Options
-	 * @return Entity
+	 * @return \Cake\Datasource\EntityInterface
 	 */
-	protected function _beforeRegister(Entity $entity, $options = []) {
+	protected function _beforeRegister(EntityInterface $entity, $options = []) {
 		$options = Hash::merge($this->_config['register'], $options);
 
 		$schema = $this->_table->getSchema();
@@ -309,7 +310,7 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param \Cake\ORM\Query $query Query object
 	 * @param array $options Options
-	 * @return Query
+	 * @return \Cake\ORM\Query Modified query
 	 */
 	public function findActive(Query $query, array $options) {
 		$query->where([
@@ -397,7 +398,7 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param \Cake\Datasource\EntityInterface $entity User entity
 	 * @param array $options Options
-	 * @return \Cake\ORM\Entity
+	 * @return \Cake\Datasource\EntityInterface
 	 */
 	protected function _afterRegister(EntityInterface $entity, $options) {
 		if ($entity) {
@@ -644,7 +645,7 @@ class UserBehavior extends Behavior {
 	 * @param mixed $value User lookup value
 	 * @param array $options Options
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
-	 * @return \Cake\ORM\Entity
+	 * @return \Cake\Datasource\EntityInterface
 	 */
 	protected function _getUser($value, $options = []) {
 		$defaults = [
@@ -691,11 +692,11 @@ class UserBehavior extends Behavior {
 			foreach ($options['field'] as $field) {
 				$query->orWhere([$field => $value]);
 			}
-		} else {
-			$query->where([$options['field'] => $value]);
+
+			return $query;
 		}
 
-		return $query;
+		return $query->where([$options['field'] => $value]);
 	}
 
 	/**
