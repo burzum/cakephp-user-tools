@@ -1,5 +1,5 @@
-User Tools Plugin for CakePHP 3.0
-=================================
+User Tools Plugin for CakePHP 3
+===============================
 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.txt)
 [![Build Status](https://img.shields.io/travis/burzum/cakephp-user-tools/master.svg?style=flat-square)](https://travis-ci.org/burzum/cakephp-user-tools)
@@ -22,7 +22,8 @@ If you miss something please create a ticket on Github!
 Requirements
 ------------
 
-* CakePHP 3.0+
+* CakePHP 3.0+ (Plugin Version 1.0)
+* CakePHP 3.4+ (Plugin Version 1.1)
 
 Complementary plugins
 ---------------------

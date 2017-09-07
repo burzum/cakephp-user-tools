@@ -1,20 +1,24 @@
 <?php
 namespace Burzum\UserTools\Mailer;
 
+use Cake\Datasource\EntityInterface;
 use Cake\Mailer\Mailer;
 
+/**
+ * Users Mailer
+ */
 class UsersMailer extends Mailer {
 
 	/**
 	 * Sends the verification email to an user.
 	 *
-	 * @param \Burzum\UserTools\Model\Entity\User
-	 * @param array $options
+	 * @param \Cake\Datasource\EntityInterface $user User entity
+	 * @param array $options Options
 	 * @return void
 	 */
-	public function verificationEmail($user, array $options = []) {
+	public function verificationEmail(EntityInterface $user, array $options = []) {
 		$defaults = [
-			'to' => $user->email,
+			'to' => $user->get('email'),
 			'subject' => __d('user_tools', 'Please verify your Email'),
 			'template' => 'Burzum/UserTools.Users/verification_email',
 		];
@@ -25,13 +29,13 @@ class UsersMailer extends Mailer {
 	/**
 	 * Sends the password reset token
 	 *
-	 * @param \Burzum\UserTools\Model\Entity\User
-	 * @param array $options
+	 * @param \Cake\Datasource\EntityInterface $user User entity
+	 * @param array $options Options
 	 * @return void
 	 */
-	public function passwordResetToken($user, array $options = []) {
+	public function passwordResetToken(EntityInterface $user, array $options = []) {
 		$defaults = [
-			'to' => $user->email,
+			'to' => $user->get('email'),
 			'subject' => __d('user_tools', 'Your password reset'),
 			'template' => 'Burzum/UserTools.Users/password_reset'
 		];
@@ -42,13 +46,13 @@ class UsersMailer extends Mailer {
 	/**
 	 * Sends the new password email
 	 *
-	 * @param \Burzum\UserTools\Model\Entity\User
-	 * @param array $options
+	 * @param \Cake\Datasource\EntityInterface $user User entity
+	 * @param array $options Options
 	 * @return void
 	 */
-	public function sendNewPasswordEmail($user, array $options = []) {
+	public function sendNewPasswordEmail(EntityInterface $user, array $options = []) {
 		$defaults = [
-			'to' => $user->email,
+			'to' => $user->get('email'),
 			'subject' => __d('user_tools', 'Your new password'),
 			'template' => 'Burzum/UserTools.Users/new_password'
 		];
@@ -59,7 +63,7 @@ class UsersMailer extends Mailer {
 	/**
 	 * Sets the options from the array to the corresponding mailer methods
 	 *
-	 * @param array
+	 * @param array $options Options
 	 * @return void
 	 */
 	protected function _applyOptions($options) {
@@ -67,5 +71,4 @@ class UsersMailer extends Mailer {
 			$this->{$method}($value);
 		}
 	}
-
 }

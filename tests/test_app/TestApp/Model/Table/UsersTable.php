@@ -14,5 +14,4 @@ class UsersTable extends Table {
 		]);
 		$this->addBehavior('Burzum/UserTools.User');
 	}
-
 }

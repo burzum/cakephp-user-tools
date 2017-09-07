@@ -2,10 +2,9 @@
 namespace Burzum\UserTools\Test\TestCase\Controller\Component;
 
 use Burzum\UserTools\Auth\DefaultAuthSetupTrait;
-use Cake\Controller\ComponentRegistry;
 use Cake\Controller\Controller;
-use Cake\Network\Response;
-use Cake\Network\Request;
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 
@@ -22,23 +21,23 @@ class DefaultAuthSetupTraitController extends Controller {
  */
 class DefaultAuthSetupTraitTest extends TestCase {
 
-/**
- * Fixtures
- *
- * @var array
- */
+	/**
+	 * Fixtures
+	 *
+	 * @var array
+	 */
 	public $fixtures = [
 		'plugin.Burzum\UserTools.User'
 	];
 
-/**
- * setup
- *
- * @return void
- */
+	/**
+	 * setup
+	 *
+	 * @return void
+	 */
 	public function setUp() {
 		parent::setUp();
-		$this->request = new Request();
+		$this->request = new ServerRequest();
 		$this->response = new Response();
 		$this->Users = TableRegistry::get('Users');
 		$this->Controller = new DefaultAuthSetupTraitController($this->request, $this->response);
@@ -46,15 +45,20 @@ class DefaultAuthSetupTraitTest extends TestCase {
 		$this->Controller->initialize();
 	}
 
-/**
- * tearDown
- *
- * @return void
- */
+	/**
+	 * tearDown
+	 *
+	 * @return void
+	 */
 	public function tearDown() {
 		parent::tearDown();
 	}
 
+	/**
+	 * testSetupAuthentication
+	 *
+	 * @return void
+	 */
 	public function testSetupAuthentication() {
 		$this->assertEquals($this->Controller->components()->loaded(), []);
 		$this->Controller->setupAuthentication();

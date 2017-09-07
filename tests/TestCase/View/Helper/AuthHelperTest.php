@@ -1,12 +1,12 @@
 <?php
 namespace Burzum\UserTools\Test\TestCase\View\Helper;
 
+use Burzum\UserTools\View\Helper\AuthHelper;
 use Cake\Network\Request;
 use Cake\Network\Session;
+use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
-use Cake\ORM\Entity;
-use Burzum\UserTools\View\Helper\AuthHelper;
 
 /**
  * AuthHelperTestCase
@@ -17,11 +17,11 @@ use Burzum\UserTools\View\Helper\AuthHelper;
  */
 class AuthHelperTestCase extends TestCase {
 
-/**
- * setUp method
- *
- * @return void
- */
+	/**
+	 * setUp method
+	 *
+	 * @return void
+	 */
 	public function setUp() {
 		parent::setUp();
 		$this->View = new View(null);
@@ -30,7 +30,7 @@ class AuthHelperTestCase extends TestCase {
 			->setMethods(['session'])
 			->getMock();
 
-		$this->View->viewVars = array(
+		$this->View->viewVars = [
 			'userData' => new Entity([
 				'id' => 'user-1',
 				'username' => 'florian',
@@ -40,24 +40,24 @@ class AuthHelperTestCase extends TestCase {
 					'field1' => 'field one'
 				]
 			])
-		);
+		];
 	}
 
-/**
- * tearDown method
- *
- * @return void
- */
+	/**
+	 * tearDown method
+	 *
+	 * @return void
+	 */
 	public function tearDown() {
 		unset($this->View);
 		parent::tearDown();
 	}
 
-/**
- * testUser
- *
- * @return void
- */
+	/**
+	 * testUser
+	 *
+	 * @return void
+	 */
 	public function testUser() {
 		// Testing accessing the data with an entity.
 		$Auth = new AuthHelper($this->View);
@@ -81,26 +81,26 @@ class AuthHelperTestCase extends TestCase {
 		$this->assertEquals($result, $this->View->viewVars['userData']);
 	}
 
-/**
- * testHasRole
- *
- * @return void
- */
+	/**
+	 * testHasRole
+	 *
+	 * @return void
+	 */
 	public function testHasRole() {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->hasRole('admin'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
 
-		$this->View->viewVars['userData']['role'] = array(
+		$this->View->viewVars['userData']['role'] = [
 			'manager'
-		);
+		];
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->hasRole('manager'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
 
-		$this->View->viewVars['userData']['role'] = array(
+		$this->View->viewVars['userData']['role'] = [
 			'manager', 'user'
-		);
+		];
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->hasRole('manager'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
@@ -114,22 +114,22 @@ class AuthHelperTestCase extends TestCase {
 		}
 	}
 
-/**
- * testIsMe
- *
- * @return void
- */
+	/**
+	 * testIsMe
+	 *
+	 * @return void
+	 */
 	public function testIsMe() {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->isMe('user-1'));
 		$this->assertFalse($Auth->isMe('user-2'));
 	}
 
-/**
- * testIsLoggedIn
- *
- * @return void
- */
+	/**
+	 * testIsLoggedIn
+	 *
+	 * @return void
+	 */
 	public function testIsLoggedIn() {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->isLoggedin());

@@ -8,6 +8,11 @@
  */
 namespace Burzum\UserTools\Controller\Component;
 
+/**
+ * FlashAndRedirectTrait
+ *
+ * @property \Cake\Controller\ComponentRegistry $_registry
+ */
 trait FlashAndRedirectTrait {
 
 	/**
@@ -27,6 +32,7 @@ trait FlashAndRedirectTrait {
 	 */
 	public function handleFlashAndRedirect($type, $options) {
 		$this->_handleFlash($type, $options);
+
 		return $this->_handleRedirect($type, $options);
 	}
 
@@ -39,9 +45,10 @@ trait FlashAndRedirectTrait {
 	 */
 	protected function _handleRedirect($type, $options) {
 		if (isset($options[$type . 'RedirectUrl']) && $options[$type . 'RedirectUrl'] !== false) {
-			$controller = $this->_registry->getController();
+			$controller = $this->getController();
 			$result = $controller->redirect($options[$type . 'RedirectUrl']);
 			$this->_redirectResponse = $result;
+
 			return $result;
 		}
 
@@ -55,7 +62,7 @@ trait FlashAndRedirectTrait {
 	 *
 	 * @param string $type Prefix for the array key, mostly "success" or "error"
 	 * @param array $options Options
-	 * @return boolean
+	 * @return bool
 	 */
 	protected function _handleFlash($type, $options) {
 		if (isset($options[$type . 'Message']) && $options[$type . 'Message'] !== false) {
@@ -66,8 +73,12 @@ trait FlashAndRedirectTrait {
 				}
 
 				if (!isset($flashOptions['element'])) {
+					if (!$this->_registry->has('Flash')) {
+						$this->_registry->load('Flash');
+					}
+
 					$flashOptions['element'] = $type;
-					$this->Flash->set($options[$type . 'Message'], $flashOptions);
+					$this->_registry->get('Flash')->set($options[$type . 'Message'], $flashOptions);
 				}
 
 				return true;

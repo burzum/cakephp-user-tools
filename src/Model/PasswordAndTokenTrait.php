@@ -19,7 +19,7 @@ trait PasswordAndTokenTrait {
 		$options = $this->_passwordDictionary($options);
 		$password = '';
 
-		srand((double) microtime() * 1000000);
+		srand((double)microtime() * 1000000);
 		for ($i = 0; $i < $length; $i++) {
 			$password .=
 				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
@@ -32,10 +32,10 @@ trait PasswordAndTokenTrait {
 	/**
 	 * The dictionary of vowels and consonants for the password generation.
 	 *
-	 * @param array $options
+	 * @param array $options Options List of `vowels` and `cons`
 	 * @return array
 	 */
-	public function _passwordDictionary(array $options = []) {
+	protected function _passwordDictionary(array $options = []) {
 		$defaults = [
 			'vowels' => [
 				'a', 'e', 'i', 'o', 'u'
@@ -52,14 +52,15 @@ trait PasswordAndTokenTrait {
 		if (isset($options['vowels'])) {
 			unset($defaults['vowels']);
 		}
+
 		return Hash::merge($defaults, $options);
 	}
 
 	/**
 	 * Generate token used by the user registration system
 	 *
-	 * @param integer $length Token Length
-	 * @param string $chars
+	 * @param int $length Token Length
+	 * @param string $chars Characters used in the token
 	 * @return string
 	 */
 	public function generateToken($length = 10, $chars = '0123456789abcdefghijklmnopqrstuvwxyz') {
@@ -72,7 +73,7 @@ trait PasswordAndTokenTrait {
 				$i++;
 			}
 		}
+
 		return $token;
 	}
-
 }

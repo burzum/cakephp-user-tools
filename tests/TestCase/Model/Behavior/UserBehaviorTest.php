@@ -1,10 +1,8 @@
 <?php
 namespace Burzum\UserTools\Test\TestCase\Model\Behavior;
 
-use Cake\Core\Configure;
-use Cake\ORM\TableRegistry;
-use Cake\ORM\Table;
 use Cake\ORM\Entity;
+use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 
 /**
@@ -25,10 +23,10 @@ class UserBehaviorTest extends TestCase {
 	 *
 	 * @var array
 	 */
-	public $fixtures = array(
+	public $fixtures = [
 		'plugin.Burzum\UserTools.User',
 		'plugin.Burzum\UserTools.Profile'
-	);
+	];
 
 	/**
 	 * setup
@@ -181,21 +179,21 @@ class UserBehaviorTest extends TestCase {
 		$this->Users->save(new Entity([
 			'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
 			'id' => 2
-		]), array(
+		]), [
 			'validate' => false
-		));
+		]);
 		$result = $this->Users->verifyToken('secondusertesttoken');
 		$this->assertTrue($result);
 
 		$this->Users->save(new Entity([
 			'email_token_expires' => date('Y-m-d H:i:s', strtotime('-12 hours')),
 			'id' => 3
-		]), array(
+		]), [
 			'validate' => false
-		));
-		$result = $this->Users->verifyToken('thirdusertesttoken', array(
+		]);
+		$result = $this->Users->verifyToken('thirdusertesttoken', [
 			'returnData' => true
-		));
+		]);
 		$this->assertTrue(is_a($result, '\Cake\ORM\Entity'));
 		$this->assertTrue($result->token_is_expired);
 	}
@@ -220,8 +218,7 @@ class UserBehaviorTest extends TestCase {
 			->find()
 			->where([
 				'email_verified' => 0,
-				'email_token_expires <' => date('Y-m-d H:is:'
-			)])
+				'email_token_expires <' => date('Y-m-d H:is:')])
 			->count();
 		$this->assertEquals($result, 1);
 
@@ -329,5 +326,4 @@ class UserBehaviorTest extends TestCase {
 		]);
 		$this->assertFalse($result);
 	}
-
 }
