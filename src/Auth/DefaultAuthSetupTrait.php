@@ -8,6 +8,9 @@
  */
 namespace Burzum\UserTools\Auth;
 
+/**
+ * DefaultAuthSetupTrait
+ */
 trait DefaultAuthSetupTrait {
 
 	/**
@@ -22,7 +25,7 @@ trait DefaultAuthSetupTrait {
 			$this->components()->load('Auth');
 		}
 
-		$this->components()->Auth->config('authenticate', [
+		$this->components()->Auth->setConfig('authenticate', [
 			'Form' => [
 				'userModel' => 'Users',
 				'fields' => [

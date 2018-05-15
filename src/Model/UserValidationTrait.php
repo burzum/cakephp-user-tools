@@ -5,6 +5,9 @@ use Cake\Core\Configure;
 use Cake\Validation\Validator;
 use RuntimeException;
 
+/**
+ * UserValidationTrait
+ */
 trait UserValidationTrait {
 
 	/**
@@ -168,7 +171,8 @@ trait UserValidationTrait {
 	 * @return \Cake\Validation\Validator
 	 */
 	public function validationChangePassword($validator) {
-		$validator->provider('userBehavior', $this);
+		$validator->setProvider('userBehavior', $this);
+
 		$validator = $this->validationPassword($validator);
 		$validator = $this->validationConfirmPassword($validator);
 		$validator = $this->validationOldPassword($validator);
@@ -183,9 +187,9 @@ trait UserValidationTrait {
 	 * @return \Cake\Validation\Validator
 	 */
 	protected function validationOldPassword($validator) {
-		$validator->provider('userBehavior', $this);
+		$validator->setProvider('userBehavior', $this);
+		$validator->setProvider('userTable', $this->_table);
 
-		$validator->provider('userTable', $this->_table);
 		$validator->add('old_password', 'notBlank', [
 			'rule' => 'notBlank',
 			'message' => __d('user_tools', 'Enter your old password.')
@@ -211,7 +215,7 @@ trait UserValidationTrait {
 	 * @return bool
 	 */
 	public function validateOldPassword($value, $field, $context) {
-		if (Configure::read('debug') > 0 && empty($context['data'][$this->_table->primaryKey()])) {
+		if (Configure::read('debug') > 0 && empty($context['data'][$this->_table->getPrimaryKey()])) {
 			throw new RuntimeException('The user id is required as well to validate the old password!');
 		}
 
@@ -220,7 +224,7 @@ trait UserValidationTrait {
 				$this->_table->aliasField($field)
 			])
 			->where([
-				$this->_table->primaryKey() => $context['data'][$this->_table->primaryKey()],
+				$this->_table->getPrimaryKey() => $context['data'][$this->_table->getPrimaryKey()],
 			])
 			->first();
 

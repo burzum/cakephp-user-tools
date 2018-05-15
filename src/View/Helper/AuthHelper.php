@@ -12,6 +12,9 @@ use Cake\Utility\Hash;
 use Cake\View\Helper;
 use InvalidArgumentException;
 
+/**
+ * AuthHelper
+ */
 class AuthHelper extends Helper {
 
 	/**
@@ -127,7 +130,7 @@ class AuthHelper extends Helper {
 	 * @return bool|null True if the role is in the set of roles for the active user data.
 	 */
 	public function hasRole($requestedRole) {
-		$roles = $this->user($this->config('roleField'));
+		$roles = $this->user($this->getConfig('roleField'));
 		if (is_null($roles)) {
 			return false;
 		}

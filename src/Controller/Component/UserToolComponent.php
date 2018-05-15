@@ -336,13 +336,14 @@ class UserToolComponent extends Component {
 				if (!is_a($table, Table::class)) {
 					throw new RuntimeException('Passed object is not of type \Cake\ORM\Table!');
 				}
-				$this->UserTable = $table->alias();
+				$this->UserTable = $table->getAlias();
 			}
 			if (is_string($table)) {
 				$this->UserTable = TableRegistry::get($table);
 			}
 		}
-		$this->getController()->set('userTable', $this->UserTable->alias());
+
+		$this->getController()->set('userTable', $this->UserTable->getAlias());
 	}
 
 	/**
@@ -535,9 +536,10 @@ class UserToolComponent extends Component {
 	 */
 	public function getUser($userId = null, $options = []) {
 		$options = Hash::merge($this->getConfig('getUser'), $options);
+
 		if (is_null($userId)) {
-			if (isset($this->_getRequest()->params['pass'][0])) {
-				$userId = $this->_getRequest()->params['pass'][0];
+			if (isset($this->_getRequest()->getParam('pass')[0])) {
+				$userId = $this->_getRequest()->getParam('pass')[0];
 			}
 		}
 
@@ -582,7 +584,7 @@ class UserToolComponent extends Component {
 		}
 		if (is_string($userId) || is_integer($userId)) {
 			return $this->UserTable->newEntity([
-				$this->UserTable->primaryKey() => $userId
+				$this->UserTable->getPrimaryKey() => $userId
 			]);
 		}
 		if (is_array($userId)) {
