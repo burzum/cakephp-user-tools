@@ -113,7 +113,7 @@ class UserBehaviorTest extends TestCase {
 
 		$result = $this->UserBehavior->register($entity);
 		$this->assertFalse($result);
-		$errors = $entity->errors();
+		$errors = $entity->getErrors();
 		$this->assertNotEmpty($errors);
 	}
 

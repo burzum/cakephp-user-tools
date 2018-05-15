@@ -2,8 +2,8 @@
 namespace Burzum\UserTools\Test\TestCase\View\Helper;
 
 use Burzum\UserTools\View\Helper\AuthHelper;
-use Cake\Network\Request;
-use Cake\Network\Session;
+use Cake\Http\ServerRequest as Request;
+use Cake\Http\Session;
 use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;

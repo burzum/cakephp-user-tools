@@ -163,7 +163,7 @@ class UserBehavior extends Behavior {
 			$this->setupDefaultValidation();
 		}
 
-		$this->eventManager()->on($this->_table);
+		$this->getEventManager()->on($this->_table);
 	}
 
 	/**
@@ -187,7 +187,7 @@ class UserBehavior extends Behavior {
 	 * @return void
 	 */
 	public function setupDefaultValidation() {
-		$validator = $this->_table->validator('default');
+		$validator = $this->_table->getValidator('default');
 		$validator = $this->validationUserName($validator);
 		$validator = $this->validationPassword($validator);
 		$validator = $this->validationConfirmPassword($validator);
@@ -216,11 +216,11 @@ class UserBehavior extends Behavior {
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
 		$options = Hash::merge($this->_config['updateLastActivity'], $options);
 		if ($this->_table->exists([
-			$this->_table->aliasField($this->_table->primaryKey()) => $userId
+			$this->_table->aliasField($this->_table->getPrimaryKey()) => $userId
 		])) {
 			return $this->_table->updateAll(
 				[$field => date($options['dateFormat'])],
-				[$this->_table->primaryKey() => $userId]
+				[$this->_table->getPrimaryKey() => $userId]
 			);
 		}
 
@@ -260,7 +260,7 @@ class UserBehavior extends Behavior {
 		$options = Hash::merge($this->_config['register'], $options);
 
 		$schema = $this->_table->getSchema();
-		$columnType = $schema->columnType($this->_table->getPrimaryKey());
+		$columnType = $schema->getColumnType($this->_table->getPrimaryKey());
 
 		if ($this->_config['useUuid'] === true && $columnType !== 'integer') {
 			$primaryKey = $this->_table->getPrimaryKey();
@@ -398,7 +398,7 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param \Cake\Datasource\EntityInterface $entity User entity
 	 * @param array $options Options
-	 * @return \Cake\Datasource\EntityInterface
+	 * @return array|\Cake\Datasource\EntityInterface
 	 */
 	protected function _afterRegister(EntityInterface $entity, $options) {
 		if ($entity) {
@@ -446,7 +446,7 @@ class UserBehavior extends Behavior {
 			'options' => $options
 		]);
 
-		$this->eventManager()->dispatch($event);
+		$this->getEventManager()->dispatch($event);
 		if ($event->isStopped()) {
 			return (bool)$event->result;
 		}
@@ -574,7 +574,7 @@ class UserBehavior extends Behavior {
 	public function changePassword(EntityInterface $entity, array $options = []) {
 		$options = Hash::merge($this->_config['changePassword'], $options);
 
-		if ($entity->errors()) {
+		if ($entity->getErrors()) {
 			return false;
 		}
 
@@ -690,11 +690,13 @@ class UserBehavior extends Behavior {
 
 		if (is_array($options['field'])) {
 			foreach ($options['field'] as $field) {
-				$query->orWhere([$field => $value]);
+				$query->where([
+					'OR' => [$field => $value]
+				]);
 			}
 
-			return $query;
-		}
+		return $query;
+	}
 
 		return $query->where([$options['field'] => $value]);
 	}
@@ -775,7 +777,7 @@ class UserBehavior extends Behavior {
 
 		$oldPassword = $user->get($this->_field('oldPassword'));
 
-		if (empty($oldPassword) || $user->errors()) {
+		if (empty($oldPassword) || $user->getErrors()) {
 			$user->unsetProperty($this->_field('password'));
 			$user->unsetProperty($this->_field('passwordCheck'));
 

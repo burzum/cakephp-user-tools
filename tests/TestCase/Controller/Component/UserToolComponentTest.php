@@ -30,6 +30,12 @@ class UserToolComponentTest extends TestCase {
 		'plugin.Burzum\UserTools.User'
 	];
 
+	public $request;
+	public $response;
+	public $Controller;
+	public $Users;
+	public $Registry;
+
 	/**
 	 * setup
 	 *
@@ -85,12 +91,13 @@ class UserToolComponentTest extends TestCase {
 	 * @return void
 	 */
 	public function testGetUser() {
+		$this->Controller->request = $this->Controller->request->withParam('pass', [0 => 1]);
 		$this->Controller->loadComponent('Burzum/UserTools.UserTool');
 		$user = $this->Controller->UserTool->getUser(1);
 		$this->assertEquals($user->id, 1);
 		$this->assertEquals($user->username, 'adminuser');
 
-		$this->Controller->request->params['pass'][0] = 2;
+		$this->Controller->request = $this->Controller->request->withParam('pass', [0 => 2]);
 		$user = $this->Controller->UserTool->getUser();
 		$this->assertEquals($user->id, 2);
 		$this->assertEquals($user->username, 'newuser');

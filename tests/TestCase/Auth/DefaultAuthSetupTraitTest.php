@@ -63,7 +63,7 @@ class DefaultAuthSetupTraitTest extends TestCase {
 		$this->assertEquals($this->Controller->components()->loaded(), []);
 		$this->Controller->setupAuthentication();
 		$this->assertEquals($this->Controller->components()->loaded(), ['Auth']);
-		$result = $this->Controller->components()->Auth->config('authenticate');
+		$result = $this->Controller->components()->Auth->getConfig('authenticate');
 		$expected = [
 			'Form' => [
 				'userModel' => 'Users',
