@@ -1,4 +1,6 @@
 <?php
+declare(strict_types = 1);
+
 namespace Burzum\UserTools\Model;
 
 use Cake\Core\Configure;

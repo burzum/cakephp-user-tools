@@ -1,4 +1,6 @@
 <?php
+declare(strict_types = 1);
+
 namespace Burzum\UserTools\Mailer;
 
 use Cake\Datasource\EntityInterface;

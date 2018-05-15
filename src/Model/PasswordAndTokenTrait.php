@@ -1,4 +1,6 @@
 <?php
+declare(strict_types = 1);
+
 namespace Burzum\UserTools\Model;
 
 use Cake\Utility\Hash;
@@ -19,7 +21,7 @@ trait PasswordAndTokenTrait {
 		$options = $this->_passwordDictionary($options);
 		$password = '';
 
-		srand((double)microtime() * 1000000);
+		srand((int)microtime() * 1000000);
 		for ($i = 0; $i < $length; $i++) {
 			$password .=
 				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
