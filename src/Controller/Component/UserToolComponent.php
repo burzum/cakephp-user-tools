@@ -370,7 +370,7 @@ class UserToolComponent extends Component {
 	 * @return bool|\Cake\Http\Response
 	 */
 	public function mapAction() {
-		$action = $this->_getRequest()->params['action'];
+		$action = $this->_getRequest()->getParam('action');
 		if ($this->getConfig('directMapping') === true) {
 			$this->_directMapping($action);
 		}
@@ -389,7 +389,7 @@ class UserToolComponent extends Component {
 			return false;
 		}
 
-		$pass = (array)$this->_getRequest()->param('pass');
+		$pass = (array)$this->_getRequest()->getParam('pass');
 		$result = call_user_func_array([$this, $action], $pass);
 
 		if ($result instanceof Response) {
@@ -406,9 +406,10 @@ class UserToolComponent extends Component {
 	 * @return bool|\Cake\Http\Response
 	 */
 	protected function _mapAction($action) {
-		$actionMap = $this->getConfig('actionMap');
+		$actionMap = (array)$this->getConfig('actionMap');
+
 		if (isset($actionMap[$action]) && method_exists($this, $actionMap[$action]['method'])) {
-			$pass = (array)$this->_getRequest()->param('pass');
+			$pass = (array)$this->_getRequest()->getParam('pass');
 			call_user_func_array([$this, $actionMap[$action]['method']], $pass);
 
 			if ($this->_redirectResponse instanceof Response) {
@@ -417,7 +418,7 @@ class UserToolComponent extends Component {
 
 			if (is_string($actionMap[$action]['view'])) {
 				try {
-					return $this->getController()->render($this->getController()->request->param('action'));
+					return $this->getController()->render($this->_getRequest()->getParam('action'));
 				} catch (MissingTemplateException $e) {
 					return $this->getController()->render($actionMap[$action]['view']);
 				}
@@ -588,7 +589,7 @@ class UserToolComponent extends Component {
 
 			return $this->UserTable->patchEntity(
 				$entity,
-				[$this->UserTable->primaryKey() => $userId],
+				[$this->UserTable->getPrimaryKey() => $userId],
 				['guard' => false]
 			);
 		}
@@ -616,7 +617,9 @@ class UserToolComponent extends Component {
 		$user = $Auth->user();
 
 		if (empty($user)) {
-			return $this->getController()->redirect($this->getController()->referer());
+			return $this->getController()->redirect(
+				$this->getController()->referer()
+			);
 		}
 
 		$logoutRedirect = $Auth->logout();
@@ -652,7 +655,7 @@ class UserToolComponent extends Component {
 		$return = false;
 		$entity = $this->UserTable->newEntity();
 		// Make the field accessible in the case the default entity class is used.
-		$entity->accessible('confirm_password', true);
+		$entity->setAccess('confirm_password', true);
 		if ($this->_getRequest()->is('post')) {
 			$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->getData(), [
 				'validate' => $options['validation']
@@ -707,12 +710,12 @@ class UserToolComponent extends Component {
 				'validate' => 'requestPassword'
 			]);
 
-			if (!$entity->errors($options['field']) && $this->_initPasswordReset($entity, $options)) {
+			if (!$entity->getError($options['field']) && $this->_initPasswordReset($entity, $options)) {
 				return true;
 			}
 
 			if ($options['setEntity']) {
-				if ($entity->dirty('email') && !$entity->errors('email')) {
+				if ($entity->isDirty('email') && !$entity->getError('email')) {
 					$entity->email = '';
 				}
 				$this->_setViewVar('userEntity', $entity);
@@ -785,6 +788,7 @@ class UserToolComponent extends Component {
 			if (empty($options['invalidErrorMessage'])) {
 				$options['invalidErrorMessage'] = $e->getMessage();
 			}
+
 			$redirect = $this->handleFlashAndRedirect('expiredError', $options);
 			if ($redirect instanceof Response) {
 				return $redirect;
@@ -819,7 +823,7 @@ class UserToolComponent extends Component {
 		$options = Hash::merge($this->getConfig('changePassword'), $options);
 
 		$entity = $this->UserTable->newEntity();
-		$entity->accessible([
+		$entity->setAccess([
 			'old_password',
 			'password',
 			'new_password',
@@ -828,7 +832,7 @@ class UserToolComponent extends Component {
 
 		if ($this->_getRequest()->is(['post', 'put'])) {
 			$entity = $this->UserTable->get($this->_getAuthObject()->user('id'));
-			$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->data, [
+			$entity = $this->UserTable->patchEntity($entity, $this->_getRequest()->getData(), [
 				'validate' => 'changePassword'
 			]);
 
