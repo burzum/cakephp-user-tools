@@ -14,7 +14,11 @@ use Cake\Cache\Cache;
 use Cake\Console\Shell;
 use Cake\Datasource\ConnectionManager;
 use Cake\ORM\TableRegistry;
+use Exception;
 
+/**
+ * Users Shell
+ */
 class UserShell extends Shell {
 
 	/**
@@ -32,17 +36,35 @@ class UserShell extends Shell {
 			$this->UserTable->addBehavior('Burzum/UserTools.User');
 		}
 		try {
-			$this->UserTable->schema();
-		} catch (\Exception $e) {
+			$this->UserTable->getSchema();
+		} catch (Exception $e) {
 			$this->err($e->getMessage());
 			$this->_stop(1);
 		}
 	}
 
 	/**
+	 * Removes inactive users
+	 *
+	 * @return void
+	 * @throws \Aura\Intl\Exception
+	 */
+	public function removeInactive() {
+		$count = $this->UserTable->removeInactiveUsers();
+		$this->out(__dn(
+			'burzum/user_tools',
+			'Removed {0,number,integer} inactive user.',
+			'Removed {0,number,integer} inactive users.',
+			$count,
+			$count
+		));
+	}
+
+	/**
 	 * Removes expired registrations
 	 *
 	 * @return void
+	 * @throws \Aura\Intl\Exception
 	 */
 	public function removeExpired() {
 		$count = $this->UserTable->removeExpiredRegistrations();
@@ -57,10 +79,10 @@ class UserShell extends Shell {
 
 	/**
 	 * Sets a new password for an user.
-	 *
 	 * cake user setPassword <searchTerm> <newPassword> <field | optional>
 	 *
 	 * @return void
+	 * @throws \Aura\Intl\Exception
 	 */
 	public function setPassword() {
 		if (count($this->args) < 2) {

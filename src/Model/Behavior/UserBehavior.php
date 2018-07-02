@@ -172,8 +172,9 @@ class UserBehavior extends Behavior {
 	 * Gets the mapped field name of the table
 	 *
 	 * @param string $field Field name to get the mapped field for
-	 * @throws \RuntimeException
 	 * @return string field name of the table
+	 * @throws \RuntimeException
+	 * @throws \Aura\Intl\Exception
 	 */
 	protected function _field($field) {
 		if (!isset($this->_config['fieldMap'][$field])) {
@@ -419,8 +420,9 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param string $token The token to check.
 	 * @param array $options Options array.
-	 * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
 	 * @return bool|\Cake\ORM\Entity Returns false if the token has expired
+	 * @throws \Cake\Datasource\Exception\RecordNotFoundException if the token was not found at all
+	 * @throws \Aura\Intl\Exception
 	 */
 	public function verifyToken($token, $options = []) {
 		$defaults = [
@@ -542,28 +544,69 @@ class UserBehavior extends Behavior {
 	}
 
 	/**
-	 * Removes all users from the user table that did not complete the registration
+	 * Removes many user records using delete() and will by this trigger callbacks
 	 *
-	 * @param array $conditions Find conditions passed to where()
-	 * @return int Number of removed records
+	 * Be aware that if you delete A LOT records this might cause a timeout if
+	 * this is executed in a web context and not from a shell!
+	 *
+	 * @param array $conditions Conditions
+	 * @return int Amount of deleted records
 	 */
-	public function removeExpiredRegistrations($conditions = []) {
-		$defaults = [
-			$this->_table->aliasField($this->_field('emailVerified')) => 0,
-			$this->_table->aliasField($this->_field('emailTokenExpires')) . ' <' => date('Y-m-d H:i:s')
-		];
-
-		$conditions = Hash::merge($defaults, $conditions);
+	public function removeMany($conditions = []) {
 		$count = $this->_table
 			->find()
 			->where($conditions)
 			->count();
 
-		if ($count > 0) {
-			$this->_table->deleteAll($conditions);
+		if ($count === 0) {
+			return 0;
+		}
+
+		$chunkSize = 25;
+		$chunkCount = 0;
+
+		while ($chunkCount <= $count) {
+			$results = $this->_table->find()
+				->offset($chunkCount)
+				->limit($chunkSize)
+				->where($conditions)
+				->all();
+
+			foreach ($results as $result) {
+				$this->_table->delete($result);
+			}
 		}
 
 		return $count;
+	}
+
+	/**
+	 * Removes all users from the user table that are inactive
+	 *
+	 * @param array $conditions Find conditions passed to where()
+	 * @return int Number of removed records
+	 */
+	public function removeInactive(array $conditions = []) {
+		$defaults = [
+			$this->_table->aliasField($this->_field('active')) => false,
+		];
+
+		return $this->removeMany(Hash::merge($defaults, $conditions));
+	}
+
+	/**
+	 * Removes all users from the user table that did not complete the registration
+	 *
+	 * @param array $conditions Find conditions passed to where()
+	 * @return int Number of removed records
+	 */
+	public function removeExpiredRegistrations(array $conditions = []) {
+		$defaults = [
+			$this->_table->aliasField($this->_field('emailVerified')) => 0,
+			$this->_table->aliasField($this->_field('emailTokenExpires')) . ' <' => date('Y-m-d H:i:s')
+		];
+
+		return $this->removeMany(Hash::merge($defaults, $conditions));
 	}
 
 	/**
@@ -594,6 +637,7 @@ class UserBehavior extends Behavior {
 	 * @param mixed $value User id or other value to look the user up
 	 * @param array $options Options
 	 * @return void
+	 * @throws \Aura\Intl\Exception
 	 */
 	public function initPasswordReset($value, $options = []) {
 		$defaults = [
@@ -631,8 +675,9 @@ class UserBehavior extends Behavior {
 	 *
 	 * @param mixed $value User ID or other value to look the user up
 	 * @param array $options Options
+	 * @return \Cake\Datasource\EntityInterface
 	 * @throws \Cake\Datasource\Exception\RecordNotFoundException;
-	 * @return \Cake\ORM\Entity
+	 * @throws \Aura\Intl\Exception
 	 */
 	public function getUser($value, $options = []) {
 		return $this->_getUser($value, $options);
@@ -640,14 +685,14 @@ class UserBehavior extends Behavior {
 
 	/**
 	 * Finds the user for the password reset.
-	 *
 	 * Extend the behavior and override this method if the configuration options
 	 * are not sufficient.
 	 *
 	 * @param mixed $value User lookup value
 	 * @param array $options Options
-	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
 	 * @return \Cake\Datasource\EntityInterface
+	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
+	 * @throws \Aura\Intl\Exception
 	 */
 	protected function _getUser($value, $options = []) {
 		$defaults = [
@@ -697,23 +742,23 @@ class UserBehavior extends Behavior {
 				]);
 			}
 
-		return $query;
-	}
+			return $query;
+		}
 
 		return $query->where([$options['field'] => $value]);
 	}
 
 	/**
 	 * Sends a new password to an user by email.
-	 *
 	 * Note that this is *not* a recommended way to reset an user password. A much
 	 * more secure approach is to have the user manually enter a new password and
 	 * only send him an URL with a token.
 	 *
 	 * @param string|EntityInterface $email The user entity or the email
 	 * @param array $options Optional options array, use it to pass config options.
-	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
 	 * @return bool
+	 * @throws \Cake\Datasource\Exception\RecordNotFoundException
+	 * @throws \Aura\Intl\Exception
 	 */
 	public function sendNewPassword($email, $options = []) {
 		if ($email instanceof EntityInterface) {
@@ -828,4 +873,33 @@ class UserBehavior extends Behavior {
 		$this->getMailer($this->getConfig('mailer'))
 			->send('verificationEmail', [$user, $options]);
 	}
+
+	/**
+	 * Fires the User.beforeDelete event
+	 *
+	 * @param \Cake\Event\Event $event Event
+	 * @return void
+	 */
+	public function beforeDelete(Event $event) {
+		$this->dispatchEvent(
+			'User.beforeDelete',
+			$event->getData(),
+			$event->getSubject()
+		);
+	}
+
+	/**
+	 * Fires the User.afterDelete event
+	 *
+	 * @param \Cake\Event\Event $event Event
+	 * @return void
+	 */
+	public function afterDelete(Event $event) {
+		$this->dispatchEvent(
+			'User.afterDelete',
+			$event->getData(),
+			$event->getSubject()
+		);
+	}
+
 }
