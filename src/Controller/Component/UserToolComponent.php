@@ -900,7 +900,7 @@ class UserToolComponent extends Component {
 		}
 
 			return $this->_registry->Auth;
-		}
+	}
 
 	/**
 	 * Handles the optional setting of view vars within the component.
