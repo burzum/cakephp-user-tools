@@ -384,7 +384,7 @@ class UserBehavior extends Behavior {
 			$this->_afterRegister($result, $options);
 		}
 
-		$event = $this->dispatchEvent('user.afterRegister', [
+		$event = $this->dispatchEvent('User.afterRegister', [
 			'data' => $result,
 			'table' => $this->_table
 		]);
