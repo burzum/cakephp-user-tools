@@ -3,6 +3,8 @@ declare(strict_types = 1);
 
 namespace Burzum\UserTools\Model;
 
+use Burzum\UserTools\Utility\PasswordGenerator;
+use Burzum\UserTools\Utility\TokenGenerator;
 use Cake\Utility\Hash;
 
 /**
@@ -18,44 +20,16 @@ trait PasswordAndTokenTrait {
 	 * @return string
 	 */
 	public function generatePassword($length = 8, $options = []) {
-		$options = $this->_passwordDictionary($options);
-		$password = '';
+		$generator = new PasswordGenerator();
 
-		srand((int)microtime() * 1000000);
-		for ($i = 0; $i < $length; $i++) {
-			$password .=
-				$options['cons'][mt_rand(0, count($options['cons']) - 1)] .
-				$options['vowels'][mt_rand(0, count($options['vowels']) - 1)];
-		}
-
-		return substr($password, 0, $length);
-	}
-
-	/**
-	 * The dictionary of vowels and consonants for the password generation.
-	 *
-	 * @param array $options Options List of `vowels` and `cons`
-	 * @return array
-	 */
-	protected function _passwordDictionary(array $options = []) {
-		$defaults = [
-			'vowels' => [
-				'a', 'e', 'i', 'o', 'u'
-			],
-			'cons' => [
-				'b', 'c', 'd', 'g', 'h', 'j', 'k', 'l', 'm', 'n',
-				'p', 'r', 's', 't', 'u', 'v', 'w', 'tr', 'cr', 'br', 'fr', 'th',
-				'dr', 'ch', 'ph', 'wr', 'st', 'sp', 'sw', 'pr', 'sl', 'cl'
-			]
-		];
 		if (isset($options['cons'])) {
-			unset($defaults['cons']);
+			$generator->setConsonants($options['cons']);
 		}
 		if (isset($options['vowels'])) {
-			unset($defaults['vowels']);
+			$generator->setVowels($options['vowels']);
 		}
 
-		return Hash::merge($defaults, $options);
+		return $generator->generate($length);
 	}
 
 	/**
@@ -66,16 +40,6 @@ trait PasswordAndTokenTrait {
 	 * @return string
 	 */
 	public function generateToken($length = 10, $chars = '0123456789abcdefghijklmnopqrstuvwxyz') {
-		$token = '';
-		$i = 0;
-		while ($i < $length) {
-			$char = substr($chars, mt_rand(0, strlen($chars) - 1), 1);
-			if (!stristr($token, $char)) {
-				$token .= $char;
-				$i++;
-			}
-		}
-
-		return $token;
+		return (new TokenGenerator())->generate($length, $chars);
 	}
 }
