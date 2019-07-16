@@ -13,19 +13,21 @@ use Cake\TestSuite\TestCase;
  * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
-class PasswordGeneratorTest extends TestCase {
+class PasswordGeneratorTest extends TestCase
+{
 
-	/**
-	 * testGenerate
-	 *
-	 * @return void
-	 */
-	public function testGenerate(): void {
-		$generator = new PasswordGenerator();
-		$result = $generator->generate();
-		$this->assertEquals(10, strlen($result));
+    /**
+     * testGenerate
+     *
+     * @return void
+     */
+    public function testGenerate(): void
+    {
+        $generator = new PasswordGenerator();
+        $result = $generator->generate();
+        $this->assertEquals(10, strlen($result));
 
-		$result = $generator->generate(6);
-		$this->assertEquals(6, strlen($result));
-	}
+        $result = $generator->generate(6);
+        $this->assertEquals(6, strlen($result));
+    }
 }

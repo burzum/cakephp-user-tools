@@ -13,18 +13,20 @@ use Cake\TestSuite\TestCase;
  * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
-class TokenGeneratorTest extends TestCase {
-	/**
-	 * testGenerate
-	 *
-	 * @return void
-	 */
-	public function testGenerate(): void {
-		$generator = new TokenGenerator();
-		$result = $generator->generate();
-		$this->assertEquals(10, strlen($result));
+class TokenGeneratorTest extends TestCase
+{
+    /**
+     * testGenerate
+     *
+     * @return void
+     */
+    public function testGenerate(): void
+    {
+        $generator = new TokenGenerator();
+        $result = $generator->generate();
+        $this->assertEquals(10, strlen($result));
 
-		$result = $generator->generate(6);
-		$this->assertEquals(6, strlen($result));
-	}
+        $result = $generator->generate(6);
+        $this->assertEquals(6, strlen($result));
+    }
 }

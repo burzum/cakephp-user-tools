@@ -10,50 +10,51 @@ use Cake\TestSuite\Fixture\TestFixture;
  * ]@copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
-class ProfileFixture extends TestFixture {
+class ProfileFixture extends TestFixture
+{
 
-	/**
-	 * Fields
-	 *
-	 * @var array
-	 */
-	public $fields = [
-		'id' => ['type' => 'uuid', 'length' => null, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null],
-		'user_id' => ['type' => 'string', 'null' => false, 'length' => 36],
-		'first_name' => ['type' => 'string', 'null' => false, 'default' => null],
-		'last_name' => ['type' => 'string', 'null' => false, 'default' => null],
-		'_constraints' => [
-			'primary' => ['type' => 'primary', 'columns' => ['id'], 'length' => []],
-		],
-		'_options' => [
-			'engine' => 'InnoDB',
-			'collation' => 'utf8_general_ci'
-		],
-	];
+    /**
+     * Fields
+     *
+     * @var array
+     */
+    public $fields = [
+        'id' => ['type' => 'uuid', 'length' => null, 'null' => false, 'default' => null, 'comment' => '', 'precision' => null],
+        'user_id' => ['type' => 'string', 'null' => false, 'length' => 36],
+        'first_name' => ['type' => 'string', 'null' => false, 'default' => null],
+        'last_name' => ['type' => 'string', 'null' => false, 'default' => null],
+        '_constraints' => [
+            'primary' => ['type' => 'primary', 'columns' => ['id'], 'length' => []],
+        ],
+        '_options' => [
+            'engine' => 'InnoDB',
+            'collation' => 'utf8_general_ci'
+        ],
+    ];
 
-	/**
-	 * Records
-	 *
-	 * @var array
-	 */
-	public $records = [
-		[
-			'id' => '1',
-			'user_id' => 1,
-			'first_name' => 'Cake',
-			'last_name' => 'PHP'
-		],
-		[
-			'id' => '2',
-			'user_id' => 2,
-			'first_name' => 'Cake',
-			'last_name' => 'PHP'
-		],
-		[
-			'id' => '3',
-			'user_id' => 3,
-			'first_name' => 'Cake',
-			'last_name' => 'PHP'
-		],
-	];
+    /**
+     * Records
+     *
+     * @var array
+     */
+    public $records = [
+        [
+            'id' => '1',
+            'user_id' => 1,
+            'first_name' => 'Cake',
+            'last_name' => 'PHP'
+        ],
+        [
+            'id' => '2',
+            'user_id' => 2,
+            'first_name' => 'Cake',
+            'last_name' => 'PHP'
+        ],
+        [
+            'id' => '3',
+            'user_id' => 3,
+            'first_name' => 'Cake',
+            'last_name' => 'PHP'
+        ],
+    ];
 }
