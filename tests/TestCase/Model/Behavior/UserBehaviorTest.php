@@ -32,7 +32,7 @@ class UserBehaviorTest extends TestCase
     /**
      * @var \Burzum\UserTools\Model\Behavior\UserBehavior
      */
-    protected $Users;
+    protected $UserBehavior;
 
     /**
      * setup
@@ -42,15 +42,17 @@ class UserBehaviorTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        TableRegistry::clear();
-        $this->Users = TableRegistry::get('Users', [
+        TableRegistry::getTableLocator()->clear();
+        $this->Users = TableRegistry::getTableLocator()->get('Users', [
             'className' => 'TestApp\Model\Table\UsersTable'
         ]);
 
         $this->UserBehavior = $this->getMockBuilder('\Burzum\UserTools\Model\Behavior\UserBehavior')
-            ->setConstructorArgs([$this->Users])
+            ->setConstructorArgs([$this->Users, ['fromEmail' => 'noreply@noreply.com']])
             ->setMethods(['getMailer'])
             ->getMock();
+
+        $this->UserBehavior->setConfig('fromEmail', 'noreply@noreply.com');
 
         $this->MockMailer = $this->getMockBuilder('Burzum\UserTools\Mailer\UsersMailer')
             ->setMethods(['send'])

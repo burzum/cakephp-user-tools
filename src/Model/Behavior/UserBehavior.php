@@ -72,6 +72,7 @@ class UserBehavior extends Behavior
      */
     protected $_defaultConfig = [
         'emailConfig' => 'default',
+        'fromEmail' => '',
         'defaultValidation' => true,
         'useUuid' => true,
         'passwordHasher' => 'Default',
@@ -877,6 +878,7 @@ class UserBehavior extends Behavior
     {
         $options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
         $this->getMailer($this->getConfig('mailer'))
+            ->setFrom($this->getConfig('fromEmail'))
             ->send('passwordResetToken', [$user, $options]);
     }
 
@@ -891,6 +893,7 @@ class UserBehavior extends Behavior
     {
         $options = Hash::merge($this->_config['sendNewPasswordEmail'], $options);
         $this->getMailer($this->getConfig('mailer'))
+            ->setFrom($this->getConfig('fromEmail'))
             ->send('verificationEmail', [$user, $options]);
     }
 
@@ -905,6 +908,7 @@ class UserBehavior extends Behavior
     {
         $options = Hash::merge($this->_config['sendVerificationEmail'], $options);
         $this->getMailer($this->getConfig('mailer'))
+            ->setFrom($this->getConfig('fromEmail'))
             ->send('verificationEmail', [$user, $options]);
     }
 
