@@ -22,6 +22,11 @@ use Exception;
 class UserShell extends Shell {
 
 	/**
+	 * @var \Cake\ORM\Table
+	 */
+	protected $UserTable;
+
+	/**
 	 * Assign $this->connection to the active task if a connection param is set.
 	 *
 	 * @return void
@@ -29,12 +34,15 @@ class UserShell extends Shell {
 	public function startup() {
 		parent::startup();
 		Cache::disable();
-		$this->UserTable = TableRegistry::get($this->param('model'), [
+
+		$this->UserTable = TableRegistry::getTableLocator()->get($this->param('model'), [
 			'connection' => ConnectionManager::get($this->param('connection'))
 		]);
+
 		if (!$this->UserTable->hasBehavior('Burzum/UserTools.User')) {
 			$this->UserTable->addBehavior('Burzum/UserTools.User');
 		}
+
 		try {
 			$this->UserTable->getSchema();
 		} catch (Exception $e) {

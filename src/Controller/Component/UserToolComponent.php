@@ -18,7 +18,7 @@ use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventDispatcherTrait;
 use Cake\Http\Response;
-use Cake\Network\Exception\NotFoundException;
+use Cake\Http\Exception\NotFoundException;
 use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
@@ -869,7 +869,7 @@ class UserToolComponent extends Component {
 			$result = $this->UserTable->$methodName($token);
 			$this->handleFlashAndRedirect('success', $options);
 		} catch (RecordNotFoundException $e) {
-			if (is_null($options['errorMessage'])) {
+			if ($options['errorMessage'] === null) {
 				$options['errorMessage'] = $e->getMessage();
 			}
 			$this->handleFlashAndRedirect('error', $options);

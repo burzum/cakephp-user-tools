@@ -69,8 +69,23 @@ class UsersMailer extends Mailer {
 	 * @return void
 	 */
 	protected function _applyOptions($options) {
+		$builderVars = [
+			'template',
+			'layout',
+			'theme',
+			'var',
+			'vars'
+		];
+
 		foreach ($options as $method => $value) {
-			$this->{$method}($value);
+			$methodName = 'set' . $method;
+
+			if (in_array($method, $builderVars)) {
+				$this->viewBuilder()->{$methodName}($value);
+				continue;
+			}
+
+			$this->{$methodName}($value);
 		}
 	}
 }
