@@ -5,7 +5,7 @@ declare(strict_types = 1);
  * UserBehavior
  *
  * @author Florian Krämer
- * @copyright 2013 - 2017 Florian Krämer
+ * @copyright Florian Krämer
  * @copyright 2012 Cake Development Corporation
  * @license MIT
  */
@@ -190,7 +190,7 @@ class UserBehavior extends Behavior {
 	 * @return void
 	 */
 	public function setupDefaultValidation() {
-		$validator = $this->_table->getValidator('default');
+		$validator = $this->getTable()->getValidator('default');
 		$validator = $this->validationUserName($validator);
 		$validator = $this->validationPassword($validator);
 		$validator = $this->validationConfirmPassword($validator);
@@ -218,12 +218,12 @@ class UserBehavior extends Behavior {
 	 */
 	public function updateLastActivity($userId = null, $field = 'last_action', $options = []) {
 		$options = Hash::merge($this->_config['updateLastActivity'], $options);
-		if ($this->_table->exists([
-			$this->_table->aliasField($this->_table->getPrimaryKey()) => $userId
+		if ($this->getTable()->exists([
+			$this->getTable()->aliasField($this->getTable()->getPrimaryKey()) => $userId
 		])) {
-			return $this->_table->updateAll(
+			return $this->getTable()->updateAll(
 				[$field => date($options['dateFormat'])],
-				[$this->_table->getPrimaryKey() => $userId]
+				[$this->getTable()->getPrimaryKey() => $userId]
 			);
 		}
 
@@ -262,11 +262,11 @@ class UserBehavior extends Behavior {
 	protected function _beforeRegister(EntityInterface $entity, $options = []) {
 		$options = Hash::merge($this->_config['register'], $options);
 
-		$schema = $this->_table->getSchema();
-		$columnType = $schema->getColumnType($this->_table->getPrimaryKey());
+		$schema = $this->getTable()->getSchema();
+		$columnType = $schema->getColumnType($this->getTable()->getPrimaryKey());
 
 		if ($this->_config['useUuid'] === true && $columnType !== 'integer') {
-			$primaryKey = $this->_table->getPrimaryKey();
+			$primaryKey = $this->getTable()->getPrimaryKey();
 			$entity->set($primaryKey, Text::uuid());
 		}
 
@@ -302,7 +302,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findEmailVerified(Query $query, array $options) {
 		$query->where([
-			$this->_table->aliasField($this->_field('emailVerified')) => true,
+			$this->getTable()->aliasField($this->_field('emailVerified')) => true,
 		]);
 
 		return $query;
@@ -317,7 +317,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function findActive(Query $query, array $options) {
 		$query->where([
-			$this->_table->aliasField($this->_field('active')) => true,
+			$this->getTable()->aliasField($this->_field('active')) => true,
 		]);
 
 		return $query;
@@ -374,7 +374,7 @@ class UserBehavior extends Behavior {
 			return $event->result;
 		}
 
-		$result = $this->_table->save($entity, $options['saveOptions']);
+		$result = $this->getTable()->save($entity, $options['saveOptions']);
 
 		if (!$result) {
 			return $result;
@@ -484,7 +484,7 @@ class UserBehavior extends Behavior {
 			]);
 		}
 
-		return $this->_table->save($user, ['validate' => false]);
+		return $this->getTable()->save($user, ['validate' => false]);
 	}
 
 	/**
@@ -537,7 +537,7 @@ class UserBehavior extends Behavior {
 			$user->{$this->_field('passwordToken')} = null;
 			$user->{$this->_field('passwordTokenExpires')} = null;
 
-			return $this->_table->save($user, ['checkRules' => false]);
+			return $this->getTable()->save($user, ['checkRules' => false]);
 		}
 
 		return false;
@@ -565,16 +565,19 @@ class UserBehavior extends Behavior {
 		$chunkSize = 25;
 		$chunkCount = 0;
 
-		while ($chunkCount <= $count) {
-			$results = $this->_table->find()
+		while ($count > $chunkCount) {
+			$results = $this->getTable()
+				->find()
 				->offset($chunkCount)
 				->limit($chunkSize)
 				->where($conditions)
 				->all();
 
 			foreach ($results as $result) {
-				$this->_table->delete($result);
+				$this->getTable()->delete($result);
 			}
+
+			$chunkCount++;
 		}
 
 		return $count;
@@ -588,7 +591,7 @@ class UserBehavior extends Behavior {
 	 */
 	public function removeInactive(array $conditions = []) {
 		$defaults = [
-			$this->_table->aliasField($this->_field('active')) => false,
+			$this->getTable()->aliasField($this->_field('active')) => false,
 		];
 
 		return $this->removeMany(Hash::merge($defaults, $conditions));
@@ -602,8 +605,8 @@ class UserBehavior extends Behavior {
 	 */
 	public function removeExpiredRegistrations(array $conditions = []) {
 		$defaults = [
-			$this->_table->aliasField($this->_field('emailVerified')) => 0,
-			$this->_table->aliasField($this->_field('emailTokenExpires')) . ' <' => date('Y-m-d H:i:s')
+			$this->getTable()->aliasField($this->_field('emailVerified')) => 0,
+			$this->getTable()->aliasField($this->_field('emailTokenExpires')) . ' <' => date('Y-m-d H:i:s')
 		];
 
 		return $this->removeMany(Hash::merge($defaults, $conditions));
@@ -628,7 +631,7 @@ class UserBehavior extends Behavior {
 			$entity->set($field, $this->hashPassword($entity->get($field)));
 		}
 
-		return (bool)$this->_table->save($entity);
+		return (bool)$this->getTable()->save($entity);
 	}
 
 	/**
@@ -642,8 +645,8 @@ class UserBehavior extends Behavior {
 	public function initPasswordReset($value, $options = []) {
 		$defaults = [
 			'field' => [
-				$this->_table->aliasField($this->_field('email')),
-				$this->_table->aliasField($this->_field('username'))
+				$this->getTable()->aliasField($this->_field('email')),
+				$this->getTable()->aliasField($this->_field('username'))
 			]
 		];
 
@@ -661,7 +664,7 @@ class UserBehavior extends Behavior {
 			'guard' => false
 		]);
 
-		if (!$this->_table->save($result, ['checkRules' => false])) {
+		if (!$this->getTable()->save($result, ['checkRules' => false])) {
 			new RuntimeException('Could not initialize password reset. Data could not be saved.');
 		}
 
@@ -697,7 +700,7 @@ class UserBehavior extends Behavior {
 	protected function _getUser($value, $options = []) {
 		$defaults = [
 			'notFoundErrorMessage' => __d('user_tools', 'User not found.'),
-			'field' => $this->_table->aliasField($this->_table->getPrimaryKey())
+			'field' => $this->getTable()->aliasField($this->getTable()->getPrimaryKey())
 		];
 		$defaults = Hash::merge($defaults, $this->getConfig('getUser'));
 
@@ -729,10 +732,10 @@ class UserBehavior extends Behavior {
 	 * @return \Cake\ORM\Query
 	 */
 	protected function _getFindUserQuery($value, $options) {
-		if (is_string($value) && $this->_table->hasFinder($value)) {
-			$query = $this->_table->find($value, ['getUserOptions' => $options]);
+		if (is_string($value) && $this->getTable()->hasFinder($value)) {
+			$query = $this->getTable()->find($value, ['getUserOptions' => $options]);
 		} else {
-			$query = $this->_table->find();
+			$query = $this->getTable()->find();
 		}
 
 		if (is_array($options['field'])) {
@@ -765,9 +768,9 @@ class UserBehavior extends Behavior {
 			$result = $email;
 			$email = $result->get($this->_field('email'));
 		} else {
-			$result = $this->_table->find()
+			$result = $this->getTable()->find()
 				->where([
-					$this->_table->aliasField($this->_field('email')) => $email
+					$this->getTable()->aliasField($this->_field('email')) => $email
 				])
 				->first();
 
@@ -784,7 +787,7 @@ class UserBehavior extends Behavior {
 			'guard' => false
 		]);
 
-		$this->_table->save($result, ['validate' => false]);
+		$this->getTable()->save($result, ['validate' => false]);
 
 		return $this->sendNewPasswordEmail($result, ['to' => $result->get($this->_field('email'))]);
 	}

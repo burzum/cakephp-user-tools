@@ -29,6 +29,11 @@ class UserBehaviorTest extends TestCase {
 	];
 
 	/**
+	 * @var \Burzum\UserTools\Model\Behavior\UserBehavior
+	 */
+	protected $Users;
+
+	/**
 	 * setup
 	 *
 	 * @return void

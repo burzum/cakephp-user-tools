@@ -5,7 +5,7 @@ declare(strict_types = 1);
  * UserRegistrationValidator
  *
  * @author Florian Krämer
- * @copyright 2013 - 2017 Florian Krämer
+ * @copyright Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\Validation;

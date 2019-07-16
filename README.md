@@ -24,6 +24,7 @@ Requirements
 
 * CakePHP 3.0+ (Plugin Version 1.0)
 * CakePHP 3.4+ (Plugin Version 1.1)
+* CakePHP 3.8+ (Plugin Version 2.0)
 
 Complementary plugins
 ---------------------
@@ -63,6 +64,6 @@ Please feel free to contribute to the plugin with new issues, requests, unit tes
 License
 -------
 
-Copyright 2013 - 2016 Florian Krämer
+Copyright Florian Krämer
 
 Licensed under the [MIT](http://www.opensource.org/licenses/mit-license.php) License. Redistributions of the source code included in this repository must retain the copyright notice found in each file.

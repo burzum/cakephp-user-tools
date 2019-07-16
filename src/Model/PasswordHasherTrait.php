@@ -10,7 +10,7 @@ use Cake\Auth\PasswordHasherFactory;
  * Password Hasher Trait
  *
  * @author Florian Krämer
- * @copyright 2013 - 2017 Florian Krämer
+ * @copyright Florian Krämer
  * @license MIT
  */
 trait PasswordHasherTrait {

@@ -5,7 +5,7 @@ declare(strict_types = 1);
  * AuthHelper
  *
  * @author Florian Krämer
- * @copyright 2013 - 2017 Florian Krämer
+ * @copyright Florian Krämer
  * @license MIT
  */
 namespace Burzum\UserTools\View\Helper;
@@ -59,7 +59,7 @@ class AuthHelper extends Helper {
 	 */
 	protected function _setupUserData() {
 		if (is_string($this->_config['session'])) {
-			$this->_userData = $this->_View->request->session()->read($this->_config['session']);
+			$this->_userData = $this->getView()->getRequest()->getSession()->read($this->_config['session']);
 		} else {
 			if (!array_key_exists($this->_config['viewVar'], $this->_View->viewVars)) {
 				if ($this->_config['viewVarException'] === true) {
@@ -68,7 +68,7 @@ class AuthHelper extends Helper {
 					$this->_userData = [];
 				}
 			} else {
-				$this->_userData = $this->_View->viewVars[$this->_config['viewVar']];
+				$this->_userData = $this->getView()->get($this->_config['viewVar']);
 			}
 		}
 	}

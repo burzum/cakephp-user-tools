@@ -7,15 +7,22 @@ use Cake\Http\Session;
 use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * AuthHelperTestCase
  *
  * @author Florian Krämer
- * ]@copyright 2013 - 2017 Florian Krämer
+ * @copyright 2013 - 2017 Florian Krämer
  * @license MIT
  */
-class AuthHelperTestCase extends TestCase {
+class AuthHelperTest extends TestCase {
+
+	/**
+	 * @var \Cake\View\View
+	 */
+	protected $View;
 
 	/**
 	 * setUp method
@@ -26,11 +33,11 @@ class AuthHelperTestCase extends TestCase {
 		parent::setUp();
 		$this->View = new View(null);
 
-		$this->View->request = $this->getMockBuilder(Request::class)
-			->setMethods(['session'])
-			->getMock();
+		$this->View->setRequest($this->getMockBuilder(Request::class)
+			->setMethods(['getSession'])
+			->getMock());
 
-		$this->View->viewVars = [
+		$this->View->set([
 			'userData' => new Entity([
 				'id' => 'user-1',
 				'username' => 'florian',
@@ -40,7 +47,7 @@ class AuthHelperTestCase extends TestCase {
 					'field1' => 'field one'
 				]
 			])
-		];
+		]);
 	}
 
 	/**
@@ -67,18 +74,18 @@ class AuthHelperTestCase extends TestCase {
 		$this->assertEquals($result, 'field one');
 
 		// Testing accessing it with an array.
-		$this->View->viewVars['userData'] = [
+		$this->View->set('userData', [
 			'id' => 'user-1',
 			'username' => 'florian',
 			'role' => 'admin',
 			'something' => 'some value'
-		];
+		]);
 		$Auth = new AuthHelper($this->View);
 		$result = $Auth->user('something');
 		$this->assertEquals($result, 'some value');
 
 		$result = $Auth->user();
-		$this->assertEquals($result, $this->View->viewVars['userData']);
+		$this->assertEquals($result, $this->View->get('userData'));
 	}
 
 	/**
@@ -91,16 +98,18 @@ class AuthHelperTestCase extends TestCase {
 		$this->assertTrue($Auth->hasRole('admin'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
 
-		$this->View->viewVars['userData']['role'] = [
-			'manager'
-		];
+		$this->View->set('userData', [
+			'role' => 'manager'
+		]);
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->hasRole('manager'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
 
-		$this->View->viewVars['userData']['role'] = [
-			'manager', 'user'
-		];
+		$this->View->set('userData', [
+			'role' => [
+				'manager', 'user'
+			]
+		]);
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->hasRole('manager'));
 		$this->assertFalse($Auth->hasRole('doesnotexist'));
@@ -109,7 +118,7 @@ class AuthHelperTestCase extends TestCase {
 			$object = new \stdClass();
 			$Auth->hasRole($object);
 			$this->fail('No \InvalidArgumentException thrown!');
-		} catch (\InvalidArgumentException $e) {
+		} catch (InvalidArgumentException $e) {
 			// Pass
 		}
 	}
@@ -134,7 +143,7 @@ class AuthHelperTestCase extends TestCase {
 		$Auth = new AuthHelper($this->View);
 		$this->assertTrue($Auth->isLoggedin());
 
-		$this->View->viewVars['userData'] = [];
+		$this->View->set('userData', []);
 		$Auth = new AuthHelper($this->View);
 		$this->assertFalse($Auth->isLoggedin());
 	}
@@ -153,8 +162,8 @@ class AuthHelperTestCase extends TestCase {
 				'username' => 'SomeUser'
 			]));
 
-		$this->View->request->expects($this->at(0))
-			->method('session')
+		$this->View->getRequest()->expects($this->at(0))
+			->method('getSession')
 			->will($this->returnValue($session));
 
 		$Auth = new AuthHelper($this->View, [
@@ -165,20 +174,18 @@ class AuthHelperTestCase extends TestCase {
 		$this->assertEquals($result, 'SomeUser');
 
 		try {
-			$this->View->viewVars = [];
 			$Auth = new AuthHelper($this->View);
 			$this->fail('No \RuntimeException thrown!');
-		} catch (\RuntimeException $e) {
+		} catch (RuntimeException $e) {
 			// Pass
 		}
 
 		try {
-			$this->View->viewVars = [];
 			$Auth = new AuthHelper($this->View, [
 				'viewVar' => 'doesNotExist'
 			]);
 			$this->fail('No \RuntimeException thrown!');
-		} catch (\RuntimeException $e) {
+		} catch (RuntimeException $e) {
 			// Pass
 		}
 	}
