@@ -48,7 +48,12 @@ class UserBehaviorTest extends TestCase
         ]);
 
         $this->UserBehavior = $this->getMockBuilder('\Burzum\UserTools\Model\Behavior\UserBehavior')
-            ->setConstructorArgs([$this->Users, ['fromEmail' => 'noreply@noreply.com']])
+            ->setConstructorArgs([$this->Users, [
+                    'email' => [
+                        'from' => 'noreply@noreply.com'
+                    ]
+                ]
+            ])
             ->setMethods(['getMailer'])
             ->getMock();
 

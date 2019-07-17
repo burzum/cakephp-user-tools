@@ -71,12 +71,14 @@ class UserBehavior extends Behavior
      * @var array
      */
     protected $_defaultConfig = [
-        'emailConfig' => 'default',
-        'fromEmail' => '',
+        'email' => [
+            'transport' => 'default',
+            'fromEmail' => null,
+            'mailer' => UsersMailer::class,
+        ],
         'defaultValidation' => true,
         'useUuid' => true,
         'passwordHasher' => 'Default',
-        'mailer' => UsersMailer::class,
         'passwordMinLength' => 6,
         'getUser' => [],
         'register' => [
@@ -877,8 +879,9 @@ class UserBehavior extends Behavior
     public function sendPasswordResetToken(EntityInterface $user, $options = [])
     {
         $options = Hash::merge($this->_config['sendPasswordResetToken'], $options);
-        $this->getMailer($this->getConfig('mailer'))
-            ->setFrom($this->getConfig('fromEmail'))
+        $this->getMailer($this->getConfig('email.mailer'))
+            ->setFrom($this->getConfig('email.from'))
+            ->setTransport($this->getConfig('email.transport'))
             ->send('passwordResetToken', [$user, $options]);
     }
 
@@ -892,8 +895,9 @@ class UserBehavior extends Behavior
     public function sendNewPasswordEmail(EntityInterface $user, $options = [])
     {
         $options = Hash::merge($this->_config['sendNewPasswordEmail'], $options);
-        $this->getMailer($this->getConfig('mailer'))
-            ->setFrom($this->getConfig('fromEmail'))
+        $this->getMailer($this->getConfig('email.mailer'))
+            ->setFrom($this->getConfig('email.from'))
+            ->setTransport($this->getConfig('email.transport'))
             ->send('verificationEmail', [$user, $options]);
     }
 
@@ -907,8 +911,9 @@ class UserBehavior extends Behavior
     public function sendVerificationEmail(EntityInterface $user, $options = [])
     {
         $options = Hash::merge($this->_config['sendVerificationEmail'], $options);
-        $this->getMailer($this->getConfig('mailer'))
-            ->setFrom($this->getConfig('fromEmail'))
+        $this->getMailer($this->getConfig('email.mailer'))
+            ->setFrom($this->getConfig('email.from'))
+            ->setTransport($this->getConfig('email.transport'))
             ->send('verificationEmail', [$user, $options]);
     }
 

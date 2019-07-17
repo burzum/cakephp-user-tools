@@ -82,3 +82,7 @@ Cake\Datasource\ConnectionManager::setConfig('test', [
     'quoteIdentifiers' => true,
     'cacheMetadata' => true,
 ]);
+
+Cake\Mailer\TransportFactory::setConfig('default', [
+    'className' => 'Debug'
+]);
